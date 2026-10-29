@@ -23,6 +23,7 @@ from app.integrations.mailer import Email, Mailer
 from app.models import AuditLog, Invitation, Membership, Organization, Role, User
 from app.services import audit
 from app.services.auth_service import InvalidTokenError
+from app.services.pipeline_service import seed_default_stages
 
 
 def _now() -> datetime:
@@ -48,6 +49,7 @@ def create_organization(db: Session, principal: Principal, name: str) -> Organiz
     db.add(org)
     db.flush()
     db.add(Membership(organization_id=org.id, user_id=principal.user.id, role=Role.owner))
+    seed_default_stages(db, org.id)
     audit.record(
         db,
         "org.created",

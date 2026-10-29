@@ -291,6 +291,23 @@ export interface paths {
         patch: operations["update_organization_api_v1_organizations__org_id__patch"];
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/analytics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analytics Overview */
+        get: operations["analytics_overview_api_v1_organizations__org_id__analytics_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/audit": {
         parameters: {
             query?: never;
@@ -306,6 +323,42 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Companies */
+        get: operations["list_companies_api_v1_organizations__org_id__companies_get"];
+        put?: never;
+        /** Create Company */
+        post: operations["create_company_api_v1_organizations__org_id__companies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/companies/{company_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Company */
+        get: operations["get_company_api_v1_organizations__org_id__companies__company_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Company */
+        patch: operations["update_company_api_v1_organizations__org_id__companies__company_id__patch"];
         trace?: never;
     };
     "/api/v1/organizations/{org_id}/invitations": {
@@ -338,6 +391,145 @@ export interface paths {
         post?: never;
         /** Revoke Invitation */
         delete: operations["revoke_invitation_api_v1_organizations__org_id__invitations__invitation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/lead-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Import */
+        post: operations["run_import_api_v1_organizations__org_id__lead_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/lead-imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Import */
+        post: operations["preview_import_api_v1_organizations__org_id__lead_imports_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/lead-imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import_api_v1_organizations__org_id__lead_imports__import_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Leads */
+        get: operations["list_leads_api_v1_organizations__org_id__leads_get"];
+        put?: never;
+        /** Create Lead */
+        post: operations["create_lead_api_v1_organizations__org_id__leads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bulk Leads */
+        post: operations["bulk_leads_api_v1_organizations__org_id__leads_bulk_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Leads */
+        get: operations["export_leads_api_v1_organizations__org_id__leads_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Lead */
+        get: operations["get_lead_api_v1_organizations__org_id__leads__lead_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Lead */
+        delete: operations["delete_lead_api_v1_organizations__org_id__leads__lead_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Lead */
+        patch: operations["update_lead_api_v1_organizations__org_id__leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Note */
+        post: operations["add_note_api_v1_organizations__org_id__leads__lead_id__notes_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -378,6 +570,94 @@ export interface paths {
         patch: operations["update_member_api_v1_organizations__org_id__members__membership_id__patch"];
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunities */
+        get: operations["list_opportunities_api_v1_organizations__org_id__opportunities_get"];
+        put?: never;
+        /** Create Opportunity */
+        post: operations["create_opportunity_api_v1_organizations__org_id__opportunities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/opportunities/{opp_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Opportunity */
+        get: operations["get_opportunity_api_v1_organizations__org_id__opportunities__opp_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Opportunity */
+        patch: operations["update_opportunity_api_v1_organizations__org_id__opportunities__opp_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/pipeline/stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Stages */
+        get: operations["list_stages_api_v1_organizations__org_id__pipeline_stages_get"];
+        put?: never;
+        /** Create Stage */
+        post: operations["create_stage_api_v1_organizations__org_id__pipeline_stages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/pipeline/stages/{stage_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename Stage */
+        patch: operations["rename_stage_api_v1_organizations__org_id__pipeline_stages__stage_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/pipeline/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipeline Summary */
+        get: operations["pipeline_summary_api_v1_organizations__org_id__pipeline_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -393,6 +673,35 @@ export interface components {
              */
             status: string;
         };
+        /** ActivityOut */
+        ActivityOut: {
+            /** Actor User Id */
+            actor_user_id: string | null;
+            /** Body */
+            body: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Opportunity Id */
+            opportunity_id: string | null;
+            type: components["schemas"]["ActivityType"];
+        };
+        /**
+         * ActivityType
+         * @enum {string}
+         */
+        ActivityType: "created" | "imported" | "updated" | "status_changed" | "assigned" | "note" | "opportunity_created" | "stage_changed" | "deleted";
         /** AuditEntryOut */
         AuditEntryOut: {
             /** Action */
@@ -427,6 +736,116 @@ export interface components {
             /** Next Cursor */
             next_cursor: string | null;
         };
+        /** BulkIn */
+        BulkIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "assign" | "set_status" | "add_tag" | "remove_tag" | "delete";
+            /** Ids */
+            ids: string[];
+            /** Value */
+            value?: string | null;
+        };
+        /** BulkOut */
+        BulkOut: {
+            /** Affected */
+            affected: number;
+        };
+        /** CompanyDetailOut */
+        CompanyDetailOut: {
+            /** Country */
+            country: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Domain */
+            domain: string | null;
+            /** Employee Count */
+            employee_count: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Industry */
+            industry: string | null;
+            /** Lead Count */
+            lead_count: number;
+            /** Name */
+            name: string;
+        };
+        /** CompanyIn */
+        CompanyIn: {
+            /** Country */
+            country?: string | null;
+            /** Domain */
+            domain?: string | null;
+            /** Employee Count */
+            employee_count?: number | null;
+            /** Industry */
+            industry?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** CompanyOut */
+        CompanyOut: {
+            /** Country */
+            country: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Domain */
+            domain: string | null;
+            /** Employee Count */
+            employee_count: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Industry */
+            industry: string | null;
+            /** Name */
+            name: string;
+        };
+        /** CompanyPage */
+        CompanyPage: {
+            /** Items */
+            items: components["schemas"]["CompanyOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** CompanySummary */
+        CompanySummary: {
+            /** Domain */
+            domain: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** CompanyUpdate */
+        CompanyUpdate: {
+            /** Country */
+            country?: string | null;
+            /** Domain */
+            domain?: string | null;
+            /** Employee Count */
+            employee_count?: number | null;
+            /** Industry */
+            industry?: string | null;
+            /** Name */
+            name?: string | null;
+        };
         /** DependencyStatus */
         DependencyStatus: {
             /** Error */
@@ -439,11 +858,97 @@ export interface components {
              */
             status: "ok" | "error";
         };
+        /**
+         * DuplicatePolicy
+         * @enum {string}
+         */
+        DuplicatePolicy: "skip" | "update";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ImportIn */
+        ImportIn: {
+            /** Content */
+            content: string;
+            /** @default skip */
+            duplicate_policy: components["schemas"]["DuplicatePolicy"];
+            /** Filename */
+            filename: string;
+            /** Mapping */
+            mapping: {
+                [key: string]: "email" | "first_name" | "last_name" | "full_name" | "title" | "phone" | "linkedin_url" | "source" | "status" | "tags" | "company_name" | "company_domain" | "website";
+            };
+            /** Source */
+            source?: string | null;
+            /**
+             * Unmapped As Custom Fields
+             * @default false
+             */
+            unmapped_as_custom_fields: boolean;
+        };
+        /** ImportOut */
+        ImportOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created Count */
+            created_count: number;
+            duplicate_policy: components["schemas"]["DuplicatePolicy"];
+            /** Error Count */
+            error_count: number;
+            /** Errors */
+            errors: {
+                [key: string]: unknown;
+            }[];
+            /** Filename */
+            filename: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Replayed
+             * @default false
+             */
+            replayed: boolean;
+            /** Skipped Count */
+            skipped_count: number;
+            status: components["schemas"]["ImportStatus"];
+            /** Total Rows */
+            total_rows: number;
+            /** Updated Count */
+            updated_count: number;
+        };
+        /** ImportPreviewIn */
+        ImportPreviewIn: {
+            /** Content */
+            content: string;
+            /** Filename */
+            filename: string;
+        };
+        /** ImportPreviewOut */
+        ImportPreviewOut: {
+            /** Headers */
+            headers: string[];
+            /** Sample Rows */
+            sample_rows: string[][];
+            /** Suggested Mapping */
+            suggested_mapping: {
+                [key: string]: ("email" | "first_name" | "last_name" | "full_name" | "title" | "phone" | "linkedin_url" | "source" | "status" | "tags" | "company_name" | "company_domain" | "website") | null;
+            };
+            /** Total Rows */
+            total_rows: number;
+        };
+        /**
+         * ImportStatus
+         * @enum {string}
+         */
+        ImportStatus: "completed" | "failed";
         /** InvitationCreateIn */
         InvitationCreateIn: {
             /**
@@ -486,6 +991,175 @@ export interface components {
             /** Organization Name */
             organization_name: string;
             role: components["schemas"]["Role"];
+        };
+        /** LeadCreate */
+        LeadCreate: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string | number | boolean | null;
+            } | null;
+            /** Email */
+            email?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Source */
+            source?: string | null;
+            status?: components["schemas"]["LeadStatus"] | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** LeadDetailOut */
+        LeadDetailOut: {
+            /** Activities */
+            activities: components["schemas"]["ActivityOut"][];
+            company: components["schemas"]["CompanySummary"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Custom Fields */
+            custom_fields: {
+                [key: string]: unknown;
+            };
+            /** Email */
+            email: string | null;
+            /** First Name */
+            first_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Import Id */
+            import_id: string | null;
+            /** Last Name */
+            last_name: string | null;
+            /** Linkedin Url */
+            linkedin_url: string | null;
+            /** Opportunities */
+            opportunities: components["schemas"]["OpportunityOut"][];
+            /** Owner User Id */
+            owner_user_id: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Source */
+            source: string | null;
+            status: components["schemas"]["LeadStatus"];
+            /** Tags */
+            tags: string[];
+            /** Title */
+            title: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** LeadOut */
+        LeadOut: {
+            company: components["schemas"]["CompanySummary"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Custom Fields */
+            custom_fields: {
+                [key: string]: unknown;
+            };
+            /** Email */
+            email: string | null;
+            /** First Name */
+            first_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Import Id */
+            import_id: string | null;
+            /** Last Name */
+            last_name: string | null;
+            /** Linkedin Url */
+            linkedin_url: string | null;
+            /** Owner User Id */
+            owner_user_id: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Source */
+            source: string | null;
+            status: components["schemas"]["LeadStatus"];
+            /** Tags */
+            tags: string[];
+            /** Title */
+            title: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** LeadPage */
+        LeadPage: {
+            /** Items */
+            items: components["schemas"]["LeadOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Total */
+            total: number;
+        };
+        /**
+         * LeadStatus
+         * @enum {string}
+         */
+        LeadStatus: "new" | "contacted" | "qualified" | "disqualified";
+        /**
+         * LeadUpdate
+         * @description Partial update: only fields present in the request body change.
+         */
+        LeadUpdate: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Custom Fields */
+            custom_fields?: {
+                [key: string]: string | number | boolean | null;
+            } | null;
+            /** Email */
+            email?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Linkedin Url */
+            linkedin_url?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Source */
+            source?: string | null;
+            status?: components["schemas"]["LeadStatus"] | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Title */
+            title?: string | null;
         };
         /** LiveResponse */
         LiveResponse: {
@@ -557,6 +1231,90 @@ export interface components {
             permissions: string[];
             role: components["schemas"]["Role"];
         };
+        /** NoteIn */
+        NoteIn: {
+            /** Body */
+            body: string;
+        };
+        /** OpportunityCreate */
+        OpportunityCreate: {
+            /** Amount */
+            amount?: number | string | null;
+            /** Company Id */
+            company_id?: string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Name */
+            name: string;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /**
+             * Stage Id
+             * Format: uuid
+             */
+            stage_id: string;
+        };
+        /** OpportunityOut */
+        OpportunityOut: {
+            /** Amount */
+            amount: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Company Id */
+            company_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Expected Close Date */
+            expected_close_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lead Id */
+            lead_id: string | null;
+            /** Name */
+            name: string;
+            /** Owner User Id */
+            owner_user_id: string | null;
+            /**
+             * Stage Id
+             * Format: uuid
+             */
+            stage_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** OpportunityUpdate */
+        OpportunityUpdate: {
+            /** Amount */
+            amount?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Owner User Id */
+            owner_user_id?: string | null;
+            /** Stage Id */
+            stage_id?: string | null;
+        };
         /** OrganizationCreateIn */
         OrganizationCreateIn: {
             /** Name */
@@ -604,6 +1362,34 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /**
+         * OverviewOut
+         * @description Aggregates computed from stored records at request time. No estimates.
+         */
+        OverviewOut: {
+            /** Leads Added 30D */
+            leads_added_30d: number;
+            /** Leads By Status */
+            leads_by_status: {
+                [key: string]: number;
+            };
+            /** Leads Total */
+            leads_total: number;
+            /** Open Opportunities */
+            open_opportunities: number;
+            /** Open Pipeline Value */
+            open_pipeline_value: {
+                [key: string]: string;
+            };
+            /** Recent Activity */
+            recent_activity: components["schemas"]["ActivityOut"][];
+            /** Won Count 90D */
+            won_count_90d: number;
+            /** Won Value 90D */
+            won_value_90d: {
+                [key: string]: string;
+            };
+        };
         /** PasswordChangeIn */
         PasswordChangeIn: {
             /** Current Password */
@@ -625,6 +1411,11 @@ export interface components {
              * Format: email
              */
             email: string;
+        };
+        /** PipelineSummaryOut */
+        PipelineSummaryOut: {
+            /** Stages */
+            stages: components["schemas"]["StageSummary"][];
         };
         /** ReadyResponse */
         ReadyResponse: {
@@ -686,6 +1477,53 @@ export interface components {
             last_seen_at: string;
             /** User Agent */
             user_agent: string | null;
+        };
+        /** StageCreate */
+        StageCreate: {
+            /** @default open */
+            kind: components["schemas"]["StageKind"];
+            /** Name */
+            name: string;
+        };
+        /**
+         * StageKind
+         * @enum {string}
+         */
+        StageKind: "open" | "won" | "lost";
+        /** StageOut */
+        StageOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["StageKind"];
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+        };
+        /** StageSummary */
+        StageSummary: {
+            /** Count */
+            count: number;
+            kind: components["schemas"]["StageKind"];
+            /** Name */
+            name: string;
+            /**
+             * Stage Id
+             * Format: uuid
+             */
+            stage_id: string;
+            /** Totals */
+            totals: {
+                [key: string]: string;
+            };
+        };
+        /** StageUpdate */
+        StageUpdate: {
+            /** Name */
+            name: string;
         };
         /** TokenIn */
         TokenIn: {
@@ -1254,6 +2092,37 @@ export interface operations {
             };
         };
     };
+    analytics_overview_api_v1_organizations__org_id__analytics_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_audit_api_v1_organizations__org_id__audit_get: {
         parameters: {
             query?: {
@@ -1275,6 +2144,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_companies_api_v1_organizations__org_id__companies_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_company_api_v1_organizations__org_id__companies_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_company_api_v1_organizations__org_id__companies__company_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_company_api_v1_organizations__org_id__companies__company_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyOut"];
                 };
             };
             /** @description Validation Error */
@@ -1384,6 +2391,393 @@ export interface operations {
             };
         };
     };
+    run_import_api_v1_organizations__org_id__lead_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_import_api_v1_organizations__org_id__lead_imports_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import_api_v1_organizations__org_id__lead_imports__import_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_leads_api_v1_organizations__org_id__leads_get: {
+        parameters: {
+            query?: {
+                sort?: string;
+                limit?: number;
+                cursor?: string | null;
+                q?: string | null;
+                status?: components["schemas"]["LeadStatus"][] | null;
+                /** @description User id or 'none' */
+                owner?: string | null;
+                tag?: string | null;
+                company_id?: string | null;
+                source?: string | null;
+                import_id?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lead_api_v1_organizations__org_id__leads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_leads_api_v1_organizations__org_id__leads_bulk_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_leads_api_v1_organizations__org_id__leads_export_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                status?: components["schemas"]["LeadStatus"][] | null;
+                /** @description User id or 'none' */
+                owner?: string | null;
+                tag?: string | null;
+                company_id?: string | null;
+                source?: string | null;
+                import_id?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lead_api_v1_organizations__org_id__leads__lead_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_lead_api_v1_organizations__org_id__leads__lead_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_lead_api_v1_organizations__org_id__leads__lead_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_note_api_v1_organizations__org_id__leads__lead_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_members_api_v1_organizations__org_id__members_get: {
         parameters: {
             query?: never;
@@ -1467,6 +2861,277 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_opportunities_api_v1_organizations__org_id__opportunities_get: {
+        parameters: {
+            query?: {
+                stage_id?: string | null;
+                owner_id?: string | null;
+                include_closed?: boolean;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_opportunity_api_v1_organizations__org_id__opportunities_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_opportunity_api_v1_organizations__org_id__opportunities__opp_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opp_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_opportunity_api_v1_organizations__org_id__opportunities__opp_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opp_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stages_api_v1_organizations__org_id__pipeline_stages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_stage_api_v1_organizations__org_id__pipeline_stages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_stage_api_v1_organizations__org_id__pipeline_stages__stage_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stage_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipeline_summary_api_v1_organizations__org_id__pipeline_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineSummaryOut"];
+                };
             };
             /** @description Validation Error */
             422: {

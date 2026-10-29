@@ -16,16 +16,31 @@ class Permission(enum.StrEnum):
     members_invite = "members:invite"
     members_manage = "members:manage"  # change roles, remove members
     audit_read = "audit:read"
+    leads_read = "leads:read"
+    leads_write = "leads:write"  # create, edit, assign, notes, companies
+    leads_delete = "leads:delete"  # soft delete, including bulk
+    leads_import = "leads:import"
+    leads_export = "leads:export"
+    pipeline_read = "pipeline:read"
+    pipeline_write = "pipeline:write"  # create and move opportunities
+    pipeline_configure = "pipeline:configure"  # stages
 
 
 _ALL = frozenset(Permission)
+_READ = frozenset(
+    {Permission.org_read, Permission.members_read, Permission.leads_read, Permission.pipeline_read}
+)
+_SELL = _READ | {Permission.leads_write, Permission.pipeline_write}
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.owner: _ALL,
     Role.admin: _ALL,
-    Role.manager: frozenset({Permission.org_read, Permission.members_read}),
-    Role.sales_rep: frozenset({Permission.org_read, Permission.members_read}),
-    Role.analyst: frozenset({Permission.org_read, Permission.members_read}),
+    # Managers run the team's data: bulk changes, imports, and exports.
+    Role.manager: _SELL
+    | {Permission.leads_delete, Permission.leads_import, Permission.leads_export},
+    Role.sales_rep: _SELL,
+    # Read-only. Export is withheld: it is the easiest path to bulk data exfiltration.
+    Role.analyst: _READ,
 }
 
 # Roles each role may grant, change, or remove. Owners are managed only by owners, and
