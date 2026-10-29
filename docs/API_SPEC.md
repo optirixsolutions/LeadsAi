@@ -32,7 +32,6 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | POST / GET / DELETE | `/organizations/{org_id}/invitations[/{id}]` | `members:invite` | Invite, list pending, revoke |
 | POST | `/invitations/preview`, `/invitations/accept` | none / verified session | Inspect or redeem an invitation token |
 | GET | `/organizations/{org_id}/audit?limit&cursor` | `audit:read` | Cursor-paginated audit log |
-
 | GET / POST | `/organizations/{org_id}/leads` | `leads:read` / `leads:write` | List (filters `q`, `status` (repeatable), `owner` (id or `none`), `tag`, `company_id`, `source`, `import_id`; `sort` one of `created_at`, `updated_at`, `last_name`, `email` with optional `-`; `limit`, `cursor`) / create. Duplicate email → 409 `duplicate_lead` with `details.existing_lead_id` |
 | GET / PATCH / DELETE | `/organizations/{org_id}/leads/{id}` | read / write / `leads:delete` | Detail with timeline (50 latest) and opportunities / partial update / soft delete |
 | POST | `/organizations/{org_id}/leads/{id}/notes` | `leads:write` | Append a note; returns the timeline |
@@ -49,5 +48,4 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 References to other records (company, lead, stage, owner) that are not in the caller's org return 422
 `invalid_reference`. Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
 
-Planned groups: `companies`, `research`, `qualification`, `opportunities`,
-`pipeline`, `activities`, `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `analytics`, `usage`, `audit`.
+Planned groups: `research`, `qualification`, `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `usage`.
