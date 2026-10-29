@@ -22,5 +22,18 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | GET | `/health/live` | none | Process is serving. `{status, service, version}` |
 | GET | `/health/ready` | none | Per-dependency checks for database and redis. 200 when all ok, 503 when degraded. Errors report the exception type only |
 
-Planned groups: `auth`, `organizations`, `members`, `leads`, `companies`, `research`, `qualification`, `opportunities`,
+| POST | `/auth/register`, `/auth/login` | none (JSON only, rate limited) | Create account / sign in; sets session + CSRF cookies |
+| POST | `/auth/logout`, `/auth/password` | session + CSRF | Sign out; change password (revokes other sessions) |
+| GET / DELETE | `/auth/me`, `/auth/sessions`, `/auth/sessions/{id}` | session | Current user + memberships; list/revoke own sessions |
+| POST | `/auth/password-reset/request`, `/auth/password-reset/confirm`, `/auth/verify-email`, `/auth/verify-email/resend` | none / session | Single-use token flows; request always returns 202 |
+| POST / GET | `/organizations` | session | Create (caller becomes owner) / list own orgs |
+| GET / PATCH | `/organizations/{org_id}` | member / `org:update` | Read / rename |
+| GET / PATCH / DELETE | `/organizations/{org_id}/members[/{id}]` | member / `members:manage` | List, change role, remove or leave |
+| POST / GET / DELETE | `/organizations/{org_id}/invitations[/{id}]` | `members:invite` | Invite, list pending, revoke |
+| POST | `/invitations/preview`, `/invitations/accept` | none / verified session | Inspect or redeem an invitation token |
+| GET | `/organizations/{org_id}/audit?limit&cursor` | `audit:read` | Cursor-paginated audit log |
+
+Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
+
+Planned groups: `leads`, `companies`, `research`, `qualification`, `opportunities`,
 `pipeline`, `activities`, `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `analytics`, `usage`, `audit`.

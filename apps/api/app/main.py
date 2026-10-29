@@ -4,7 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.v1 import health
+from app.api.v1 import auth, health, organizations
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import RequestContextMiddleware
@@ -37,6 +37,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     v1 = APIRouter(prefix="/api/v1")
     v1.include_router(health.router)
+    v1.include_router(auth.router)
+    v1.include_router(organizations.router)
     app.include_router(v1)
     return app
 

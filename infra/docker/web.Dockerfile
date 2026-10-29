@@ -10,7 +10,9 @@ RUN pnpm install --frozen-lockfile --filter @salesiq/web...
 FROM deps AS build
 COPY packages/contracts packages/contracts
 COPY apps/web apps/web
-ENV NEXT_TELEMETRY_DISABLED=1 SALESIQ_STANDALONE=1
+# API rewrites are resolved at build time; override for other topologies.
+ARG SALESIQ_API_URL=http://api:8000
+ENV NEXT_TELEMETRY_DISABLED=1 SALESIQ_STANDALONE=1 SALESIQ_API_URL=$SALESIQ_API_URL
 RUN pnpm --filter @salesiq/web build
 
 FROM node:22-alpine AS run

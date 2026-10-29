@@ -59,6 +59,7 @@ def test_unhandled_error_does_not_leak_internals(tclient: TestClient) -> None:
     r = tclient.get("/_test/crash")
     assert r.status_code == 500
     assert r.json()["error"]["code"] == "internal_error"
+    assert r.json()["error"]["request_id"] == r.headers["x-request-id"]
     assert "hunter2" not in r.text
 
 
@@ -98,7 +99,13 @@ def test_production_refuses_default_secret() -> None:
         Settings(environment="production").validate_for_runtime()
     with pytest.raises(RuntimeError, match="32"):
         Settings(environment="production", secret_key=SecretStr("short")).validate_for_runtime()
-    Settings(environment="production", secret_key=SecretStr("x" * 40)).validate_for_runtime()
+    with pytest.raises(RuntimeError, match="MAILER"):
+        Settings(
+            environment="production", secret_key=SecretStr("x" * 40), mailer="log"
+        ).validate_for_runtime()
+    Settings(
+        environment="production", secret_key=SecretStr("x" * 40), mailer="disabled"
+    ).validate_for_runtime()
 
 
 def test_redaction_masks_sensitive_keys_and_url_credentials() -> None:

@@ -15,7 +15,7 @@ target_metadata = Base.metadata
 
 def _url() -> str:
     # Tests may inject a URL via config attributes; otherwise use application settings.
-    return config.attributes.get("database_url") or get_settings().database_url
+    return config.attributes.get("database_url") or get_settings().effective_migration_url
 
 
 def run_migrations_offline() -> None:

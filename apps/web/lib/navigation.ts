@@ -28,7 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Analytics", href: "/analytics", icon: BarChart3, phase: 9 },
   { label: "Integrations", href: "/integrations", icon: Plug, phase: 10 },
   { label: "System status", href: "/status", icon: Activity },
-  { label: "Settings", href: "/settings", icon: Settings, phase: 2 },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function isActive(pathname: string, href: string): boolean {

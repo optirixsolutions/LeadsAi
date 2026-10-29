@@ -36,7 +36,9 @@ services:
       - path: .env
         required: false
     environment:
-      SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq:salesiq@postgres:5432/salesiq
+      # Runtime connects as the non-superuser app role so row-level security applies.
+      SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
+      SALESIQ_MIGRATION_DATABASE_URL: postgresql+psycopg://salesiq:salesiq@postgres:5432/salesiq
       SALESIQ_REDIS_URL: redis://redis:6379/0
     ports:
       - "127.0.0.1:8000:8000"

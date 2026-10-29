@@ -3,10 +3,11 @@
 ## Threat model
 | Threat | Primary control | Status |
 |---|---|---|
-| Cross-tenant data exposure / BOLA / IDOR | Org resolved from session + membership; every query scoped; RLS as backstop; isolation tests per route | Phase 2 |
-| Privilege escalation | Server-side permission matrix; role changes restricted to owner/admin and audited | Phase 2 |
-| Session theft | HttpOnly, Secure, SameSite cookies; server-side revocable sessions; nothing in localStorage | Phase 2 |
-| CSRF | SameSite=Lax + double-submit token on mutations | Phase 2 |
+| Cross-tenant data exposure / BOLA / IDOR | Org resolved from session + membership; every query scoped; RLS as backstop; isolation tests per route | Done (Phase 2) |
+| Privilege escalation | Server-side permission matrix and assignable-role rules; no self role change; last-owner lock; audited | Done (Phase 2) |
+| Session theft | HttpOnly, SameSite, Secure (staging/prod) cookies; hashed server-side sessions; idle + absolute expiry; revocation | Done (Phase 2); `__Host-` prefix Phase 11 |
+| CSRF | SameSite=Lax + session-bound HMAC token on mutations; JSON-only pre-session endpoints | Done (Phase 2) |
+| Account enumeration / credential stuffing | Uniform login errors, dummy-hash timing equalization, indistinguishable reset requests, rate limits | Done (Phase 2); lockout DoS noted in KNOWN_LIMITATIONS |
 | Prompt injection via imported content | Retrieved text is data, never instructions; tool permissions enforced in code, not prompts; injection test suite | Phases 5–7 |
 | Unsafe tool calls / confused deputy | MCP tools carry actor + tenant context; authorization inside each tool; no SQL/shell/arbitrary HTTP tools | Phase 7 |
 | Unauthorized external communication | Approval record + final policy check at dispatch; suppression lists; tests for bypass | Phase 8 |
@@ -30,6 +31,34 @@
 - CI includes `pip-audit` and `pnpm audit`.
 
 All of these are covered by tests in `apps/api/tests/test_platform.py` and `test_health.py`.
+
+## Controls implemented (Phase 2)
+| Control | Where | Tests |
+|---|---|---|
+| argon2id hashing, rehash on login, 12–256 char passwords | `core/security.py` | `test_auth.py` |
+| Opaque 256-bit tokens; only SHA-256 digests stored (sessions, reset, verification, invitations) | `core/security.py`, `models/auth.py` | `test_tokens_are_stored_hashed` |
+| Session cookie resolution, idle/absolute expiry, disabled users rejected | `core/auth.py:get_principal` | `test_auth.py` |
+| CSRF HMAC bound to session; JSON-only bodies on unsafe methods | `core/auth.py`, `core/security.py` | `test_mutations_require_csrf_token`, `test_csrf_token_from_other_session_rejected` |
+| Org context only from membership; 404 for non-members | `core/auth.py:get_org_context` | `test_tenancy.py` (every org route, IDOR on members and invitations) |
+| RLS `FORCE` with per-command policies; app connects as non-superuser `salesiq_app`; no DELETE on organizations | migration `d6b53821b0ee` | direct-SQL tests in `test_tenancy.py`, `test_security_regressions.py` |
+| Tenant context is transaction-local (`set_config(..., true)`) so pooled connections never leak it | `core/db.py` | `test_rls_context_does_not_leak_across_transactions` |
+| Invitation lookup via SECURITY DEFINER owned by NOLOGIN BYPASSRLS role, pinned search_path | migration | `test_invitation_lookup_*` |
+| Role rules: owners manage all, admins manage manager/rep/analyst, no self-change, last owner protected under org row lock | `core/permissions.py`, `services/org_service.py` | `test_permissions.py`, concurrency regression |
+| Invitations redeemable only by the invited, verified address; locked against concurrent revoke/accept | `services/org_service.py` | `test_permissions.py`, regressions |
+| Append-only audit log (app role has SELECT/INSERT only) | migration grants | `test_audit_log_is_append_only_for_app_role` |
+| Redis rate limits on login, register, reset, token redemption, password change | `core/rate_limit.py`, `api/v1/auth.py` | `test_login_is_rate_limited`, `test_password_change_is_rate_limited` |
+| 500s always carry the error envelope and request ID, never internals | `core/middleware.py` | `test_unhandled_error_does_not_leak_internals` |
+| Web: session never readable by scripts; same-origin API via rewrites; open-redirect-safe `next` param; single-use links require a click | `apps/web` | `features/auth/schemas.test.ts`, Playwright |
+
+## Database roles
+| Role | Login | Superuser | BYPASSRLS | Used for |
+|---|---|---|---|---|
+| schema owner (`salesiq` locally) | yes | dev only | — | Alembic migrations only |
+| `salesiq_app` | yes | no | no | API runtime; subject to RLS |
+| `salesiq_definer` | no | no | yes | Owns `invitation_lookup()` only |
+
+Every migration that adds a table must also grant `salesiq_app` exactly the privileges it needs and add RLS policies
+for tenant-owned tables. `tests/test_migrations.py` checks that RLS is enabled and forced.
 
 ## Rules
 - Treat model output as untrusted until schema-validated and policy-checked.

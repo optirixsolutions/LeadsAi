@@ -1,17 +1,38 @@
 # Known Limitations
 
-Current as of Phase 1 (2026-10-29).
+Current as of Phase 2 (2026-10-30).
 
 ## Functional
-- No authentication yet. All endpoints are public; only health endpoints exist. Do not expose a deployment beyond localhost until Phase 2 lands.
-- No domain features (leads, research, scoring, agents, outreach). The Overview shows an empty state rather than placeholder numbers.
+- No domain features yet (leads, research, scoring, agents, outreach). The Overview shows an empty state rather than placeholder numbers.
 - Sidebar entries for unbuilt modules are non-interactive and labelled with their delivery phase.
+- **No real email provider.** `SALESIQ_MAILER=log` prints verification, reset, and invitation links to the API log
+  (development only; startup refuses it in staging/production). With `disabled`, no emails are sent, so verification,
+  password reset, and invitations cannot be completed. A provider adapter is required before any real deployment.
+- An invitee must verify their email before accepting, which means two emails for a new user. A future improvement is
+  to let redemption of the invite token itself verify a brand-new account.
+- Pending invitations stay valid if the inviter is later demoted or removed.
+- No organization deletion, ownership transfer UI, or user account deletion yet.
+
+## Security (from the Phase 2 review, accepted for now)
+- **Login lockout DoS:** the per-email login limit (10/min) lets someone who knows an address block its logins for a
+  minute at a time. Planned: progressive delays plus per-IP limits weighted above per-email ones.
+- **Client IP behind proxies:** rate limits key on the ASGI client address. Traffic that arrives through the Next.js
+  rewrite or a load balancer shares one IP unless uvicorn's `--forwarded-allow-ips` is set to the trusted proxy and the
+  proxy forwards `X-Forwarded-For`. Must be configured per deployment (see DEPLOYMENT.md).
+- **Rate limiter fails open** when Redis is down (deliberate, to avoid locking everyone out; readiness reports Redis down).
+- **Cookie prefixes:** cookies are not yet `__Host-` prefixed, so a compromised sibling subdomain could plant cookies.
+  Planned for staging/production in Phase 11, along with a CSP.
+- `users`, `user_sessions`, and `auth_tokens` are not under RLS; the app role can read them. Isolation there relies on
+  application code (every query filters by the authenticated user or a token digest).
+- Not yet tested: absolute session TTL expiry, behaviour when an HTTP server omits `Content-Length` on bodies.
 
 ## Operational
 - GitHub Actions workflow is written but has not run; no remote repository is configured.
-- Nothing is committed yet; the repository was initialized but the first commit awaits review.
-- No background worker, rate limiting, OpenTelemetry export, or error-monitoring integration yet (planned Phases 2, 6, 11).
+- No background worker, OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
+- The web build resolves the API URL for rewrites at **build time** (`SALESIQ_API_URL`); change it and rebuild per environment.
 - `make` is unavailable in plain PowerShell; use Git Bash/WSL or the raw commands in README.
+- Existing local Postgres volumes created before Phase 2 lack the `salesiq_app` and `salesiq_definer` roles; run the
+  role statements from `infra/docker/postgres-init.sql` once, or recreate the volume (`docker compose down -v`).
 
 ## Tooling
 - `pnpm` reports `eslint@9` as deprecated; `eslint-config-next@16.4.3` is validated against ESLint 9, so the upgrade to 10 is deferred.

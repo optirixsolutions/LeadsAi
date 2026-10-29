@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -22,6 +23,10 @@ class Base(DeclarativeBase):
 
 
 class IdMixin:
+    # Fetch server defaults (created_at, ...) via RETURNING on insert. Reloading them later
+    # would run after commit, when row-level security context has already been cleared.
+    __mapper_args__: dict[str, Any] = {"eager_defaults": True}  # noqa: RUF012
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
 

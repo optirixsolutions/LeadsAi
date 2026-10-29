@@ -9,7 +9,16 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,6 +44,7 @@ class Organization(IdMixin, TimestampMixin, Base):
 
 class User(IdMixin, TimestampMixin, Base):
     __tablename__ = "users"
+    __table_args__ = (CheckConstraint("email = lower(email)", name="email_lowercase"),)
 
     # Stored lowercased; uniqueness is enforced on the normalized value.
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
@@ -70,6 +80,9 @@ class AuditLog(IdMixin, Base):
 
     __tablename__ = "audit_logs"
     __table_args__ = (Index("ix_audit_logs_org_created", "organization_id", "created_at"),)
+    # INSERT ... RETURNING must also satisfy the read policy, which platform-level rows
+    # (organization_id NULL) never do. Audit rows are write-only here, so skip RETURNING.
+    __mapper_args__ = {"eager_defaults": False}  # noqa: RUF012
 
     # Nullable for platform-level events (e.g. failed login for unknown user).
     organization_id: Mapped[uuid.UUID | None] = mapped_column(

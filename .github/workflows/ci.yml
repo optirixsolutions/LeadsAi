@@ -47,6 +47,21 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    # The e2e suite drives the real API, so it needs the same services as the API job.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: salesiq
+          POSTGRES_PASSWORD: salesiq
+          POSTGRES_DB: salesiq
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U salesiq" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["56379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -64,6 +79,12 @@ jobs:
         run: pnpm --filter @salesiq/contracts test
       - run: pnpm --filter @salesiq/web test
       - run: pnpm --filter @salesiq/web build
+      - name: Provision database roles and migrate
+        env:
+          PGPASSWORD: salesiq
+        run: |
+          psql -h 127.0.0.1 -p 55432 -U salesiq -d salesiq -v ON_ERROR_STOP=1 -f infra/docker/postgres-init.sql
+          cd apps/api && uv run alembic upgrade head
       - run: pnpm --filter @salesiq/web exec playwright install --with-deps chromium
       - run: pnpm --filter @salesiq/web test:e2e
         env:

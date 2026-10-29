@@ -1,14 +1,17 @@
 import "server-only";
 
-import type { ReadyResponse } from "@salesiq/contracts";
+import type { components, ReadyResponse } from "@salesiq/contracts";
+import { cookies } from "next/headers";
 
 import { type ApiResult, parseResult } from "./api-result";
 
 /**
- * Server-side API client. The API base URL is a server-only env var, so it is never
- * bundled to the browser.
+ * Server-side API client. Forwards the caller's cookies so the API authenticates the same
+ * session. The API base URL is a server-only env var and is never bundled to the browser.
  */
-const API_URL = process.env.SALESIQ_API_URL ?? "http://127.0.0.1:8000";
+export const API_URL = process.env.SALESIQ_API_URL ?? "http://127.0.0.1:8000";
+
+export type MeOut = components["schemas"]["MeOut"];
 
 interface RawResponse {
   status: number;
@@ -18,8 +21,10 @@ interface RawResponse {
 
 async function request(path: string): Promise<RawResponse | ApiResult<never>> {
   try {
+    const jar = await cookies();
     const res = await fetch(`${API_URL}${path}`, {
       cache: "no-store",
+      headers: { cookie: jar.toString() },
       signal: AbortSignal.timeout(5000),
     });
     const body: unknown = await res.json().catch(() => null);

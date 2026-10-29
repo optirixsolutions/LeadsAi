@@ -16,10 +16,18 @@ PostgreSQL 17, managed by Alembic (`apps/api/migrations`). Conventions:
 
 Roles: `owner`, `admin`, `manager`, `sales_rep`, `analyst`.
 
+## Implemented (migration `d6b53821b0ee`)
+| Table | Key columns | Notes |
+|---|---|---|
+| `user_sessions` | `user_id`, `token_hash` (unique), `expires_at`, `last_seen_at`, `revoked_at`, `ip_address`, `user_agent` | Server-side sessions; raw token never stored |
+| `invitations` | `organization_id`, `email`, `role`, `token_hash`, `expires_at`, `accepted_at`, `revoked_at` | RLS; looked up by token via `invitation_lookup()` |
+| `auth_tokens` | `user_id`, `purpose` (password_reset / email_verification), `token_hash`, `expires_at`, `used_at` | Single-use; newest per purpose wins |
+
+RLS is enabled and forced on `organizations`, `memberships`, `invitations`, `audit_logs` (see SECURITY.md).
+
 ## Planned
 | Phase | Tables |
 |---|---|
-| 2 | `sessions`, `invitations`, `password_reset_tokens`; RLS policies on tenant tables |
 | 3 | `companies`, `leads`, `lead_sources`, `lead_imports`, `lead_activities`, `pipeline_stages`, `opportunities`, `tasks`, `custom_field_definitions` |
 | 5 | `research_evidence`, `icp_configurations` (versioned), `lead_scores` |
 | 6 | `workflow_runs`, `workflow_checkpoints` (LangGraph Postgres saver), `jobs` |

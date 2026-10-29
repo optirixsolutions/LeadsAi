@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+import { signUpWithOrg } from "./helpers";
+
+test.beforeEach(async ({ page }) => {
+  await signUpWithOrg(page, "Shell Co");
+});
+
 test("overview renders shell and honest empty state", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -14,8 +20,7 @@ test("overview renders shell and honest empty state", async ({ page }) => {
 test("status page reports each component", async ({ page }) => {
   await page.goto("/status");
   await expect(page.getByRole("heading", { level: 1, name: "System status" })).toBeVisible();
-  // API row is always present: either live, or reported unreachable with an alert.
-  await expect(page.getByText("API", { exact: true })).toBeVisible();
+  await expect(page.getByText("PostgreSQL")).toBeVisible();
 });
 
 test("navigation reaches status page", async ({ page, isMobile }) => {

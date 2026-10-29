@@ -1,5 +1,6 @@
 """Request correlation IDs, access logging, and baseline security headers."""
 
+import json
 import logging
 import re
 import time
@@ -7,6 +8,7 @@ import uuid
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.core.errors import error_body
 from app.observability.logging import request_id_var
 
 log = logging.getLogger("salesiq.access")
@@ -40,9 +42,12 @@ class RequestContextMiddleware:
         start = time.perf_counter()
         status = 500
 
+        started = False
+
         async def send_wrapper(message: Message) -> None:
-            nonlocal status
+            nonlocal status, started
             if message["type"] == "http.response.start":
+                started = True
                 status = message["status"]
                 headers = list(message.get("headers", []))
                 present = {k.lower() for k, _ in headers}
@@ -53,6 +58,21 @@ class RequestContextMiddleware:
 
         try:
             await self.app(scope, receive, send_wrapper)
+        except Exception:
+            # Unhandled errors would otherwise reach Starlette's outermost handler after the
+            # request ID is gone. Answer here so the 500 carries the ID and the envelope.
+            log.exception("unhandled_error")
+            if started:
+                raise
+            body = json.dumps(error_body("internal_error", "An unexpected error occurred"))
+            await send_wrapper(
+                {
+                    "type": "http.response.start",
+                    "status": 500,
+                    "headers": [(b"content-type", b"application/json")],
+                }
+            )
+            await send_wrapper({"type": "http.response.body", "body": body.encode()})
         finally:
             log.info(
                 "request",

@@ -8,6 +8,9 @@ import { useSyncExternalStore } from "react";
 
 import { NAV_ITEMS, isActive } from "@/lib/navigation";
 
+import { type OrgOption, OrgSwitcher } from "./org-switcher";
+import { UserMenu } from "./user-menu";
+
 // UI preference only; session data never goes in localStorage.
 const COLLAPSE_KEY = "salesiq.sidebar.collapsed";
 const listeners = new Set<() => void>();
@@ -37,7 +40,22 @@ function writeCollapsed(value: boolean) {
   listeners.forEach((l) => l());
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export interface ShellUser {
+  email: string;
+  name: string;
+}
+
+export function AppShell({
+  children,
+  user,
+  orgs,
+  currentOrgId,
+}: {
+  children: React.ReactNode;
+  user: ShellUser;
+  orgs: OrgOption[];
+  currentOrgId: string;
+}) {
   const pathname = usePathname();
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
 
@@ -65,6 +83,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           {!collapsed && <span className="font-semibold tracking-tight">SalesIQ</span>}
         </div>
+        {!collapsed && (
+          <div className="border-b border-border p-2">
+            <OrgSwitcher orgs={orgs} currentId={currentOrgId} />
+          </div>
+        )}
 
         <nav aria-label="Primary" className="flex-1 space-y-0.5 overflow-y-auto p-2">
           {NAV_ITEMS.map((item) => {
@@ -127,6 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </>
           )}
         </button>
+        <UserMenu email={user.email} name={user.name} collapsed={collapsed} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -140,6 +164,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <li className="text-fg">{current?.label ?? "Page"}</li>
             </ol>
           </nav>
+          <div className="ml-auto w-44 md:hidden">
+            <OrgSwitcher orgs={orgs} currentId={currentOrgId} />
+          </div>
         </header>
 
         {/* Mobile navigation: live pages only */}

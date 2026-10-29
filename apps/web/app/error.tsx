@@ -10,7 +10,7 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   return (
-    <Card className="mx-auto max-w-lg">
+    <Card className="mx-auto mt-24 max-w-lg">
       <EmptyState
         title="Something went wrong"
         body={error.digest ? `Error reference: ${error.digest}` : "An unexpected error occurred."}
