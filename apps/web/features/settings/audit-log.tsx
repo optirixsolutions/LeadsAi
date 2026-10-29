@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, EmptyState } from "@/components/ui/card";
 import { apiRequest } from "@/lib/client-api";
+import { formatDateTime } from "@/lib/format";
 
 type AuditPage = components["schemas"]["AuditPageOut"];
 type Entry = AuditPage["items"][number];
@@ -66,7 +67,7 @@ export function AuditLog({ orgId, initial }: { orgId: string; initial: AuditPage
                 {describe(e) && <p className="truncate text-xs text-fg-subtle">{describe(e)}</p>}
               </div>
               <time dateTime={e.created_at} className="shrink-0 text-xs text-fg-subtle">
-                {new Date(e.created_at).toLocaleString()}
+                {formatDateTime(e.created_at)}
               </time>
             </li>
           ))}

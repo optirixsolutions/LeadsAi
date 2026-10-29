@@ -6,13 +6,13 @@ test.beforeEach(async ({ page }) => {
   await signUpWithOrg(page, "Shell Co");
 });
 
-test("overview renders shell and honest empty state", async ({ page }) => {
+test("overview renders shell and an empty state for a new org", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
-  await expect(page.getByText("No pipeline data yet")).toBeVisible();
+  await expect(page.getByText("No leads yet")).toBeVisible();
   await expect(page.getByText("Platform health")).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -34,8 +34,8 @@ test("unbuilt modules are not links", async ({ page, isMobile }) => {
   test.skip(isMobile, "sidebar hidden on mobile");
   await page.goto("/");
   const sidebar = page.getByRole("complementary", { name: "Sidebar" });
-  await expect(sidebar.getByRole("link", { name: /Leads/ })).toHaveCount(0);
-  await expect(sidebar.getByText("Leads")).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: /Outreach/ })).toHaveCount(0);
+  await expect(sidebar.getByText("Outreach")).toBeVisible();
 });
 
 test("sidebar collapses", async ({ page, isMobile }) => {

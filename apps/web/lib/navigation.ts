@@ -21,8 +21,8 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
-  { label: "Leads", href: "/leads", icon: Users, phase: 3 },
-  { label: "Pipeline", href: "/pipeline", icon: KanbanSquare, phase: 3 },
+  { label: "Leads", href: "/leads", icon: Users },
+  { label: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { label: "Outreach", href: "/outreach", icon: Inbox, phase: 8 },
   { label: "Agents", href: "/agents", icon: Bot, phase: 6 },
   { label: "Analytics", href: "/analytics", icon: BarChart3, phase: 9 },

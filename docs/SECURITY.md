@@ -50,6 +50,19 @@ All of these are covered by tests in `apps/api/tests/test_platform.py` and `test
 | 500s always carry the error envelope and request ID, never internals | `core/middleware.py` | `test_unhandled_error_does_not_leak_internals` |
 | Web: session never readable by scripts; same-origin API via rewrites; open-redirect-safe `next` param; single-use links require a click | `apps/web` | `features/auth/schemas.test.ts`, Playwright |
 
+## Controls implemented (Phase 3)
+| Control | Where | Tests |
+|---|---|---|
+| RLS forced on all six CRM tables; app role has no DELETE on leads/companies/opportunities and cannot modify activities | migration `dcaf2a468d1d` | `test_crm_isolation.py` |
+| Every CRM route scoped by membership; cross-org IDs return 404, cross-org references return 422 | `services/lead_service.py`, `pipeline_service.py` | `test_b_cannot_*` |
+| Assignees must be org members (prevents planting foreign user IDs) | `ensure_member` | `test_owner_must_be_org_member` |
+| Bulk actions filter IDs by org and lock rows | `bulk_update` | `test_bulk_ignores_other_orgs_leads` |
+| Search escapes LIKE wildcards; sort keys are allowlisted | `_filtered`, `SORTS` | `test_filters_search_and_totals` |
+| CSV import size/row/column caps, strict mapping, per-row validation; idempotency key prevents duplicate imports | `csv_service.py` | `test_imports.py` |
+| CSV export neutralizes formula injection (`= + - @` tab, CR) and is audited; analysts and reps cannot export | `safe_cell`, permissions | `test_export_escapes_formulas_and_is_audited`, role matrix test |
+| Link fields accept only http(s) (no `javascript:` links); external links open with `noopener noreferrer` | `schemas/crm.py`, lead profile | `test_unsafe_url_rejected` |
+| Per-org dedupe never reveals another org's leads | unique index per org | `test_same_email_may_exist_in_two_orgs` |
+
 ## Database roles
 | Role | Login | Superuser | BYPASSRLS | Used for |
 |---|---|---|---|---|

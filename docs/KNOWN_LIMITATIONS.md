@@ -1,9 +1,17 @@
 # Known Limitations
 
-Current as of Phase 2 (2026-10-30).
+Current as of Phase 3 (2026-10-30).
 
 ## Functional
-- No domain features yet (leads, research, scoring, agents, outreach). The Overview shows an empty state rather than placeholder numbers.
+- No research, scoring, agents, or outreach yet (Phases 4–8).
+- **CSV import is synchronous** and capped at 5 MB / 10,000 rows in one transaction. It becomes a durable background
+  job with progress tracking when the worker lands (Phase 6). Duplicate detection is by email only; leads without an
+  email are never treated as duplicates.
+- No tasks/follow-ups table yet (planned with the Follow-up agent), no custom-field definitions (values are free-form
+  JSON), and no saved views.
+- Pipeline stages can be added and renamed but not reordered or deleted; the board shows at most 500 opportunities.
+- Sales reps can edit any lead in their org, not only leads assigned to them.
+- Dates and money are formatted in en-US and UTC for everyone until per-user locale settings exist.
 - Sidebar entries for unbuilt modules are non-interactive and labelled with their delivery phase.
 - **No real email provider.** `SALESIQ_MAILER=log` prints verification, reset, and invitation links to the API log
   (development only; startup refuses it in staging/production). With `disabled`, no emails are sent, so verification,

@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 2 complete → next is Phase 3 (lead and CRM domain).
+**Current phase:** Phase 3 complete → next is Phase 4 (AI research lab).
 **Last updated:** 2026-10-30
 
 ## Phase status
@@ -9,8 +9,8 @@
 | 0 | Repository audit, architecture, docs | Done |
 | 1 | Foundation: monorepo, API, web, DB, Docker, CI | Done (CI workflow not yet run on GitHub) |
 | 2 | Auth, organizations, memberships, permissions, audit, isolation tests | Done (CI not yet run on GitHub) |
-| 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Next |
-| 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Pending |
+| 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done (CI not yet run on GitHub) |
+| 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Next |
 | 5 | Sales intelligence: evidence, ICP, explainable scoring | Pending |
 | 6 | LangGraph workflows with Postgres checkpoints | Pending |
 | 7 | MCP server and bounded agents | Pending |
@@ -54,29 +54,48 @@
   Each has a regression test in `tests/test_security_regressions.py`; the race test was confirmed to fail with the lock
   removed. Remaining items are in KNOWN_LIMITATIONS.
 
+## Phase 3 — completed
+- **Data:** companies (unique normalized domain per org), leads (soft delete, unique live email per org, tags,
+  custom fields, owner, source, import link), append-only activity timeline, CSV import records, pipeline stages
+  (six defaults seeded per org and backfilled for existing orgs), opportunities (per-currency amounts, won/lost
+  closing). RLS on every table; the app role has no DELETE on leads, companies, or opportunities and cannot change
+  activities.
+- **Permissions:** `leads:read|write|delete|import|export`, `pipeline:read|write|configure`. Sales reps sell but
+  cannot delete, import, or export; analysts are read-only and cannot export.
+- **API:** lead CRUD with duplicate detection (409 with the existing lead's ID); filters (search over name/email/
+  company/title with escaped wildcards, status, owner/unassigned, tag, company, source, import); keyset pagination
+  on five sort keys with totals; bulk assign / status / tag / delete (500 IDs, out-of-org IDs ignored); notes;
+  companies; CSV preview with suggested mapping and an idempotent import (SHA-256 of file + settings) with
+  skip/update duplicate policies, in-file dedupe, company matching by domain then name (free-mail domains ignored),
+  and per-row errors; formula-safe CSV export (audited); stages; opportunities with stage-change history;
+  per-currency pipeline summary; stored-record analytics overview.
+- **Web:** Overview with real metrics; Leads table (URL filters, sort, selection, bulk toolbar, pagination, export);
+  new lead; lead profile (inline edit, timeline, notes, opportunities, delete); import wizard (preview, mapping,
+  policy, results with row errors); Pipeline board and table with per-currency stage totals and accessible stage moves.
+- Formatting uses one locale and UTC on server and client so hydration never mismatches (per-user settings later).
+
 ## Tests run (2026-10-30, local Windows machine)
 | Check | Result |
 |---|---|
-| API `pytest` | 87 passed, 0 skipped (auth, tenancy incl. direct RLS checks, permissions, regressions, migrations, platform) |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (37 files) |
-| Web `vitest` | 20 passed |
+| API `pytest` | 136 passed, 0 skipped (adds leads, imports, pipeline, CRM isolation incl. direct RLS and grant checks) |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (46 files) |
+| Web `vitest` | 24 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API + Postgres) | 22 passed, 2 skipped (sidebar tests are desktop-only) |
+| Playwright (desktop + mobile, real API + Postgres) | 30 passed, 2 skipped (sidebar tests are desktop-only) |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
-| `docker build` + `compose --profile app up` | Healthy; registration through the web proxy sets HttpOnly cookie; API connects as `salesiq_app` |
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- None for Phase 3. A real email provider is needed before production (see KNOWN_LIMITATIONS).
+- Phase 4 notebooks can run on the deterministic mock provider; real model comparisons need provider API keys and
+  explicit approval to spend.
 
-## Next concrete steps (Phase 3)
-1. Tables: `companies`, `leads`, `lead_sources`, `lead_imports`, `lead_activities`, `pipeline_stages`, `opportunities`,
-   `tasks`, `custom_field_definitions`; RLS on each, with grants added in the same migration.
-2. Extend the permission matrix with `leads:read|write|delete|export|import`, `pipeline:*`.
-3. Lead CRUD with cursor pagination, filters, sorting; normalized email/domain fields for dedupe.
-4. CSV import as a durable job: upload → validate/preview → idempotent commit keyed by file hash + mapping, explicit
-   duplicate policy (skip / update / create), per-row error report. CSV export with formula-injection escaping.
-5. Pipeline stages per org (seeded defaults), opportunities with stage transitions recorded as activities.
-6. Tests: tenant isolation for every new route, import idempotency, duplicate handling, CSV injection.
-7. Web: Leads table (search, filters, bulk actions), lead profile, pipeline board + table.
+## Next concrete steps (Phase 4)
+1. `app/agents/llm/`: provider-independent interface (structured output, tool calling, token + cost accounting),
+   adapters for a hosted provider and an Ollama-compatible endpoint, and a deterministic mock used by default.
+2. Model registry config (capabilities, context, pricing, timeouts, retries, concurrency, fallback) loaded from env/YAML.
+3. Synthetic, clearly fictional B2B prospect dataset with labelled train/held-out splits in `research/datasets/`.
+4. Deterministic ICP-fit and scoring baseline (rules) before any model comparison.
+5. Evaluation runner writing reproducible JSONL results (task, dataset version, model, prompt version, tokens,
+   latency, estimated cost, schema validity, grounding, failure category) to `research/evaluations/`.
+6. Notebooks 01–06 importing the same backend modules; CPU-only smoke tests; no secrets in cells.

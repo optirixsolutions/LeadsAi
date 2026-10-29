@@ -14,6 +14,7 @@ import { ConfirmButton } from "@/components/ui/confirm-button";
 import { TextField } from "@/components/ui/field";
 import { changePasswordSchema } from "@/features/auth/schemas";
 import { apiRequest } from "@/lib/client-api";
+import { formatDateTime } from "@/lib/format";
 
 type Session = components["schemas"]["SessionOut"];
 
@@ -132,7 +133,7 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
                 {s.current && <span className="ml-2 text-xs text-accent">This device</span>}
               </p>
               <p className="text-xs text-fg-subtle">
-                {s.ip_address ?? "Unknown IP"} · last active {new Date(s.last_seen_at).toLocaleString()}
+                {s.ip_address ?? "Unknown IP"} · last active {formatDateTime(s.last_seen_at)}
               </p>
             </div>
             {!s.current && (

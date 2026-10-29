@@ -25,10 +25,22 @@ Roles: `owner`, `admin`, `manager`, `sales_rep`, `analyst`.
 
 RLS is enabled and forced on `organizations`, `memberships`, `invitations`, `audit_logs` (see SECURITY.md).
 
+## Implemented (migration `dcaf2a468d1d`)
+| Table | Key columns | Notes |
+|---|---|---|
+| `companies` | `name`, `domain` (normalized), `industry`, `employee_count`, `country` | Unique `(org, domain)` when set; case-insensitive name index |
+| `leads` | names, `email` (lowercase), `title`, `phone`, `linkedin_url`, `source`, `status`, `tags[]`, `custom_fields` (JSONB), `company_id`, `owner_user_id`, `import_id`, `deleted_at` | Unique live email per org; soft delete only |
+| `lead_imports` | `filename`, `idempotency_key`, `duplicate_policy`, `mapping`, counts, `errors` (first 100) | Unique `(org, idempotency_key)` |
+| `pipeline_stages` | `name`, `position`, `kind` (open/won/lost) | Unique name per org; defaults seeded |
+| `opportunities` | `name`, `stage_id`, `lead_id`, `company_id`, `owner_user_id`, `amount` (numeric 14,2), `currency`, `expected_close_date`, `closed_at` | `closed_at` set on won/lost |
+| `activities` | `lead_id` and/or `opportunity_id`, `actor_user_id`, `type`, `body`, `data` | Append-only timeline |
+
+All six have RLS enabled and forced, scoped to `app_current_org()`.
+
 ## Planned
 | Phase | Tables |
 |---|---|
-| 3 | `companies`, `leads`, `lead_sources`, `lead_imports`, `lead_activities`, `pipeline_stages`, `opportunities`, `tasks`, `custom_field_definitions` |
+| 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
 | 5 | `research_evidence`, `icp_configurations` (versioned), `lead_scores` |
 | 6 | `workflow_runs`, `workflow_checkpoints` (LangGraph Postgres saver), `jobs` |
 | 7 | `agent_definitions`, `agent_runs`, `tool_calls` |

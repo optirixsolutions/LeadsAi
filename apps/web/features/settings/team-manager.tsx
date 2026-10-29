@@ -13,6 +13,7 @@ import { Card, CardHeader, EmptyState } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SelectField, TextField } from "@/components/ui/field";
 import { apiRequest } from "@/lib/client-api";
+import { formatDate as formatDateValue } from "@/lib/format";
 import { assignableRoles, canManage, ROLE_LABELS, type Role } from "@/lib/roles";
 
 type Member = components["schemas"]["MemberOut"];
@@ -24,7 +25,7 @@ const inviteSchema = z.object({
 });
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium" });
+  return formatDateValue(iso);
 }
 
 export function TeamManager({

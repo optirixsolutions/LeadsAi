@@ -6,6 +6,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { AuditLog } from "@/features/settings/audit-log";
 import { OrgNameForm } from "@/features/settings/org-name-form";
 import { apiGet } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { hasPermission, ROLE_LABELS, type Role } from "@/lib/roles";
 import { requireOrg } from "@/lib/session";
 
@@ -41,7 +42,7 @@ export default async function OrganizationPage() {
             </div>
             <div>
               <dt className="text-xs text-fg-subtle">Created</dt>
-              <dd className="mt-0.5">{new Date(org.data.created_at).toLocaleDateString()}</dd>
+              <dd className="mt-0.5">{formatDate(org.data.created_at)}</dd>
             </div>
             <div>
               <dt className="text-xs text-fg-subtle">Your role</dt>

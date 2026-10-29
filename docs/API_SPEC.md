@@ -33,7 +33,21 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | POST | `/invitations/preview`, `/invitations/accept` | none / verified session | Inspect or redeem an invitation token |
 | GET | `/organizations/{org_id}/audit?limit&cursor` | `audit:read` | Cursor-paginated audit log |
 
-Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
+| GET / POST | `/organizations/{org_id}/leads` | `leads:read` / `leads:write` | List (filters `q`, `status` (repeatable), `owner` (id or `none`), `tag`, `company_id`, `source`, `import_id`; `sort` one of `created_at`, `updated_at`, `last_name`, `email` with optional `-`; `limit`, `cursor`) / create. Duplicate email → 409 `duplicate_lead` with `details.existing_lead_id` |
+| GET / PATCH / DELETE | `/organizations/{org_id}/leads/{id}` | read / write / `leads:delete` | Detail with timeline (50 latest) and opportunities / partial update / soft delete |
+| POST | `/organizations/{org_id}/leads/{id}/notes` | `leads:write` | Append a note; returns the timeline |
+| POST | `/organizations/{org_id}/leads/bulk` | `leads:write` (+`leads:delete` for delete) | `{ids ≤ 500, action: assign\|set_status\|add_tag\|remove_tag\|delete, value}` → `{affected}`; IDs outside the org are ignored |
+| GET | `/organizations/{org_id}/leads/export` | `leads:export` | CSV of the filtered leads (≤ 50,000), formula-escaped, audited |
+| POST | `/organizations/{org_id}/lead-imports/preview` | `leads:import` | `{filename, content}` → headers, 5 sample rows, row count, suggested mapping |
+| POST / GET | `/organizations/{org_id}/lead-imports[/{id}]` | `leads:import` / `leads:read` | Run an import (201) or replay an identical one (200, `replayed: true`) / read its result |
+| GET / POST / PATCH | `/organizations/{org_id}/companies[/{id}]` | read / write | List (`q`, cursor) / create / detail with lead count / update |
+| GET / POST / PATCH | `/organizations/{org_id}/pipeline/stages[/{id}]` | `pipeline:read` / `pipeline:configure` | List / add / rename stages |
+| GET | `/organizations/{org_id}/pipeline/summary` | `pipeline:read` | Count and per-currency totals per stage |
+| GET / POST / PATCH | `/organizations/{org_id}/opportunities[/{id}]` | `pipeline:read` / `pipeline:write` | List (`stage_id`, `owner_id`, `include_closed`) / create / move or edit |
+| GET | `/organizations/{org_id}/analytics/overview` | `pipeline:read` | Lead counts by status, 30-day additions, open pipeline and 90-day won value per currency, recent activity |
 
-Planned groups: `leads`, `companies`, `research`, `qualification`, `opportunities`,
+References to other records (company, lead, stage, owner) that are not in the caller's org return 422
+`invalid_reference`. Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
+
+Planned groups: `companies`, `research`, `qualification`, `opportunities`,
 `pipeline`, `activities`, `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `analytics`, `usage`, `audit`.
