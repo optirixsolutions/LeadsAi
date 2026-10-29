@@ -13,6 +13,17 @@ Status: container images and compose are verified locally. No production environ
 docker compose --profile app up -d --build --wait
 docker compose run --rm api .venv/bin/alembic upgrade head
 ```
+The `api` service has both URLs set: it runs as `salesiq_app`, and Alembic uses `SALESIQ_MIGRATION_DATABASE_URL`.
+
+## Database roles (provision before the first migration)
+| Role | Attributes | Purpose |
+|---|---|---|
+| Schema owner | LOGIN, owns `public` | Runs migrations only (`SALESIQ_MIGRATION_DATABASE_URL`) |
+| `salesiq_app` | LOGIN, NOSUPERUSER, NOBYPASSRLS, not an owner | API runtime (`SALESIQ_DATABASE_URL`). Connecting as an owner or superuser silently disables RLS |
+| `salesiq_definer` | NOLOGIN, BYPASSRLS | Owns `invitation_lookup()`; creating it needs a superuser (or a managed-Postgres admin role) |
+
+`infra/docker/postgres-init.sql` holds the local versions of these statements. Migrations grant privileges to these
+roles if they exist and log a notice otherwise.
 
 ## Release procedure (target)
 1. CI green on the commit (lint, types, tests, e2e, audits, image builds).
@@ -26,10 +37,19 @@ docker compose run --rm api .venv/bin/alembic upgrade head
 |---|---|---|
 | `SALESIQ_ENVIRONMENT` | yes | `production` disables `/api/docs` and enforces secret checks |
 | `SALESIQ_SECRET_KEY` | yes (≥32 chars) | From a secret manager |
-| `SALESIQ_DATABASE_URL` | yes | `postgresql+psycopg://…`; use TLS (`sslmode=require`) |
+| `SALESIQ_DATABASE_URL` | yes | Runtime role `salesiq_app`; `postgresql+psycopg://…`; use TLS (`sslmode=require`) |
+| `SALESIQ_MIGRATION_DATABASE_URL` | for migrations | Schema-owner credentials; only in the migration job |
 | `SALESIQ_REDIS_URL` | yes | Use `rediss://` in production |
 | `SALESIQ_CORS_ORIGINS` | yes | JSON list of web origins |
-| `SALESIQ_API_URL` (web) | yes | Internal API URL, server-side only |
+| `SALESIQ_WEB_BASE_URL` | yes | Public web URL used in email links |
+| `SALESIQ_MAILER` | yes | Must be `disabled` outside development until a real provider adapter exists |
+| `SALESIQ_REGISTRATION_ENABLED` | no | Default `true` |
+| `SALESIQ_API_URL` (web, **build time**) | yes | Internal API URL for the same-origin `/api/v1` rewrite; rebuild the web image to change it |
+
+## Reverse proxy and client IPs
+Rate limits key on the client IP. Run uvicorn with `--forwarded-allow-ips=<trusted proxy CIDRs>` and make sure the
+proxy (load balancer and the Next.js rewrite hop) forwards `X-Forwarded-For`. Otherwise every user shares one bucket.
+Never trust forwarded headers from arbitrary sources.
 
 ## Backups and recovery (to be completed in Phase 11)
 - Managed Postgres with point-in-time recovery; daily snapshot retention per plan.
