@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: salesiq
+          POSTGRES_PASSWORD: salesiq
+          POSTGRES_DB: salesiq_test
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U salesiq" --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["56379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.19"
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run pytest -q
+      - name: Dependency audit
+        run: uv run pip-audit
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.19"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - name: Contracts match API schema
+        run: pnpm --filter @salesiq/contracts test
+      - run: pnpm --filter @salesiq/web test
+      - run: pnpm --filter @salesiq/web build
+      - run: pnpm --filter @salesiq/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @salesiq/web test:e2e
+        env:
+          CI: "true"
+      - name: Dependency audit
+        run: pnpm audit --prod
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f infra/docker/api.Dockerfile apps/api
+      - run: docker build -f infra/docker/web.Dockerfile .
