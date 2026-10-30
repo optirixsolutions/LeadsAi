@@ -1,7 +1,8 @@
 """CSV lead import (preview + idempotent commit) and export.
 
-Imports run synchronously within one transaction and are capped in size; durable
-background jobs arrive with the worker in Phase 6 (see docs/KNOWN_LIMITATIONS.md).
+Small imports finish within the request, so the common case gets its result at once. Larger ones
+go to a worker, because the largest allowed file took 36 s when measured. Either way an import
+is one transaction, so a crash leaves nothing half-done and a retry starts clean.
 """
 
 import csv
@@ -12,12 +13,13 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.auth import OrgContext
 from app.core.errors import AppError, ConflictError
+from app.core.rate_limit import RateLimitedError
 from app.models import (
     ActivityType,
     Company,
@@ -39,6 +41,9 @@ from app.services.normalize import (
 )
 
 MAX_ROWS = 10_000
+SYNC_ROW_LIMIT = 1_000
+# Each waiting import can hold a 5 MB file, and it occupies a worker when its turn comes.
+MAX_QUEUED_PER_ORG = 3
 MAX_COLUMNS = 200
 MAX_REPORTED_ERRORS = 100
 PREVIEW_ROWS = 5
@@ -219,7 +224,8 @@ def run_import(db: Session, ctx: OrgContext, body: ImportIn) -> tuple[LeadImport
             LeadImport.organization_id == ctx.org_id, LeadImport.idempotency_key == key
         )
     )
-    if existing:
+    # A failed import did nothing, so submitting it again is a fresh attempt, not a replay.
+    if existing and existing.status != ImportStatus.failed:
         return existing, True
 
     headers, rows = parse_csv(body.content)
@@ -227,23 +233,68 @@ def run_import(db: Session, ctx: OrgContext, body: ImportIn) -> tuple[LeadImport
     if unknown:
         raise CsvError(f"Mapped columns not found in the file: {', '.join(unknown[:5])}")
 
-    record = LeadImport(
+    if len(rows) > SYNC_ROW_LIMIT:
+        waiting = db.scalar(
+            select(func.count())
+            .select_from(LeadImport)
+            .where(
+                LeadImport.organization_id == ctx.org_id,
+                LeadImport.status.in_((ImportStatus.queued, ImportStatus.running)),
+            )
+        )
+        if (waiting or 0) >= MAX_QUEUED_PER_ORG:
+            raise RateLimitedError("Too many large imports are waiting. Try again shortly.")
+    record = existing or LeadImport(
         organization_id=ctx.org_id,
-        created_by_user_id=ctx.user_id,
-        filename=body.filename,
         idempotency_key=key,
-        status=ImportStatus.completed,
+        filename=body.filename,
         duplicate_policy=body.duplicate_policy,
         mapping=dict(body.mapping),
-        total_rows=len(rows),
     )
+    record.created_by_user_id = ctx.user_id
+    record.total_rows = len(rows)
+    record.status = ImportStatus.queued if len(rows) > SYNC_ROW_LIMIT else ImportStatus.running
+    record.attempts = 0
+    record.error_message = None
+    if record.status == ImportStatus.queued:
+        record.payload = body.model_dump(mode="json")
     db.add(record)
     try:
         db.flush()
     except IntegrityError as exc:
         # The same import is being committed by a concurrent request.
         raise ConflictError("This import is already being processed; refresh to see it") from exc
+    if record.status == ImportStatus.queued:
+        audit.record(
+            db,
+            "leads.import_queued",
+            org_id=ctx.org_id,
+            actor_id=ctx.user_id,
+            target_type="lead_import",
+            target_id=record.id,
+            data={"filename": body.filename, "rows": len(rows)},
+        )
+        return record, False
+    _apply(db, ctx, record, body, headers, rows)
+    return record, False
 
+
+def process_queued(db: Session, ctx: OrgContext, record: LeadImport) -> None:
+    """Worker step, in one transaction. The stored file is removed in that same transaction."""
+    body = ImportIn.model_validate(record.payload)
+    headers, rows = parse_csv(body.content)
+    _apply(db, ctx, record, body, headers, rows)
+
+
+def _apply(
+    db: Session,
+    ctx: OrgContext,
+    record: LeadImport,
+    body: ImportIn,
+    headers: list[str],
+    rows: list[list[str]],
+) -> None:
+    record.created_count = record.updated_count = record.skipped_count = record.error_count = 0
     by_email = {
         lead.email: lead
         for lead in db.scalars(
@@ -351,7 +402,10 @@ def run_import(db: Session, ctx: OrgContext, body: ImportIn) -> tuple[LeadImport
             "errors": record.error_count,
         },
     )
-    return record, False
+    record.status = ImportStatus.completed
+    record.payload = None
+    record.lease_owner = None
+    record.lease_expires_at = None
 
 
 # --- export -----------------------------------------------------------------------------

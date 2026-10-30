@@ -136,6 +136,13 @@ class LeadAssessment(IdMixin, Base):
 
     __tablename__ = "lead_scores"
     __table_args__ = (
+        # At most one per workflow run, so a repeated step cannot score twice.
+        Index(
+            "uq_lead_scores_run",
+            "workflow_run_id",
+            unique=True,
+            postgresql_where=text("workflow_run_id IS NOT NULL"),
+        ),
         Index("ix_lead_scores_lead", "lead_id", "created_at"),
         CheckConstraint("score BETWEEN 0 AND 100", name="score_range"),
     )
@@ -144,6 +151,9 @@ class LeadAssessment(IdMixin, Base):
     lead_id: Mapped[uuid.UUID] = _lead_fk()
     icp_configuration_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("icp_configurations.id", ondelete="RESTRICT"), nullable=False
+    )
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflow_runs.id", ondelete="SET NULL")
     )
     score: Mapped[int] = mapped_column(Integer, nullable=False)
     fit: Mapped[FitLabel] = mapped_column(_enum(FitLabel, "fit_label"), nullable=False)
@@ -169,6 +179,13 @@ class ResearchBrief(IdMixin, Base):
     __tablename__ = "research_briefs"
     __table_args__ = (
         Index("ix_research_briefs_lead", "lead_id", "created_at"),
+        # At most one per workflow run, so a repeated step cannot write twice.
+        Index(
+            "uq_research_briefs_run",
+            "workflow_run_id",
+            unique=True,
+            postgresql_where=text("workflow_run_id IS NOT NULL"),
+        ),
         # At most one brief in progress per lead, so repeat clicks cannot queue up model calls.
         Index(
             "uq_research_briefs_running",
@@ -181,6 +198,9 @@ class ResearchBrief(IdMixin, Base):
 
     organization_id: Mapped[uuid.UUID] = _org_fk()
     lead_id: Mapped[uuid.UUID] = _lead_fk()
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflow_runs.id", ondelete="SET NULL")
+    )
     status: Mapped[BriefStatus] = mapped_column(_enum(BriefStatus, "brief_status"), nullable=False)
     model_key: Mapped[str] = mapped_column(String(80), nullable=False)
     served_by: Mapped[str | None] = mapped_column(String(80))

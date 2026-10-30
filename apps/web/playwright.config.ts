@@ -17,6 +17,7 @@ const apiEnv = {
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },

@@ -17,7 +17,7 @@
 | Webhook forgery / replay | HMAC signatures, timestamp window, event-ID dedupe | Phase 10 |
 | Resource exhaustion / abuse | Rate limits (Redis), request size caps, agent step/time/budget limits | Phases 2, 6 |
 | Credential leakage | Env-only secrets; log redaction; encrypted integration tokens | Redaction done; encryption Phase 10 |
-| Duplicate background jobs | Idempotency keys, row locks, unique job keys | Phase 6 |
+| Duplicate background jobs | Leases, one active run per lead, unique per-run results | Done (Phase 6) |
 
 ## Controls implemented (Phase 1)
 - Settings refuse to start in staging/production with the default or a short (<32 char) secret key.
@@ -80,12 +80,23 @@ findings were fixed with tests except where KNOWN_LIMITATIONS says otherwise.
 | Limits: per-user writes, per-org fetches and briefs, global model slots, evidence per lead | `api/v1/intelligence.py`, `brief_service.py` | `test_writes_are_rate_limited`, `test_one_org_cannot_run_unlimited_briefs` |
 | Database errors in logs never include parameters | `core/db.py` | Not separately tested |
 
+## Controls implemented (Phase 6)
+| Control | Where | Tests |
+|---|---|---|
+| Workers cross tenants only through definer functions that return IDs; all later work is under the requester's RLS context | migrations, `workflows/runner.py` | `test_rls_hides_runs_without_tenant_context_and_claim_is_the_only_way_across` |
+| Authority is rechecked at every step, so leaving or losing a role stops a queued run | `traced`, `worker_context` | `test_requester_who_left_cannot_keep_acting`, `test_demoted_requester_stops_at_the_next_step` |
+| Status changes need a person's decision, are recorded under them, and never overwrite a newer choice | `apply_decision` | `test_decision_is_recorded_under_the_person_who_made_it`, `test_approval_does_not_overwrite_a_newer_choice` |
+| Checkpoints are read strictly and hold no lead data, addresses, or provider text | `checkpoint_serde`, `_failed` | `test_checkpoint_reader_will_not_construct_objects_from_a_stored_blob`, `test_failed_run_checkpoint_holds_neither_addresses_nor_provider_text` |
+| A worker that lost its lease cannot overwrite newer work | `_finish`, `write_brief` | `test_lost_lease_stops_the_old_worker_from_writing`, `test_late_answer_from_a_worker_that_lost_its_lease_is_dropped` |
+| LangSmith tracing stays off, even if the environment enables it | `workflows/runner.py` | `test_tracing_stays_off_even_if_the_environment_turns_it_on` |
+| Limits: active runs and queued imports per org, fair claims, rate limits on starts, resumes, and imports | services, migrations | `test_org_limit_on_active_runs`, `test_queue_of_large_imports_is_bounded_per_org` |
+
 ## Database roles
 | Role | Login | Superuser | BYPASSRLS | Used for |
 |---|---|---|---|---|
 | schema owner (`salesiq` locally) | yes | dev only | — | Alembic migrations only |
 | `salesiq_app` | yes | no | no | API runtime; subject to RLS |
-| `salesiq_definer` | no | no | yes | Owns `invitation_lookup()` only |
+| `salesiq_definer` | no | no | yes | Owns `invitation_lookup()`, `workflow_claim()`, `import_claim()`, `workflow_finished_threads()` |
 
 Every migration that adds a table must also grant `salesiq_app` exactly the privileges it needs and add RLS policies
 for tenant-owned tables. `tests/test_migrations.py` checks that RLS is enabled and forced.

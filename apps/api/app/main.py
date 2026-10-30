@@ -4,7 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.api.v1 import auth, health, intelligence, leads, organizations, pipeline
+from app.api.v1 import auth, health, intelligence, leads, organizations, pipeline, workflows
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import RequestContextMiddleware
@@ -42,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     v1.include_router(leads.router)
     v1.include_router(pipeline.router)
     v1.include_router(intelligence.router)
+    v1.include_router(workflows.router)
     app.include_router(v1)
     return app
 

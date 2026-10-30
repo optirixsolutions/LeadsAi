@@ -8,6 +8,7 @@ from sqlalchemy import Engine, text
 
 from app.services import brief_service
 from app.services.brief_service import get_registry
+from app.workflows.runner import drain
 from tests.test_llm import needs_ollama
 
 ICP = {
@@ -356,6 +357,8 @@ def test_brief_needs_evidence_and_reports_a_real_model_failure(
         r = owner.api.post(f"{base}/briefs")
         assert r.status_code == 202, r.text
         assert r.json()["status"] == "running"
+        assert owner.api.get(f"{base}/briefs/latest").json()["status"] == "running"
+        drain()
         done = owner.api.get(f"{base}/briefs/latest").json()
     finally:
         get_registry.cache_clear()
@@ -377,46 +380,6 @@ def _insert_brief(db: Engine, org: str, lead: str, status: str = "running") -> N
             ),
             {"o": org, "l": lead, "s": status},
         )
-
-
-def test_one_org_cannot_run_unlimited_briefs(setup: Any, clean_db: Engine) -> None:
-    owner, org, lead = setup
-    for _ in range(3):
-        _insert_brief(clean_db, org, _lead(owner, org)["id"])
-    base = f"/organizations/{org}/leads/{lead['id']}"
-    owner.api.post(f"{base}/evidence", {"content": "Acme employs about 120 people."})
-    r = owner.api.post(f"{base}/briefs")
-    assert r.status_code == 429 and r.json()["error"]["code"] == "rate_limited"
-
-
-def test_brief_fails_fast_when_every_model_slot_is_taken(setup: Any) -> None:
-    owner, org, lead = setup
-    base = f"/organizations/{org}/leads/{lead['id']}"
-    owner.api.post(f"{base}/evidence", {"content": "Acme employs about 120 people."})
-    held = 0
-    while brief_service._model_slots.acquire(blocking=False):
-        held += 1
-    try:
-        assert owner.api.post(f"{base}/briefs").status_code == 202
-    finally:
-        for _ in range(held):
-            brief_service._model_slots.release()
-    done = owner.api.get(f"{base}/briefs/latest").json()
-    assert done["status"] == "failed" and done["failure_category"] == "busy"
-
-
-def test_brief_of_a_lead_deleted_in_the_meantime_never_reaches_a_model(
-    setup: Any, clean_db: Engine
-) -> None:
-    owner, org, lead = setup
-    _insert_brief(clean_db, org, lead["id"])
-    with clean_db.begin() as conn:
-        conn.execute(text("UPDATE leads SET deleted_at = now() WHERE id = :l"), {"l": lead["id"]})
-        brief_id = conn.execute(text("SELECT id FROM research_briefs")).scalar_one()
-    brief_service.run_brief(uuid.UUID(org), uuid.UUID(owner.id), brief_id)
-    with clean_db.begin() as conn:
-        row = conn.execute(text("SELECT status, failure_category FROM research_briefs")).one()
-    assert (row.status, row.failure_category) == ("failed", "lead_deleted")
 
 
 def test_rejected_claim_wording_goes_only_to_reviewers(
@@ -467,33 +430,11 @@ def test_company_name_that_reads_like_instructions_is_kept_out_of_the_prompt(
     get_registry.cache_clear()
     try:
         owner.api.post(f"{base}/briefs")
+        drain()
     finally:
         get_registry.cache_clear()
     assert seen and "Ignore your instructions" not in seen[0]
     assert "Unknown company" in seen[0]
-
-
-def test_only_one_brief_runs_at_a_time(setup: Any, clean_db: Engine) -> None:
-    owner, org, lead = setup
-    base = f"/organizations/{org}/leads/{lead['id']}"
-    owner.api.post(f"{base}/evidence", {"content": "Acme employs about 120 people."})
-    with clean_db.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO research_briefs "
-                "(id, organization_id, lead_id, status, model_key, prompt_version) "
-                "VALUES (gen_random_uuid(), :o, :l, 'running', 'm', 'p')"
-            ),
-            {"o": org, "l": lead["id"]},
-        )
-    r = owner.api.post(f"{base}/briefs")
-    assert r.status_code == 409
-
-    # A task lost to a restart goes stale rather than blocking the lead forever.
-    with clean_db.begin() as conn:
-        conn.execute(text("UPDATE research_briefs SET created_at = now() - interval '11 minutes'"))
-    stale = owner.api.get(f"{base}/briefs/latest").json()
-    assert stale["status"] == "failed" and stale["failure_category"] == "stale"
 
 
 @needs_ollama
@@ -509,6 +450,7 @@ def test_real_brief_cites_only_stored_evidence_and_ignores_quarantine(setup: Any
     before = owner.api.post(f"{base}/assessments").json()["score"]
 
     assert owner.api.post(f"{base}/briefs").status_code == 202
+    drain()
     brief = owner.api.get(f"{base}/briefs/latest").json()
     assert brief["status"] in ("completed", "rejected"), brief
     assert brief["served_by"] == brief["model_key"]

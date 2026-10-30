@@ -10,7 +10,8 @@ from sqlalchemy import select
 from app.core.auth import DbDep, OrgContext, require
 from app.core.errors import ForbiddenError, NotFoundError
 from app.core.permissions import Permission, has_permission
-from app.models import LeadImport, LeadStatus
+from app.core.rate_limit import get_rate_limiter
+from app.models import ImportStatus, LeadImport, LeadStatus
 from app.schemas.crm import (
     ActivityOut,
     BulkIn,
@@ -33,6 +34,8 @@ from app.schemas.crm import (
 )
 from app.services import audit, csv_service, lead_service
 from app.services.lead_service import LeadFilters
+
+IMPORTS_PER_MINUTE = 20
 
 router = APIRouter(prefix="/organizations/{org_id}", tags=["leads"])
 
@@ -190,10 +193,14 @@ def preview_import(body: ImportPreviewIn, ctx: LeadsImport) -> ImportPreviewOut:
 
 @router.post("/lead-imports", response_model=ImportOut)
 def run_import(body: ImportIn, ctx: LeadsImport, db: DbDep, response: Response) -> ImportOut:
+    get_rate_limiter().hit(f"import:{ctx.org_id}", IMPORTS_PER_MINUTE)
     record, replayed = csv_service.run_import(db, ctx, body)
     out = ImportOut.model_validate(record).model_copy(update={"replayed": replayed})
     db.commit()
-    response.status_code = 200 if replayed else 201
+    if record.status in (ImportStatus.queued, ImportStatus.running):
+        response.status_code = 202
+    else:
+        response.status_code = 200 if replayed else 201
     return out
 
 

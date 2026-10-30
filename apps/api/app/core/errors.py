@@ -47,6 +47,22 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class RequestInvalidError(AppError):
+    """A queued request can no longer be carried out. Retrying would not help."""
+
+    code = "request_invalid"
+
+
+class AccessLostError(RequestInvalidError):
+    """The requester left or was disabled. No retry or resume can bring that back."""
+
+    code = "access_lost"
+
+
+class LeaseLostError(Exception):
+    """Another worker now owns this run, so this one must stop without writing anything."""
+
+
 def error_body(code: str, message: str, details: Any = None) -> dict[str, Any]:
     return {
         "error": {

@@ -53,10 +53,19 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | POST | `/organizations/{org_id}/leads/{id}/briefs` | `research:write` | 202; a model writes a brief after the response. 409 `evidence_required` or a brief already running, 429 past limits |
 | GET | `/organizations/{org_id}/leads/{id}/briefs/latest` | `intelligence:read` | Poll for status `running`, `completed`, `rejected`, or `failed` with `failure_category`; 404 if none. `rejected_claims[].text` is null without `intelligence:review` |
 
+| POST | `/organizations/{org_id}/leads/{id}/workflows` | `workflows:run` | `{urls ≤ 3, propose_status}`; 202, run queued. 409 if the lead already has an active run, 429 past limits |
+| GET | `/organizations/{org_id}/workflows[?lead_id]`, `/workflows/{id}` | `workflows:read` | Newest 50 / one run with its step trace, diagnosis, and result |
+| POST | `/organizations/{org_id}/workflows/{id}/cancel`, `/resume` | `workflows:run` | Cancel an active run / continue a failed run from its last checkpoint. 409 when not applicable |
+| POST | `/organizations/{org_id}/workflows/{id}/decision` | `intelligence:review` | `{decision: approved\|rejected}` for a run in `waiting_approval`; audited |
+| GET | `/workers/health` | session | `{alive}`: whether a background worker reported in recently |
+
+`POST /lead-imports` returns 202 with status `queued` above 1,000 rows; poll `GET /lead-imports/{id}`. `POST /leads/{id}/briefs` queues
+a research run, so it now also needs a running worker.
+
 References to other records (company, lead, stage, owner) that are not in the caller's org return 422
 `invalid_reference`. Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
 
 Scores rank a lead against the organization's ICP. They are deterministic, are not conversion probabilities, and are never
 changed by model output. Research older than the ICP's `signal_ttl_days` does not count toward them.
 
-Planned groups: `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `usage`.
+Planned groups: `tasks`, `outreach`, `approvals`, `agents`, `integrations`, `usage`.

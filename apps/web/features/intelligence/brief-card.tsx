@@ -20,8 +20,12 @@ const FAILURES: Record<string, string> = {
   truncated: "The model ran out of output space before finishing. Try again.",
   schema_invalid: "The model returned something that could not be read. Try again.",
   stale: "This brief was interrupted before it finished. Try again.",
-  busy: "The model is busy with other briefs. Try again in a moment.",
-  lead_deleted: "This lead was deleted before the brief finished.",
+  attempts_exhausted: "Workers kept stopping before this brief finished. Try again.",
+  abandoned: "This brief's run ended before the brief finished. Try again.",
+  access_lost: "The person who requested this brief no longer has access.",
+  cancelled: "This brief was cancelled.",
+  deadline: "This brief passed its time limit. Try again.",
+  request_invalid: "This brief can no longer be written.",
 };
 
 export function BriefCard({
@@ -90,7 +94,7 @@ export function BriefCard({
         <EmptyState title="No brief yet" body="A brief summarizes the accepted evidence, with citations." />
       ) : running ? (
         <p className="px-5 py-4 text-sm text-fg-muted" role="status">
-          The model is writing this brief. Local models can take a minute to start.
+          This brief is queued or being written. Local models can take a minute to start.
         </p>
       ) : (
         <div className="space-y-4 px-5 py-4 text-sm">

@@ -1,6 +1,23 @@
 # Known Limitations
 
-Current as of Phase 5 (2026-10-30).
+Current as of Phase 6 (2026-10-30).
+
+## Workflows
+- **The API and workers share a database role.** So the API could write to checkpoint tables or call the claim functions if it were
+  compromised. Reading checkpoints is now strict, so a planted row cannot run code, but a separate worker role is still planned first
+  in Phase 7. Checkpoint tables have no tenant column and no RLS, and hold only IDs, statuses, and counts.
+- Runs waiting for approval never expire. They hold their lead's active slot and one of the organization's 20, until someone decides
+  or cancels.
+- Each start of a run counts as an attempt, and workers do not release leases on shutdown. Restarting a worker therefore delays its
+  runs by up to the lease time and uses up one of three attempts.
+- Worker status shows the process is alive, not that its work threads are making progress.
+- A model call under way cannot be interrupted, so cancelling takes effect when it returns.
+- Retries inside the model client are not shown one by one: the trace gives the count on the failed step.
+- A deadline is checked between steps, so a run can overrun by up to one model call (about 9 minutes at worst).
+- Imports above 1,000 rows wait for a worker, and an organization can queue 3 at a time. Each still runs as one transaction with one
+  query per row (36 s for the largest file), and its file sits in the database until processed.
+- The worker container has not been built or run. It was tested as a local process.
+- Upgrading `langgraph-checkpoint-postgres` may need a new migration (see DEPLOYMENT.md).
 
 ## Sales intelligence
 - **The input gate is easy to evade by rewording.** See `research/evaluations/GATES.md`. Its score on the dataset is optimistic
@@ -15,8 +32,7 @@ Current as of Phase 5 (2026-10-30).
   blocked fetches are not audited, and public suffixes such as `co.uk` are not rejected as domains.
 - ICP keywords are free text, so nothing technically stops someone configuring a keyword about a personal attribute. Criteria
   fields are firmographic by design.
-- Briefs run in-process: a restart loses them, and they show as `stale` after 10 minutes. They come from small local models and
-  have no human ratings.
+- Briefs come from small local models and have no human ratings.
 - The Phase 4 results in `REPORT.md` predate the prompt change in version `2026-10-30.2`, which moved names inside the untrusted
   block. They were not rerun, so the live rows in `GATES.md` are the only results on the current prompt.
 - The fetcher has not been run against the public internet, only real local servers, so TLS paths are unexercised by tests.
@@ -35,9 +51,8 @@ Current as of Phase 5 (2026-10-30).
 
 ## Functional
 - No agents or outreach in the product yet (Phases 6–8).
-- **CSV import is synchronous** and capped at 5 MB / 10,000 rows in one transaction. It becomes a durable background
-  job with progress tracking when the worker lands (Phase 6). Duplicate detection is by email only; leads without an
-  email are never treated as duplicates.
+- CSV imports are capped at 5 MB / 10,000 rows in one transaction, with no progress within a run. Duplicate detection is by email
+  only; leads without an email are never treated as duplicates.
 - No tasks/follow-ups table yet (planned with the Follow-up agent), no custom-field definitions (values are free-form
   JSON), and no saved views.
 - Pipeline stages can be added and renamed but not reordered or deleted; the board shows at most 500 opportunities.
@@ -67,7 +82,7 @@ Current as of Phase 5 (2026-10-30).
 
 ## Operational
 - GitHub Actions workflow is written but has not run; no remote repository is configured.
-- No background worker, OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
+- No OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
 - The web build resolves the API URL for rewrites at **build time** (`SALESIQ_API_URL`); change it and rebuild per environment.
 - Host port 55432 is inside Windows' ephemeral range (49152–65535), so any local process can take it as a random socket
   port. Docker then starts Postgres healthy but unpublished (`docker compose ps` shows only `5432/tcp`) and connections

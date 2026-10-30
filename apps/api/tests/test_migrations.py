@@ -69,9 +69,10 @@ def test_rls_enabled_and_forced_on_tenant_tables(db_url: str) -> None:
         rows = conn.execute(
             text(
                 "SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class "
-                "WHERE relname IN ('organizations','memberships','invitations','audit_logs')"
+                "WHERE relname IN ('organizations','memberships','invitations','audit_logs',"
+                "'workflow_runs','workflow_steps')"
             )
         ).all()
     engine.dispose()
-    assert len(rows) == 4
+    assert len(rows) == 6
     assert all(r.relrowsecurity and r.relforcerowsecurity for r in rows), rows

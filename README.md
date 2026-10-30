@@ -17,13 +17,19 @@ cd apps/api && uv sync && uv run alembic upgrade head && cd ../..
 pnpm install
 ```
 
-Run the API and web app in two terminals:
+Run the API, the background worker, and the web app in three terminals:
 ```bash
 cd apps/api && uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 ```bash
+cd apps/api && uv run python -m app.tasks.worker
+```
+```bash
 pnpm --filter @salesiq/web dev
 ```
+
+The worker runs workflows, research briefs, and imports above 1,000 rows. Without it they stay queued, and System status says so.
+Model work needs [Ollama](https://ollama.com) with the models in `apps/api/app/agents/llm/models.yaml`.
 
 - Web: http://localhost:3000
 - API docs: http://127.0.0.1:8000/api/docs

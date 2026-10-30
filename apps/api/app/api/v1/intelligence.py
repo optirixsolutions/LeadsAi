@@ -3,7 +3,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, Depends
 
 from app.core.auth import DbDep, OrgContext, require
 from app.core.errors import NotFoundError
@@ -145,14 +145,11 @@ def _brief_out(brief: ResearchBrief, ctx: OrgContext) -> BriefOut:
 
 
 @router.post("/leads/{lead_id}/briefs", status_code=202, response_model=BriefOut)
-def request_brief(
-    lead_id: uuid.UUID, background: BackgroundTasks, ctx: Research, db: DbDep
-) -> BriefOut:
+def request_brief(lead_id: uuid.UUID, ctx: Research, db: DbDep) -> BriefOut:
     get_rate_limiter().hit(f"brief:{ctx.org_id}", BRIEFS_PER_MINUTE)
     brief = brief_service.create_brief(db, ctx, lead_id)
     out = _brief_out(brief, ctx)
     db.commit()
-    background.add_task(brief_service.run_brief, ctx.org_id, ctx.user_id, brief.id)
     return out
 
 

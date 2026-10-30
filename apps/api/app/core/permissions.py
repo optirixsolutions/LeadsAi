@@ -31,6 +31,8 @@ class Permission(enum.StrEnum):
     # otherwise add a planted instruction and then wave it through themselves.
     intelligence_review = "intelligence:review"
     icp_configure = "icp:configure"
+    workflows_read = "workflows:read"
+    workflows_run = "workflows:run"  # start, cancel, and resume
 
 
 _ALL = frozenset(Permission)
@@ -41,6 +43,7 @@ _READ = frozenset(
         Permission.leads_read,
         Permission.pipeline_read,
         Permission.intelligence_read,
+        Permission.workflows_read,
     }
 )
 _SELL = _READ | {
@@ -48,6 +51,7 @@ _SELL = _READ | {
     Permission.pipeline_write,
     Permission.research_write,
     Permission.assessments_run,
+    Permission.workflows_run,
 }
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {

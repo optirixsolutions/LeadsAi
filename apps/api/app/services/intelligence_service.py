@@ -339,7 +339,16 @@ def _crm_facts(
     return facts
 
 
-def assess_lead(db: Session, ctx: OrgContext, lead_id: uuid.UUID) -> LeadAssessment:
+def assess_lead(
+    db: Session, ctx: OrgContext, lead_id: uuid.UUID, *, workflow_run_id: uuid.UUID | None = None
+) -> LeadAssessment:
+    """Score now. With a run ID, a repeat returns that run's existing result instead."""
+    if workflow_run_id is not None:
+        existing = db.scalar(
+            select(LeadAssessment).where(LeadAssessment.workflow_run_id == workflow_run_id)
+        )
+        if existing is not None:
+            return existing
     lead, company = lead_with_company(db, ctx, lead_id)
     icp = active_icp(db, ctx)
     if icp is None:
@@ -371,6 +380,7 @@ def assess_lead(db: Session, ctx: OrgContext, lead_id: uuid.UUID) -> LeadAssessm
         organization_id=ctx.org_id,
         lead_id=lead.id,
         icp_configuration_id=icp.id,
+        workflow_run_id=workflow_run_id,
         score=result.score,
         fit=result.fit,
         components=result.components,

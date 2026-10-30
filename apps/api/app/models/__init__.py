@@ -26,6 +26,13 @@ from app.models.intelligence import (
     ResearchEvidence,
 )
 from app.models.tenancy import AuditLog, Membership, Organization, Role, User
+from app.models.workflow import (
+    StepStatus,
+    WorkflowKind,
+    WorkflowRun,
+    WorkflowStatus,
+    WorkflowStep,
+)
 
 __all__ = [
     "DEFAULT_STAGES",
@@ -56,7 +63,12 @@ __all__ = [
     "ResearchEvidence",
     "Role",
     "StageKind",
+    "StepStatus",
     "TokenPurpose",
     "User",
     "UserSession",
+    "WorkflowKind",
+    "WorkflowRun",
+    "WorkflowStatus",
+    "WorkflowStep",
 ]

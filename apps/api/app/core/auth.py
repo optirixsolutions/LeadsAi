@@ -15,7 +15,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import Depends, Request, Response
 from sqlalchemy import select
@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.db import get_db, set_tenant_context
-from app.core.errors import AppError, ForbiddenError, NotFoundError
+from app.core.errors import AccessLostError, AppError, ForbiddenError, NotFoundError
 from app.core.permissions import Permission, has_permission
 from app.core.security import csrf_matches, csrf_token_for, token_digest
 from app.models import Membership, Role, User, UserSession
@@ -146,6 +146,25 @@ def get_org_context(org_id: uuid.UUID, principal: PrincipalDep, db: DbDep) -> Or
     if membership is None:
         raise NotFoundError("Organization not found")
     set_tenant_context(db, user_id=principal.user.id, org_id=org_id)
+    return OrgContext(
+        principal=principal, org_id=org_id, role=membership.role, membership_id=membership.id
+    )
+
+
+def worker_context(db: Session, org_id: uuid.UUID, user_id: uuid.UUID | None) -> OrgContext:
+    """The requester's authority for queued work, looked up again now: they may have left,
+    changed role, or been disabled since they asked. Also sets the tenant for this transaction."""
+    set_tenant_context(db, user_id=user_id, org_id=org_id)
+    user = db.get(User, user_id) if user_id else None
+    membership = db.scalar(
+        select(Membership).where(
+            Membership.organization_id == org_id, Membership.user_id == user_id
+        )
+    )
+    if user is None or user.disabled_at is not None or membership is None:
+        raise AccessLostError("The person who started this no longer has access")
+    # A worker acts for a person but has no browser session; nothing downstream reads those.
+    principal = Principal(user=user, session=cast(UserSession, None), token="")
     return OrgContext(
         principal=principal, org_id=org_id, role=membership.role, membership_id=membership.id
     )

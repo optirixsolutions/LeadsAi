@@ -2,7 +2,7 @@
 
 import type { components } from "@salesiq/contracts";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,18 @@ export function ImportWizard({ orgId }: { orgId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const waitingId = result && (result.status === "queued" || result.status === "running") ? result.id : null;
+
+  // Large files are processed by a worker; poll until it reports the outcome.
+  useEffect(() => {
+    if (!waitingId) return;
+    const timer = setInterval(async () => {
+      const r = await apiRequest<ImportResult>(`/organizations/${orgId}/lead-imports/${waitingId}`);
+      if (r.ok) setResult(r.data);
+      else setError(r.message);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [waitingId, orgId]);
 
   async function choose(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -90,6 +102,22 @@ export function ImportWizard({ orgId }: { orgId: string }) {
     setBusy(false);
     if (!r.ok) setError(r.message);
     else setResult(r.data);
+  }
+
+  if (waitingId && result) {
+    return (
+      <Card>
+        <CardHeader title={`Importing ${result.filename}`} description={`${formatNumber(result.total_rows)} rows`} />
+        <p className="px-5 py-4 text-sm text-fg-muted" role="status">
+          Large files are processed in the background. You can leave this page; the import continues.
+        </p>
+        {error && (
+          <div className="px-5 pb-4">
+            <Alert tone="error">{error}</Alert>
+          </div>
+        )}
+      </Card>
+    );
   }
 
   if (result) return <ImportSummary result={result} onAgain={() => { setResult(null); setPreview(null); setFile(null); }} />;
@@ -214,11 +242,16 @@ function ImportSummary({ result, onAgain }: { result: ImportResult; onAgain: () 
   ] as const;
   return (
     <div className="space-y-6">
+      {result.status === "failed" && (
+        <Alert tone="error">
+          Nothing was imported. {result.error_message ?? "The import failed."} You can submit the file again.
+        </Alert>
+      )}
       {result.replayed && (
         <Alert tone="info">This exact file was already imported with these settings, so nothing changed. Showing the original result.</Alert>
       )}
       <Card>
-        <CardHeader title={`Imported ${result.filename}`} description={`${formatNumber(result.total_rows)} rows processed`} />
+        <CardHeader title={`${result.status === "failed" ? "Could not import" : "Imported"} ${result.filename}`} description={`${formatNumber(result.total_rows)} rows processed`} />
         <dl className="grid grid-cols-2 gap-4 px-5 py-4 sm:grid-cols-4">
           {stats.map(([label, n]) => (
             <div key={label}>

@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     # "log" prints emails to the log in development only; "disabled" drops them.
     mailer: Literal["log", "memory", "disabled"] = "log"
 
+    # A worker renews its lease at a third of this. If it dies, the run is recovered after it.
+    worker_lease_seconds: int = Field(default=60, ge=2, le=3600)
+    worker_poll_seconds: float = Field(default=2.0, gt=0, le=60)
+    worker_concurrency: int = Field(default=2, ge=1, le=32)
+
     @field_validator("log_level")
     @classmethod
     def _upper(cls, v: str) -> str:

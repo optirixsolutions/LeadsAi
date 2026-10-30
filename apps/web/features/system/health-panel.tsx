@@ -1,13 +1,18 @@
 import { Card, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-dot";
-import { getReadiness } from "@/lib/api";
+import { apiGet, getReadiness } from "@/lib/api";
 
 import { summarizeReadiness } from "./health";
 import { RefreshButton } from "./refresh-button";
 
 /** Server component: renders live readiness from the API on every request. */
 export async function HealthPanel() {
-  const summary = summarizeReadiness(await getReadiness());
+  const [readiness, worker] = await Promise.all([
+    getReadiness(),
+    apiGet<{ alive: boolean }>("/api/v1/workers/health"),
+  ]);
+  const summary = summarizeReadiness(readiness);
+  const workerAlive = worker.ok && worker.data.alive;
   const checkedAt = new Date().toISOString().slice(11, 19);
 
   return (
@@ -32,6 +37,17 @@ export async function HealthPanel() {
             <StatusBadge health={c.health} />
           </li>
         ))}
+        <li className="flex items-center justify-between gap-4 px-5 py-3">
+          <div>
+            <p className="text-sm">Background worker</p>
+            <p className="text-xs text-fg-subtle">
+              {workerAlive
+                ? "Reported in within the last 30 seconds"
+                : "Not reporting. Workflows and large imports wait until one is running."}
+            </p>
+          </div>
+          <StatusBadge health={workerAlive ? "ok" : "down"} />
+        </li>
       </ul>
     </Card>
   );

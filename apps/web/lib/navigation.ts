@@ -8,6 +8,7 @@ import {
   Plug,
   Settings,
   Users,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,7 +25,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Leads", href: "/leads", icon: Users },
   { label: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { label: "Outreach", href: "/outreach", icon: Inbox, phase: 8 },
-  { label: "Agents", href: "/agents", icon: Bot, phase: 6 },
+  { label: "Workflows", href: "/workflows", icon: Workflow },
+  { label: "Agents", href: "/agents", icon: Bot, phase: 7 },
   { label: "Analytics", href: "/analytics", icon: BarChart3, phase: 9 },
   { label: "Integrations", href: "/integrations", icon: Plug, phase: 10 },
   { label: "System status", href: "/status", icon: Activity },

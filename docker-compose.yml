@@ -49,6 +49,34 @@ services:
         condition: service_healthy
     profiles: ["app"]
 
+  # Runs workflows and large imports. Scale it freely: claims are atomic, and a run from a worker
+  # that dies is recovered by another once its lease expires.
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    command: [".venv/bin/python", "-m", "app.tasks.worker"]
+    restart: unless-stopped
+    # The image's healthcheck is the API's HTTP probe, and a worker serves no HTTP.
+    healthcheck:
+      disable: true
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
+      SALESIQ_REDIS_URL: redis://redis:6379/0
+      # Inside a container, 127.0.0.1 is the container. Ollama usually runs on the host.
+      SALESIQ_OLLAMA_BASE_URL: ${SALESIQ_OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles: ["app"]
+
   web:
     build:
       context: .

@@ -10,6 +10,8 @@ import { BriefCard } from "@/features/intelligence/brief-card";
 import { CompanyFacts } from "@/features/intelligence/company-facts";
 import { EvidenceCard } from "@/features/intelligence/evidence-card";
 import { LeadDetails, NoteForm, OpportunityForm, DeleteLeadButton } from "@/features/leads/lead-profile";
+import { WorkflowCard } from "@/features/workflows/workflow-card";
+import type { WorkflowRun } from "@/lib/workflows";
 import type { Assessment, AssessmentDetail, Brief, CompanyDetail, Evidence, Icp } from "@/lib/intelligence";
 import {
   describeActivity,
@@ -31,7 +33,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const { org } = await requireOrg();
   const orgId = org.organization_id;
   const leadPath = `/leads/${encodeURIComponent(id)}`;
-  const [lead, members, stages, icp, evidence, assessments, brief] = await Promise.all([
+  const [lead, members, stages, icp, evidence, assessments, brief, runs] = await Promise.all([
     orgGet<LeadDetail>(orgId, leadPath),
     getMembers(orgId),
     getStages(orgId),
@@ -39,6 +41,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     orgGet<Evidence[]>(orgId, `${leadPath}/evidence`),
     orgGet<Assessment[]>(orgId, `${leadPath}/assessments`),
     orgGet<Brief>(orgId, `${leadPath}/briefs/latest`),
+    orgGet<WorkflowRun[]>(orgId, `/workflows?lead_id=${encodeURIComponent(id)}`),
   ]);
   if (!lead.ok) {
     if (lead.status === 404 || lead.status === 422) notFound();
@@ -63,6 +66,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     !assessments.ok && assessments.message,
     latest && !latest.ok && latest.message,
     !brief.ok && brief.status !== 404 && brief.message,
+    !runs.ok && runs.message,
   ].find(Boolean);
 
   return (
@@ -89,6 +93,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <LeadDetails orgId={orgId} lead={l} members={members} canEdit={can("leads:write")} />
 
           {intelligenceError && <Alert tone="error">Some research data could not be loaded: {intelligenceError}</Alert>}
+          <WorkflowCard
+            key={runs.ok ? `${runs.data[0]?.id}-${runs.data[0]?.status}` : "none"}
+            orgId={orgId}
+            leadId={l.id}
+            latest={runs.ok ? (runs.data[0] ?? null) : null}
+            companyDomain={company?.ok ? company.data.domain : null}
+            canRun={can("workflows:run")}
+          />
           <AssessmentCard
             orgId={orgId}
             leadId={l.id}

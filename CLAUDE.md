@@ -12,6 +12,7 @@ Start every session by reading `docs/IMPLEMENTATION_ROADMAP.md` (current phase, 
 ## Commands (run from repo root unless noted)
 - Infra: `docker compose up -d --wait postgres redis` (host ports 55432 / 56379)
 - API (in `apps/api`): `uv run alembic upgrade head`, `uv run uvicorn app.main:app --reload --port 8000`
+- Worker (in `apps/api`): `uv run python -m app.tasks.worker`. Workflows, briefs, and large imports wait for it.
 - API checks (in `apps/api`): `uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest -q`
 - Web: `pnpm --filter @salesiq/web dev|lint|typecheck|test|build|test:e2e`
 - Contracts: `pnpm contracts:generate` after any API schema change; CI fails if stale.

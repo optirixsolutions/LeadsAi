@@ -692,6 +692,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Workflow */
+        post: operations["start_workflow_api_v1_organizations__org_id__leads__lead_id__workflows_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/members": {
         parameters: {
             query?: never;
@@ -807,6 +824,111 @@ export interface paths {
         };
         /** Pipeline Summary */
         get: operations["pipeline_summary_api_v1_organizations__org_id__pipeline_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Workflows */
+        get: operations["list_workflows_api_v1_organizations__org_id__workflows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/workflows/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workflow */
+        get: operations["get_workflow_api_v1_organizations__org_id__workflows__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/workflows/{run_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Workflow */
+        post: operations["cancel_workflow_api_v1_organizations__org_id__workflows__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/workflows/{run_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Workflow */
+        post: operations["decide_workflow_api_v1_organizations__org_id__workflows__run_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/workflows/{run_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Workflow */
+        post: operations["resume_workflow_api_v1_organizations__org_id__workflows__run_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Worker Health
+         * @description Whether any worker reported in recently. It says nothing about any tenant's data.
+         */
+        get: operations["worker_health_api_v1_workers_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1401,6 +1523,8 @@ export interface components {
             duplicate_policy: components["schemas"]["DuplicatePolicy"];
             /** Error Count */
             error_count: number;
+            /** Error Message */
+            error_message?: string | null;
             /** Errors */
             errors: {
                 [key: string]: unknown;
@@ -1449,7 +1573,7 @@ export interface components {
          * ImportStatus
          * @enum {string}
          */
-        ImportStatus: "completed" | "failed";
+        ImportStatus: "queued" | "running" | "completed" | "failed";
         /** InvitationCreateIn */
         InvitationCreateIn: {
             /**
@@ -2114,6 +2238,11 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * StepStatus
+         * @enum {string}
+         */
+        StepStatus: "running" | "succeeded" | "failed" | "interrupted" | "waiting";
         /** TokenIn */
         TokenIn: {
             /** Token */
@@ -2145,6 +2274,178 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WorkerHealthOut */
+        WorkerHealthOut: {
+            /** Alive */
+            alive: boolean;
+        };
+        /** WorkflowDecision */
+        WorkflowDecision: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+        };
+        /**
+         * WorkflowKind
+         * @enum {string}
+         */
+        WorkflowKind: "research" | "lead_intelligence";
+        /** WorkflowRunDetail */
+        WorkflowRunDetail: {
+            /** Approval Decision */
+            approval_decision: {
+                [key: string]: unknown;
+            } | null;
+            /** Approval Request */
+            approval_request: {
+                [key: string]: unknown;
+            } | null;
+            /** Attempts */
+            attempts: number;
+            /** Cancel Requested At */
+            cancel_requested_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Current Step */
+            current_step: string | null;
+            /** Error Category */
+            error_category: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["WorkflowKind"];
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /** Max Attempts */
+            max_attempts: number;
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            } | null;
+            /** Resumable */
+            readonly resumable: boolean;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["WorkflowStatus"];
+            /** Steps */
+            steps: components["schemas"]["WorkflowStepOut"][];
+        };
+        /** WorkflowRunOut */
+        WorkflowRunOut: {
+            /** Approval Decision */
+            approval_decision: {
+                [key: string]: unknown;
+            } | null;
+            /** Approval Request */
+            approval_request: {
+                [key: string]: unknown;
+            } | null;
+            /** Attempts */
+            attempts: number;
+            /** Cancel Requested At */
+            cancel_requested_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By User Id
+             * Format: uuid
+             */
+            created_by_user_id: string;
+            /** Current Step */
+            current_step: string | null;
+            /** Error Category */
+            error_category: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["WorkflowKind"];
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /** Max Attempts */
+            max_attempts: number;
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            } | null;
+            /** Resumable */
+            readonly resumable: boolean;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["WorkflowStatus"];
+        };
+        /** WorkflowStart */
+        WorkflowStart: {
+            /**
+             * Propose Status
+             * @default false
+             */
+            propose_status: boolean;
+            /**
+             * Urls
+             * @default []
+             */
+            urls: string[];
+        };
+        /**
+         * WorkflowStatus
+         * @enum {string}
+         */
+        WorkflowStatus: "queued" | "running" | "waiting_approval" | "succeeded" | "failed" | "cancelled";
+        /** WorkflowStepOut */
+        WorkflowStepOut: {
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Error Category */
+            error_category: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            status: components["schemas"]["StepStatus"];
         };
     };
     responses: never;
@@ -3801,6 +4102,42 @@ export interface operations {
             };
         };
     };
+    start_workflow_api_v1_organizations__org_id__leads__lead_id__workflows_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_members_api_v1_organizations__org_id__members_get: {
         parameters: {
             query?: never;
@@ -4163,6 +4500,191 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workflows_api_v1_organizations__org_id__workflows_get: {
+        parameters: {
+            query?: {
+                lead_id?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workflow_api_v1_organizations__org_id__workflows__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_workflow_api_v1_organizations__org_id__workflows__run_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_workflow_api_v1_organizations__org_id__workflows__run_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_workflow_api_v1_organizations__org_id__workflows__run_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    worker_health_api_v1_workers_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerHealthOut"];
                 };
             };
         };

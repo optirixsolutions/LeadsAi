@@ -95,3 +95,31 @@ runs after the response on an API thread, limited by global slots and a per-org 
 Checking an address and then letting the HTTP client resolve it again leaves a DNS rebinding gap. A custom `httpcore` network
 backend resolves, checks, and connects to the checked address, and TLS still verifies the original hostname. This relies on
 httpcore's backend interface, so `httpcore` is a direct dependency.
+
+### ADR-021 · 2026-10-30 · The job queue is a Postgres table with leases
+Redis is treated as disposable here (rate limits fail open), so losing work with it would be wrong. Runs live in Postgres, next to
+the records they change. Workers claim with `FOR UPDATE SKIP LOCKED`, renew a lease while working, and a dead worker's run is
+recovered when the lease expires. This replaces ADR-019. It costs some polling load, and it would need revisiting at a volume far
+above what this product has now.
+
+### ADR-022 · 2026-10-30 · Workers cross tenants only through narrow definer functions
+A worker must find work across organizations, but RLS correctly hides that from the app role. `workflow_claim()` and `import_claim()`
+return IDs only, and everything after that runs under the requester's tenant context, as ordinary RLS-checked queries. Authority is
+looked up again when work runs, so a person who left or lost a role cannot keep acting through a queued job.
+
+### ADR-023 · 2026-10-30 · Side effects are protected by database constraints, not by checkpoints alone
+A step can repeat, because a crash between its commit and the checkpoint re-runs it. So a run can have one assessment and one brief
+(unique `workflow_run_id`), evidence is deduplicated by content, and a status change first checks the lead still has the status the
+approver saw. Checkpoints keep work from repeating in the normal case, and the constraints make a repeat harmless in the rest.
+
+### ADR-024 · 2026-10-30 · Checkpoints hold only IDs and statuses
+LangGraph's tables have no tenant column and sit outside RLS, so tenant data must not enter them. State carries row IDs, counts, and
+statuses, and each step reads what it needs under RLS. Exceptions are stored too, so provider text and unexpected errors are replaced
+before they leave a step. Checkpoints are read with the strict deserializer, because the default can construct arbitrary objects from a
+stored row. They are deleted when a run succeeds, and a sweep removes the rest. LangSmith tracing is forced off, because LangGraph
+ships a client for it.
+
+### ADR-025 · 2026-10-30 · Large imports go to the worker; small ones stay in the request
+The largest allowed import took 36 s when measured, which is too long for a web request. Most files are far smaller, so up to 1,000
+rows still finish immediately, and the shared code means both paths behave the same. A queued file is personal data, so it is
+stored only until processed and is cleared in the transaction that finishes the import.

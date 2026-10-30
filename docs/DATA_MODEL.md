@@ -47,11 +47,21 @@ All six have RLS enabled and forced, scoped to `app_current_org()`.
 
 All four have RLS enabled and forced. The app role has no DELETE on any of them.
 
+## Implemented (migrations `3611694164d1`, `15d9ce357bc7`, `a7c1e0d24b9f`)
+| Table | Key columns | Notes |
+|---|---|---|
+| `workflow_runs` | `lead_id`, `kind`, `status`, `input`, `current_step`, `attempts`, lease columns, `deadline_at`, `cancel_requested_at`, `error_category`, `error_message`, `approval_request`, `approval_decision`, `result` | RLS forced. At most one active run per lead |
+| `workflow_steps` | `run_id`, `name`, `status`, `detail`, `error_category`, times | RLS forced. One row per try at a step, so the trace shows retries and crashes |
+| `lead_imports` (added) | `payload`, `attempts`, lease columns, `error_message` | `payload` holds a large file until it is processed, and is then cleared |
+| `lead_scores`, `research_briefs` (added) | `workflow_run_id` | Unique when set, which is what stops a repeated step from duplicating them |
+| `workflow_state.*` | LangGraph's checkpoint tables | Working state in a separate schema with no tenant column and no RLS. Holds IDs, statuses, and counts only. Deleted when a run succeeds; the worker's sweep removes the rest, keeping failed runs 30 days so they can be resumed |
+
+Workers cross tenants only through `workflow_claim()` and `import_claim()`, which return IDs. See SECURITY.md.
+
 ## Planned
 | Phase | Tables |
 |---|---|
 | 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
-| 6 | `workflow_runs`, `workflow_checkpoints` (LangGraph Postgres saver), `jobs` |
 | 7 | `agent_definitions`, `agent_runs`, `tool_calls` |
 | 8 | `outreach_drafts`, `campaigns`, `suppression_entries`, `approval_requests`, `deliveries` |
 | 4/10 | `model_configurations`, `model_evaluations`, `usage_records`, `integration_connections`, `webhook_events`, `plans`, `entitlements`, `subscriptions` |

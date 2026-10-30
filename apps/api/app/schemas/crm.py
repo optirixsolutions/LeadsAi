@@ -272,6 +272,7 @@ class ImportOut(BaseModel):
     skipped_count: int
     error_count: int
     errors: list[dict[str, Any]]
+    error_message: str | None = None
     created_at: datetime
     replayed: bool = False
 

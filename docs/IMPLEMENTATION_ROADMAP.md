@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 5 complete → next is Phase 6 (LangGraph workflows).
+**Current phase:** Phase 6 complete → next is Phase 7 (MCP server and bounded agents).
 **Last updated:** 2026-10-30
 
 ## Phase status
@@ -12,8 +12,8 @@
 | 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done (CI not yet run on GitHub) |
 | 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Done (Colab paths and hosted route not executed) |
 | 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet; CI not run) |
-| 6 | LangGraph workflows with Postgres checkpoints | Next |
-| 7 | MCP server and bounded agents | Pending |
+| 6 | LangGraph workflows with Postgres checkpoints | Done (container worker not run; CI not run) |
+| 7 | MCP server and bounded agents | Next |
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Pending |
 | 9 | Full dashboard and analytics | Pending |
 | 10 | Integrations, quotas, entitlements | Pending |
@@ -99,27 +99,41 @@ Acceptance met: a lead can be assessed, and every reason and signal in the resul
   unbounded writes and briefs, IPv6 gaps, and unhandled malformed input. Remaining items are in KNOWN_LIMITATIONS.
 - **Measured:** the input gate caught none of 8 reworded attacks. See AI_EVALUATION.md and `research/evaluations/GATES.md`.
 
+## Phase 6 — completed
+Acceptance met: a failed run shows which step failed, why, and what to do, and resuming continues from the last completed step
+with no duplicate assessment, brief, or activity. A test kills a real worker process during a model call, and another recovers the run.
+- **Queue:** runs in Postgres with leases; workers claim through definer functions that return IDs only (ADR-021, ADR-022).
+- **Graphs:** typed state, a research graph and a lead-intelligence graph, Postgres checkpoints, cancellation, deadlines.
+- **Side effects:** made safe to repeat by database constraints (ADR-023).
+- **Approval:** a proposed status change pauses the run until a manager or admin decides, and is recorded under that person.
+- **Imports:** above 1,000 rows they go to the worker, because the largest allowed file took 36 s (ADR-025). The file is deleted once processed.
+- **Web:** workflow card on the lead page, Workflows list and run detail with the step trace, worker status on System status.
+- **Independent review** found no cross-tenant path and no way for a rep to approve a change. Fixed with tests: checkpoint reads that
+  could run code, a crash that could lose a person's decision, approvals recorded under the requester, addresses and provider text in
+  checkpoints, orphaned checkpoints, a leftover brief blocking its lead, unbounded import queues, unfair claims, and a late answer
+  overwriting a newer one. One finding was only partly fixed: see the first item in KNOWN_LIMITATIONS.
+
 ## Tests run (2026-10-30, local Windows machine)
-Results are from the Phase 5 code commit. Playwright ran with `SALESIQ_API_URL` on a free port because another local project
-holds :8000.
+Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 303 passed, 0 skipped, including real calls to local Ollama models |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (66 files) |
-| Web `vitest` | 30 passed |
+| API `pytest` | 344 passed, 0 skipped, including real calls to local Ollama models and a killed worker process |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (75 files) |
+| Web `vitest` | 34 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API + Postgres) | 34 passed, 2 skipped (sidebar tests are desktop-only) |
+| Playwright (desktop + mobile, real API, worker, Postgres) | 39 passed, 3 skipped (sidebar tests are desktop-only) |
+| `docker compose config` | Valid; the images and the containerized worker were not built or run |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- None for Phase 6. Real email (Phase 8) needs a provider choice and explicit approval.
+- None for Phase 7. Real email (Phase 8) needs a provider choice and explicit approval.
 
-## Next concrete steps (Phase 6)
-1. Durable worker and job table with idempotency keys; move briefs and CSV imports onto it and retire the in-process task.
-2. LangGraph with Postgres checkpoints: typed state, resumable runs, and step, time, and budget limits.
-3. A research-and-qualify workflow that reuses the gates and scoring as they are. A workflow never changes a score by itself.
-4. Workflow status API and a page for run history, with failures visible.
-5. Add injection cases for each new surface, and tune on train only.
+## Next concrete steps (Phase 7)
+1. Separate database role for workers, so the API cannot reach checkpoints or claim functions (see KNOWN_LIMITATIONS).
+2. MCP server on the official SDK, with typed tools and authorization inside every tool, over real services and no mock tools.
+3. Tools carry the actor and tenant from the server side, never from the model. No SQL, shell, or arbitrary HTTP tools.
+4. Bounded agents with step, time, and token limits, running as workflow steps so they get the same trace and recovery.
+5. Evaluate tool use against injection before an agent can act, and tune on train only.
