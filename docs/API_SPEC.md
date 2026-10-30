@@ -44,8 +44,19 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | GET | `/organizations/{org_id}/pipeline/summary` | `pipeline:read` | Count and per-currency totals per stage |
 | GET / POST / PATCH | `/organizations/{org_id}/opportunities[/{id}]` | `pipeline:read` / `pipeline:write` | List (`stage_id`, `owner_id`, `include_closed`) / create / move or edit |
 | GET | `/organizations/{org_id}/analytics/overview` | `pipeline:read` | Lead counts by status, 30-day additions, open pipeline and 90-day won value per currency, recent activity |
+| GET / POST | `/organizations/{org_id}/icp`, `/icp/versions` | `intelligence:read` / `icp:configure` | Active ICP (`null` if none), version history, save a new immutable version |
+| GET / POST | `/organizations/{org_id}/leads/{id}/evidence` | `intelligence:read` / `research:write` | List (≤ 500) / add a finding. Text is screened; instruction-like text is stored as `quarantined`. Repeats return the original row. 409 `evidence_limit` at 500 per lead |
+| POST | `/organizations/{org_id}/leads/{id}/evidence/fetch` | `research:write` | `{url}`: fetch an HTTPS page on the lead's company domain. 422 `fetch_blocked`, 502 `fetch_failed`, 400 `company_domain_required`. 10 per minute per org |
+| PATCH | `/organizations/{org_id}/leads/{id}/evidence/{id}` | `intelligence:review` | `{status: accepted\|rejected}`; audited |
+| GET / POST | `/organizations/{org_id}/leads/{id}/assessments` | `intelligence:read` / `assessments:run` | History (≤ 50) / score the lead now; returns the result with its evidence. 409 `icp_required` if no ICP exists. 30 per minute per user |
+| GET / PATCH | `/organizations/{org_id}/assessments/{id}` | `intelligence:read` / `intelligence:review` | Result with the stored evidence behind it / `{evaluation_status: approved\|rejected}`; audited |
+| POST | `/organizations/{org_id}/leads/{id}/briefs` | `research:write` | 202; a model writes a brief after the response. 409 `evidence_required` or a brief already running, 429 past limits |
+| GET | `/organizations/{org_id}/leads/{id}/briefs/latest` | `intelligence:read` | Poll for status `running`, `completed`, `rejected`, or `failed` with `failure_category`; 404 if none. `rejected_claims[].text` is null without `intelligence:review` |
 
 References to other records (company, lead, stage, owner) that are not in the caller's org return 422
 `invalid_reference`. Non-members receive 404 on every org-scoped route. Full schemas: `/api/v1/openapi.json`.
 
-Planned groups: `research`, `qualification`, `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `usage`.
+Scores rank a lead against the organization's ICP. They are deterministic, are not conversion probabilities, and are never
+changed by model output. Research older than the ICP's `signal_ttl_days` does not count toward them.
+
+Planned groups: `tasks`, `outreach`, `approvals`, `agents`, `workflows`, `integrations`, `usage`.

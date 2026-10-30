@@ -1,6 +1,27 @@
 # Known Limitations
 
-Current as of Phase 4 (2026-10-30).
+Current as of Phase 5 (2026-10-30).
+
+## Sales intelligence
+- **The input gate is easy to evade by rewording.** See `research/evaluations/GATES.md`. Its score on the dataset is optimistic
+  because the test attacks reuse the training templates. Pages can also hide text in ways the fetcher does not strip, such as
+  CSS classes or off-screen positioning.
+- **Evidence text can move a score without any model.** A prospect's page or a rep's note that contains a configured keyword
+  raises the score, so scores are `pending_review` until a person approves them. Nothing acts on a score automatically yet.
+- Signals are keyword matches, so a need phrased differently is missed. The score has not been calibrated against outcomes
+  and is not a conversion probability.
+- A manager's rejection is not sticky against reworded text; only changes of case and spacing map to the same row.
+- Any rep can edit a company's domain, which is the fetch allowlist. The IP checks are the real control. Domain changes and
+  blocked fetches are not audited, and public suffixes such as `co.uk` are not rejected as domains.
+- ICP keywords are free text, so nothing technically stops someone configuring a keyword about a personal attribute. Criteria
+  fields are firmographic by design.
+- Briefs run in-process: a restart loses them, and they show as `stale` after 10 minutes. They come from small local models and
+  have no human ratings.
+- The Phase 4 results in `REPORT.md` predate the prompt change in version `2026-10-30.2`, which moved names inside the untrusted
+  block. They were not rerun, so the live rows in `GATES.md` are the only results on the current prompt.
+- The fetcher has not been run against the public internet, only real local servers, so TLS paths are unexercised by tests.
+- `lead_id` foreign keys do not include `organization_id`; RLS checks the org column, and every path validates the lead first.
+- Leads list and Overview do not show scores yet (Phase 9).
 
 ## AI evaluation
 - The dataset is small, synthetic, and fictional, with rule-derived labels. Results compare methods; they do not predict
@@ -13,7 +34,7 @@ Current as of Phase 4 (2026-10-30).
 - Local cost covers tokens only, not hardware or power.
 
 ## Functional
-- No research, scoring, agents, or outreach in the product yet (Phases 5–8). The model layer is not wired into any API route.
+- No agents or outreach in the product yet (Phases 6–8).
 - **CSV import is synchronous** and capped at 5 MB / 10,000 rows in one transaction. It becomes a durable background
   job with progress tracking when the worker lands (Phase 6). Duplicate detection is by email only; leads without an
   email are never treated as duplicates.
@@ -51,6 +72,8 @@ Current as of Phase 4 (2026-10-30).
 - Host port 55432 is inside Windows' ephemeral range (49152–65535), so any local process can take it as a random socket
   port. Docker then starts Postgres healthy but unpublished (`docker compose ps` shows only `5432/tcp`) and connections
   time out. Workaround: set `SALESIQ_PG_PORT`, `SALESIQ_TEST_DB_HOST`, and the database URLs to a free port below 49152.
+- Playwright reuses whatever already listens on the API port, so another project on :8000 answers its requests and every test
+  fails. Build and test with `SALESIQ_API_URL` set to a free port.
 - `make` is unavailable in plain PowerShell; use Git Bash/WSL or the raw commands in README.
 - Existing local Postgres volumes created before Phase 2 lack the `salesiq_app` and `salesiq_definer` roles; run the
   role statements from `infra/docker/postgres-init.sql` once, or recreate the volume (`docker compose down -v`).

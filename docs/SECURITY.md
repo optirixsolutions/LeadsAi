@@ -8,10 +8,10 @@
 | Session theft | HttpOnly, SameSite, Secure (staging/prod) cookies; hashed server-side sessions; idle + absolute expiry; revocation | Done (Phase 2); `__Host-` prefix Phase 11 |
 | CSRF | SameSite=Lax + session-bound HMAC token on mutations; JSON-only pre-session endpoints | Done (Phase 2) |
 | Account enumeration / credential stuffing | Uniform login errors, dummy-hash timing equalization, indistinguishable reset requests, rate limits | Done (Phase 2); lockout DoS noted in KNOWN_LIMITATIONS |
-| Prompt injection via imported content | Retrieved text is data, never instructions; tool permissions enforced in code, not prompts; injection test suite | Phases 5–7 |
+| Prompt injection via imported content | Scores never read model output; input and output gates; quarantine with human release; tool permissions in code, not prompts | Gates and scoring done (Phase 5), measured in `research/evaluations/GATES.md`, and the input gate is easy to evade by rewording; tools Phase 7 |
 | Unsafe tool calls / confused deputy | MCP tools carry actor + tenant context; authorization inside each tool; no SQL/shell/arbitrary HTTP tools | Phase 7 |
 | Unauthorized external communication | Approval record + final policy check at dispatch; suppression lists; tests for bypass | Phase 8 |
-| SSRF | Research fetcher with allowlist, DNS-rebinding-safe IP checks, no private ranges, size/time limits | Phase 5 |
+| SSRF | Research fetcher with per-hop allowlist, connection pinned to a checked public IP, size limit and a deadline on every socket call | Done (Phase 5) |
 | SQL injection | ORM / bound parameters only; no string-built SQL | Ongoing |
 | XSS | React escaping; no `dangerouslySetInnerHTML` on untrusted content; CSP | CSP in Phase 11 |
 | Webhook forgery / replay | HMAC signatures, timestamp window, event-ID dedupe | Phase 10 |
@@ -62,6 +62,23 @@ All of these are covered by tests in `apps/api/tests/test_platform.py` and `test
 | CSV export neutralizes formula injection (`= + - @` tab, CR) and is audited; analysts and reps cannot export | `safe_cell`, permissions | `test_export_escapes_formulas_and_is_audited`, role matrix test |
 | Link fields accept only http(s) (no `javascript:` links); external links open with `noopener noreferrer` | `schemas/crm.py`, lead profile | `test_unsafe_url_rejected` |
 | Per-org dedupe never reveals another org's leads | unique index per org | `test_same_email_may_exist_in_two_orgs` |
+
+## Controls implemented (Phase 5)
+An independent review of this phase found no tenant breach, role bypass, XSS, or route to private IPv4 addresses. Its other
+findings were fixed with tests except where KNOWN_LIMITATIONS says otherwise.
+| Control | Where | Tests |
+|---|---|---|
+| Fetcher: HTTPS and port 443 only, no IP literals or URL credentials, allowlist on every hop, redirects capped | `integrations/fetcher.py` | `test_fetcher.py` |
+| Every resolved address must be public (IPv6 limited to `2000::/3`, embedded IPv4 refused); the socket connects to the checked address, and TLS still verifies the hostname | `_PinnedBackend`, `is_public_ip` | `test_internal_addresses_are_not_public`, `test_connects_to_the_checked_address_not_a_new_lookup` |
+| Total deadline applied to each socket read and write, including headers; size cap; safe charsets only; robots.txt fails closed on server errors | `_DeadlineStream`, `_safe_charset` | `test_deadline_stops_a_server_that_never_finishes_its_headers`, `test_dangerous_charset_is_not_used` |
+| Scores are deterministic and read no model output; a brief cannot change one | `services/scoring.py` | `test_real_brief_cites_only_stored_evidence_and_ignores_quarantine` |
+| Input gate over normalized text, plus invisible and lookalike characters; bounded patterns | `agents/gates.py` | `test_screen_*` |
+| Output gate on claims, summary, and missing information: citations, support, numbers, links and addresses | `check_output` | `test_bad_claims_are_rejected_with_a_reason`, `test_links_and_addresses_not_in_the_sources_are_removed` |
+| Whoever adds evidence cannot release it: release needs `intelligence:review` | `core/permissions.py` | `test_quarantined_evidence_changes_nothing_until_released` |
+| Company names and all evidence sit inside the untrusted block, and data cannot close it or forge items | `evaluation/tasks.py` | `test_prompt_cannot_close_or_forge_its_data_block` |
+| Provenance protected by column grants: ICP versions insert-only, review columns only on evidence and scores, no DELETE | migration `f08206afd104` | `test_rls_and_grants_protect_provenance` |
+| Limits: per-user writes, per-org fetches and briefs, global model slots, evidence per lead | `api/v1/intelligence.py`, `brief_service.py` | `test_writes_are_rate_limited`, `test_one_org_cannot_run_unlimited_briefs` |
+| Database errors in logs never include parameters | `core/db.py` | Not separately tested |
 
 ## Database roles
 | Role | Login | Superuser | BYPASSRLS | Used for |

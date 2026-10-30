@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 4 complete → next is Phase 5 (sales intelligence).
+**Current phase:** Phase 5 complete → next is Phase 6 (LangGraph workflows).
 **Last updated:** 2026-10-30
 
 ## Phase status
@@ -11,8 +11,8 @@
 | 2 | Auth, organizations, memberships, permissions, audit, isolation tests | Done (CI not yet run on GitHub) |
 | 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done (CI not yet run on GitHub) |
 | 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Done (Colab paths and hosted route not executed) |
-| 5 | Sales intelligence: evidence, ICP, explainable scoring | Next |
-| 6 | LangGraph workflows with Postgres checkpoints | Pending |
+| 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet; CI not run) |
+| 6 | LangGraph workflows with Postgres checkpoints | Next |
 | 7 | MCP server and bounded agents | Pending |
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Pending |
 | 9 | Full dashboard and analytics | Pending |
@@ -83,29 +83,43 @@
 - **Results:** [research/evaluations/REPORT.md](../research/evaluations/REPORT.md); summary in AI_EVALUATION.md. The largest
   finding is that every model followed planted instructions at a measurable rate, so Phase 5 needs quality gates.
 
+## Phase 5 — completed
+Acceptance met: a lead can be assessed, and every reason and signal in the result resolves to a stored evidence row.
+- **ICP:** criteria and weights in immutable versions; Settings → ICP and scoring, with history.
+- **Evidence and source tracking:** findings, CRM fields, and fetched pages, each with source, time, and review state. Fetching
+  uses the SSRF-resistant fetcher and is limited to the lead's company domain.
+- **Evidence validation:** the input gate quarantines instruction-like text until a manager or admin releases it.
+- **Scoring and qualification:** a deterministic 0–100 score with components, cited reasons, dated signals, missing information,
+  and a review status. CRM-only results are escalated as `insufficient_evidence`.
+- **Briefs:** real model output, checked by the output gate, shown as inference, and never read by scoring.
+- **Web:** assessment, brief, evidence, and company-facts panels on the lead page, with citations that jump to the source.
+- **Independent security review** found no tenant breach, role bypass, XSS, or route to private IPv4 addresses. Fixed with tests:
+  CPU exhaustion through a site-chosen charset, a deadline that did not cover response headers, a slow gate pattern, a company
+  name outside the untrusted block, ungated missing-information text, gate evasion through invisible and lookalike characters,
+  unbounded writes and briefs, IPv6 gaps, and unhandled malformed input. Remaining items are in KNOWN_LIMITATIONS.
+- **Measured:** the input gate caught none of 8 reworded attacks. See AI_EVALUATION.md and `research/evaluations/GATES.md`.
+
 ## Tests run (2026-10-30, local Windows machine)
-API, contract, and `vitest` results are from the Phase 4 commit. `next build` and Playwright are from Phase 3 and were not
-rerun, because Phase 4 did not change the web app.
+Results are from the Phase 5 code commit. Playwright ran with `SALESIQ_API_URL` on a free port because another local project
+holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 160 passed, 0 skipped, including real calls to local Ollama models |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (57 files) |
-| Web `vitest` | 24 passed |
-| Web `eslint`, `tsc --noEmit` | Clean |
-| `next build` (Phase 3) | Succeeded |
-| Playwright, desktop + mobile, real API + Postgres (Phase 3) | 30 passed, 2 skipped (sidebar tests are desktop-only) |
-| Notebooks 01–06 (local Ollama) | All executed; Colab paths not run |
+| API `pytest` | 303 passed, 0 skipped, including real calls to local Ollama models |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (66 files) |
+| Web `vitest` | 30 passed |
+| Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
+| Playwright (desktop + mobile, real API + Postgres) | 34 passed, 2 skipped (sidebar tests are desktop-only) |
+| Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- None for Phase 5. Real email (Phase 8) needs a provider choice and explicit approval.
+- None for Phase 6. Real email (Phase 8) needs a provider choice and explicit approval.
 
-## Next concrete steps (Phase 5)
-1. Evidence store: tables under RLS for sources and evidence items with provenance, wired to the model layer.
-2. Research fetcher with the SSRF controls in SECURITY.md. Fetched text is untrusted input.
-3. ICP definitions per organization and an explainable score with deterministic rules first; models add cited reasons.
-4. Quality gates from the Phase 4 findings: reject uncited or unsupported claims and invented numbers, and strip or
-   quarantine instruction-like evidence before it reaches a model. Model labels never trigger an action on their own.
-5. Add injection cases to the evaluation for each new surface, and tune on train only.
+## Next concrete steps (Phase 6)
+1. Durable worker and job table with idempotency keys; move briefs and CSV imports onto it and retire the in-process task.
+2. LangGraph with Postgres checkpoints: typed state, resumable runs, and step, time, and budget limits.
+3. A research-and-qualify workflow that reuses the gates and scoring as they are. A workflow never changes a score by itself.
+4. Workflow status API and a page for run history, with failures visible.
+5. Add injection cases for each new surface, and tune on train only.

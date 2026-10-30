@@ -37,11 +37,20 @@ RLS is enabled and forced on `organizations`, `memberships`, `invitations`, `aud
 
 All six have RLS enabled and forced, scoped to `app_current_org()`.
 
+## Implemented (migration `f08206afd104`)
+| Table | Key columns | Notes |
+|---|---|---|
+| `icp_configurations` | `version`, `criteria`, `weights` (JSONB) | Immutable: the app role can only insert. Newest version is active. Unique `(org, version)` |
+| `research_evidence` | `lead_id`, `source_type`, `source_url`, `title`, `content`, `content_hash`, `status`, `screen_flags[]`, `observed_at`, reviewer | Unique `(org, lead, source_type, content_hash)`, hashed ignoring case and spacing. The app role can update only the review columns |
+| `lead_scores` | `lead_id`, `icp_configuration_id`, `score` (0–100), `fit`, `components`, `reasons`, `positive_signals`, `negative_signals`, `missing_information`, `evidence_ids[]`, `model_version`, `evaluation_status`, reviewer | One row per assessment, kept as history. The app role can update only the review columns |
+| `research_briefs` | `lead_id`, `status`, `model_key`, `served_by`, `prompt_version`, `summary`, `claims`, `rejected_claims`, `missing_information`, `evidence_ids[]`, `failure_category`, latency, tokens | At most one `running` per lead. Never read by scoring |
+
+All four have RLS enabled and forced. The app role has no DELETE on any of them.
+
 ## Planned
 | Phase | Tables |
 |---|---|
 | 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
-| 5 | `research_evidence`, `icp_configurations` (versioned), `lead_scores` |
 | 6 | `workflow_runs`, `workflow_checkpoints` (LangGraph Postgres saver), `jobs` |
 | 7 | `agent_definitions`, `agent_runs`, `tool_calls` |
 | 8 | `outreach_drafts`, `campaigns`, `suppression_entries`, `approval_requests`, `deliveries` |

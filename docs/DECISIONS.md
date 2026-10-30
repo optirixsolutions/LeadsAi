@@ -75,3 +75,23 @@ answer. Raising the limit would make each call slower on hardware that already s
 `qwen3-4b` sets `reasoning_effort: none`. The fix came from the failure mechanism, diagnosed on train items, and prompts
 were not changed. The stopped run stays in `research/evaluations/v1-test-qwen3-4b/` (records only) as evidence. Reaching
 the limit is now a separate `truncated` failure rather than `schema_invalid`.
+
+### ADR-017 · 2026-10-30 · Scores are deterministic; models only write labelled briefs
+Phase 4 measured every model following planted instructions, so no model output can change a score, a status, or evidence.
+A score comes from rules over stored CRM fields and accepted evidence, which makes it reproducible and traceable to rows. The
+cost is recall: signals are configured keywords, so a need phrased differently is missed. A model brief is shown separately as
+inference, with its claims checked against the evidence. A later phase may let models propose signals for human approval.
+
+### ADR-018 · 2026-10-30 · Screened text is quarantined, not deleted, and reps cannot release it
+False positives are expected, so flagged text is kept for review and has no effect until a manager or admin releases it.
+Reps cannot release it, or they could plant an instruction and approve it themselves.
+
+### ADR-019 · 2026-10-30 · Briefs run in-process until the Phase 6 worker
+Local models can take minutes, longer than a web request should wait, and a durable worker arrives in Phase 6. Until then a brief
+runs after the response on an API thread, limited by global slots and a per-org cap. A restart loses it, and it is reported as
+`stale` after 10 minutes.
+
+### ADR-020 · 2026-10-30 · The fetcher pins its connections with an httpcore backend
+Checking an address and then letting the HTTP client resolve it again leaves a DNS rebinding gap. A custom `httpcore` network
+backend resolves, checks, and connects to the checked address, and TLS still verifies the original hostname. This relies on
+httpcore's backend interface, so `httpcore` is a direct dependency.
