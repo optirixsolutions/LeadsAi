@@ -49,7 +49,10 @@ def _seed(admin: Any, data: Dataset) -> dict[str, Any]:
             {"o": org, "s": f"agent-eval-{org.hex[:8]}"},
         )
         conn.execute(
-            text("INSERT INTO users (id, email, password_hash) VALUES (:u, :e, 'x')"),
+            text(
+                "INSERT INTO users (id, email, display_name, password_hash) "
+                "VALUES (:u, :e, 'Agent eval', 'x')"
+            ),
             {"u": user, "e": f"agent-eval-{user.hex[:8]}@example.com"},
         )
         conn.execute(
