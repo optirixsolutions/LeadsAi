@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 3 complete → next is Phase 4 (AI research lab).
+**Current phase:** Phase 4 complete → next is Phase 5 (sales intelligence).
 **Last updated:** 2026-10-30
 
 ## Phase status
@@ -10,8 +10,8 @@
 | 1 | Foundation: monorepo, API, web, DB, Docker, CI | Done (CI workflow not yet run on GitHub) |
 | 2 | Auth, organizations, memberships, permissions, audit, isolation tests | Done (CI not yet run on GitHub) |
 | 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done (CI not yet run on GitHub) |
-| 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Next |
-| 5 | Sales intelligence: evidence, ICP, explainable scoring | Pending |
+| 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Done (Colab paths and hosted route not executed) |
+| 5 | Sales intelligence: evidence, ICP, explainable scoring | Next |
 | 6 | LangGraph workflows with Postgres checkpoints | Pending |
 | 7 | MCP server and bounded agents | Pending |
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Pending |
@@ -74,28 +74,38 @@
   policy, results with row errors); Pipeline board and table with per-currency stage totals and accessible stage moves.
 - Formatting uses one locale and UTC on server and client so hydration never mismatches (per-user settings later).
 
+## Phase 4 — completed
+- **Model layer** (`app/agents/llm/`): one OpenAI-compatible client, YAML registry, retries, reported fallback, cost
+  estimates, and distinct failure categories including `truncated`. Real models only (ADR-015). Not yet wired into the API.
+- **Dataset** (`research/datasets/v1`): fictional, with a held-out split whose wording does not appear in train.
+- **Evaluation** (`app/agents/evaluation/`): rule baseline, six tasks, per-call records, and a generated report.
+- **Notebooks 01–06:** executed locally against real models, including an in-memory MCP tool-permission demo.
+- **Results:** [research/evaluations/REPORT.md](../research/evaluations/REPORT.md); summary in AI_EVALUATION.md. The largest
+  finding is that every model followed planted instructions at a measurable rate, so Phase 5 needs quality gates.
+
 ## Tests run (2026-10-30, local Windows machine)
+API, contract, and `vitest` results are from the Phase 4 commit. `next build` and Playwright are from Phase 3 and were not
+rerun, because Phase 4 did not change the web app.
 | Check | Result |
 |---|---|
-| API `pytest` | 136 passed, 0 skipped (adds leads, imports, pipeline, CRM isolation incl. direct RLS and grant checks) |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (46 files) |
+| API `pytest` | 160 passed, 0 skipped, including real calls to local Ollama models |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (57 files) |
 | Web `vitest` | 24 passed |
-| Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API + Postgres) | 30 passed, 2 skipped (sidebar tests are desktop-only) |
+| Web `eslint`, `tsc --noEmit` | Clean |
+| `next build` (Phase 3) | Succeeded |
+| Playwright, desktop + mobile, real API + Postgres (Phase 3) | 30 passed, 2 skipped (sidebar tests are desktop-only) |
+| Notebooks 01–06 (local Ollama) | All executed; Colab paths not run |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- Phase 4 notebooks can run on the deterministic mock provider; real model comparisons need provider API keys and
-  explicit approval to spend.
+- None for Phase 5. Real email (Phase 8) needs a provider choice and explicit approval.
 
-## Next concrete steps (Phase 4)
-1. `app/agents/llm/`: provider-independent interface (structured output, tool calling, token + cost accounting),
-   adapters for a hosted provider and an Ollama-compatible endpoint, and a deterministic mock used by default.
-2. Model registry config (capabilities, context, pricing, timeouts, retries, concurrency, fallback) loaded from env/YAML.
-3. Synthetic, clearly fictional B2B prospect dataset with labelled train/held-out splits in `research/datasets/`.
-4. Deterministic ICP-fit and scoring baseline (rules) before any model comparison.
-5. Evaluation runner writing reproducible JSONL results (task, dataset version, model, prompt version, tokens,
-   latency, estimated cost, schema validity, grounding, failure category) to `research/evaluations/`.
-6. Notebooks 01–06 importing the same backend modules; CPU-only smoke tests; no secrets in cells.
+## Next concrete steps (Phase 5)
+1. Evidence store: tables under RLS for sources and evidence items with provenance, wired to the model layer.
+2. Research fetcher with the SSRF controls in SECURITY.md. Fetched text is untrusted input.
+3. ICP definitions per organization and an explainable score with deterministic rules first; models add cited reasons.
+4. Quality gates from the Phase 4 findings: reject uncited or unsupported claims and invented numbers, and strip or
+   quarantine instruction-like evidence before it reaches a model. Model labels never trigger an action on their own.
+5. Add injection cases to the evaluation for each new surface, and tune on train only.

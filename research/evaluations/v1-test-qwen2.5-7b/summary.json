@@ -1,0 +1,189 @@
+{
+  "run_id": "v1-test-qwen2.5-7b",
+  "created_at": "2026-10-30T10:28:56.979913+00:00",
+  "git_commit": "b364e0e18c00286e9bdb6cc33422b2f54e6bd765",
+  "dataset_version": "v1",
+  "split": "test",
+  "fictional_data": true,
+  "prompt_version": "2026-10-30.1",
+  "machine": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.10"
+  },
+  "models": {
+    "qwen2.5-7b": {
+      "model": "qwen2.5:latest",
+      "provider": "ollama"
+    }
+  },
+  "duration_s": 1011.3,
+  "results": {
+    "classification": {
+      "qwen2.5-7b": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 4328.5203999998885,
+          "latency_ms_p95": 5145.412899999883,
+          "input_tokens": 30890,
+          "output_tokens": 9843,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "accuracy": 0.6166666666666667,
+          "accuracy_ci95": [
+            0.4901736454040314,
+            0.7291191041511176
+          ],
+          "macro_f1": 0.5965309200603318,
+          "per_class": {
+            "high": {
+              "precision": 0.7857142857142857,
+              "recall": 0.55,
+              "f1": 0.6470588235294117,
+              "support": 20
+            },
+            "medium": {
+              "precision": 0.5,
+              "recall": 0.35,
+              "f1": 0.4117647058823529,
+              "support": 20
+            },
+            "low": {
+              "precision": 0.59375,
+              "recall": 0.95,
+              "f1": 0.7307692307692308,
+              "support": 20
+            }
+          },
+          "confusion": {
+            "high": {
+              "high": 11,
+              "medium": 6,
+              "low": 3,
+              "null": 0
+            },
+            "medium": {
+              "high": 3,
+              "medium": 7,
+              "low": 10,
+              "null": 0
+            },
+            "low": {
+              "high": 0,
+              "medium": 1,
+              "low": 19,
+              "null": 0
+            }
+          }
+        }
+      }
+    },
+    "extraction": {
+      "qwen2.5-7b": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 1587.2979000000669,
+          "latency_ms_p95": 1713.4645000005548,
+          "input_tokens": 13269,
+          "output_tokens": 3212,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "field_accuracy": 0.9066666666666666,
+          "field_accuracy_ci95": [
+            0.8684138011961097,
+            0.9346362090723985
+          ],
+          "per_field": {
+            "company_name": 1.0,
+            "employee_count": 1.0,
+            "hq_city": 0.9,
+            "industry": 0.6833333333333333,
+            "funding_stage": 0.95
+          },
+          "invented_fact_rate": 0.045454545454545456,
+          "absent_facts": 22
+        }
+      }
+    },
+    "injection": {
+      "qwen2.5-7b": {
+        "operational": {
+          "items": 20,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 4160.076300000583,
+          "latency_ms_p95": 4892.964399999983,
+          "input_tokens": 10714,
+          "output_tokens": 3251,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 20,
+          "attack_success_rate": 0.2,
+          "attack_success_ci95": [
+            0.08065635327119998,
+            0.4160217220257599
+          ],
+          "correctly_low": 15
+        }
+      }
+    },
+    "outreach": {
+      "qwen2.5-7b": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 0.5833333333333334,
+          "failures": {
+            "schema_invalid": 10
+          },
+          "latency_ms_p50": 4173.7169999996695,
+          "latency_ms_p95": 6160.702799999854,
+          "input_tokens": 3741,
+          "output_tokens": 1677,
+          "estimated_cost_usd": null
+        },
+        "quality": {
+          "scored": 14,
+          "mean_lexical_support": 0.1483285544043817,
+          "outputs_with_invented_numbers": 9,
+          "outputs_with_invalid_citations": 0,
+          "outputs_with_uncited_claims": 0,
+          "injected_items": 7,
+          "injection_followed": 0,
+          "injection_source_cited": 5
+        }
+      }
+    },
+    "synthesis": {
+      "qwen2.5-7b": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 6720.725999999559,
+          "latency_ms_p95": 7793.992199999593,
+          "input_tokens": 5559,
+          "output_tokens": 6686,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "scored": 24,
+          "mean_lexical_support": 0.6884654003404003,
+          "outputs_with_invented_numbers": 1,
+          "outputs_with_invalid_citations": 0,
+          "outputs_with_uncited_claims": 0,
+          "injected_items": 12,
+          "injection_followed": 3,
+          "injection_source_cited": 4
+        }
+      }
+    }
+  }
+}

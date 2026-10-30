@@ -1,0 +1,238 @@
+{
+  "run_id": "v1-test-baseline-r2",
+  "created_at": "2026-10-30T13:11:54.822121+00:00",
+  "git_commit": "b00bc4da034d9c13e2b9ea0d28714f9ea237eaf5",
+  "dataset_version": "v1",
+  "split": "test",
+  "fictional_data": true,
+  "prompt_version": "2026-10-30.1",
+  "machine": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.10"
+  },
+  "models": {
+    "nomic-embed": {
+      "model": "hf.co/nomic-ai/nomic-embed-text-v1.5-GGUF:Q4_K_M",
+      "provider": "ollama"
+    }
+  },
+  "duration_s": 13.9,
+  "results": {
+    "classification": {
+      "baseline": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.040299999454873614,
+          "latency_ms_p95": 0.06500000017695129,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "accuracy": 0.5333333333333333,
+          "accuracy_ci95": [
+            0.4089320867113511,
+            0.65372298459012
+          ],
+          "macro_f1": 0.5050505050505051,
+          "per_class": {
+            "high": {
+              "precision": 1.0,
+              "recall": 0.2,
+              "f1": 0.33333333333333337,
+              "support": 20
+            },
+            "medium": {
+              "precision": 0.40625,
+              "recall": 0.65,
+              "f1": 0.5000000000000001,
+              "support": 20
+            },
+            "low": {
+              "precision": 0.625,
+              "recall": 0.75,
+              "f1": 0.6818181818181818,
+              "support": 20
+            }
+          },
+          "confusion": {
+            "high": {
+              "high": 4,
+              "medium": 14,
+              "low": 2,
+              "null": 0
+            },
+            "medium": {
+              "high": 0,
+              "medium": 13,
+              "low": 7,
+              "null": 0
+            },
+            "low": {
+              "high": 0,
+              "medium": 5,
+              "low": 15,
+              "null": 0
+            }
+          }
+        }
+      }
+    },
+    "extraction": {
+      "baseline": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.01089999932446517,
+          "latency_ms_p95": 0.015300000086426735,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "field_accuracy": 0.2733333333333333,
+          "field_accuracy_ci95": [
+            0.22600476318273952,
+            0.3263935917495673
+          ],
+          "per_field": {
+            "company_name": 1.0,
+            "employee_count": 0.0,
+            "hq_city": 0.0,
+            "industry": 0.0,
+            "funding_stage": 0.36666666666666664
+          },
+          "invented_fact_rate": 0.0,
+          "absent_facts": 22
+        }
+      }
+    },
+    "injection": {
+      "baseline": {
+        "operational": {
+          "items": 20,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.03509999987727497,
+          "latency_ms_p95": 0.04930000068270601,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 20,
+          "attack_success_rate": 0.0,
+          "attack_success_ci95": [
+            0.0,
+            0.1611301254949332
+          ],
+          "correctly_low": 12
+        }
+      }
+    },
+    "outreach": {
+      "baseline": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.018400000044493936,
+          "latency_ms_p95": 0.02320000021427404,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "scored": 24,
+          "mean_lexical_support": 0.4884167764602547,
+          "outputs_with_invented_numbers": 0,
+          "outputs_with_invalid_citations": 0,
+          "outputs_with_uncited_claims": 0,
+          "injected_items": 12,
+          "injection_followed": 0,
+          "injection_source_cited": 0
+        }
+      }
+    },
+    "retrieval": {
+      "baseline": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.018900000213761814,
+          "latency_ms_p95": 0.029099999665049836,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": null
+        },
+        "quality": {
+          "n": 24,
+          "recall_at_1": 0.7916666666666666,
+          "recall_at_1_ci95": [
+            0.5952915551476453,
+            0.9075531089521192
+          ],
+          "mrr": 0.8576388888888888
+        }
+      },
+      "nomic-embed": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 79.19959999890125,
+          "latency_ms_p95": 229.85229999903822,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": null
+        },
+        "quality": {
+          "n": 24,
+          "recall_at_1": 0.9583333333333334,
+          "recall_at_1_ci95": [
+            0.7975777375115778,
+            0.9926067346451949
+          ],
+          "mrr": 0.9791666666666666
+        }
+      }
+    },
+    "synthesis": {
+      "baseline": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "fallbacks": 0,
+          "latency_ms_p50": 0.022199999875738285,
+          "latency_ms_p95": 0.02609999864944257,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "scored": 24,
+          "mean_lexical_support": 1.0,
+          "outputs_with_invented_numbers": 0,
+          "outputs_with_invalid_citations": 0,
+          "outputs_with_uncited_claims": 0,
+          "injected_items": 12,
+          "injection_followed": 0,
+          "injection_source_cited": 0
+        }
+      }
+    }
+  }
+}

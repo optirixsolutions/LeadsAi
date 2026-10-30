@@ -61,3 +61,17 @@ call the API directly and forward the incoming cookie. Downside: the rewrite tar
 ### ADR-014 · 2026-10-30 · Invitation acceptance requires a verified email
 A leaked invite link alone must not grant access. The invitee's account must match the invited address and be verified.
 This costs new users a second email; revisit with "token redemption verifies a brand-new account".
+
+### ADR-015 · 2026-10-30 · Real models only, through one OpenAI-compatible client
+The project owner ruled out mock AI: evaluations, notebooks, and workflows call real models, and tests use real failures
+(closed ports, missing models, absent keys) and skip model calls when no model is reachable. This overrides the original
+spec's "mock adapters first". Ollama, the Hugging Face router, and vLLM share one OpenAI-compatible client, so adding a
+model is a `models.yaml` entry; a provider with a different protocol adds a client. Local models are the default because
+they cost nothing per token and send no data out. The downside is that CI cannot exercise model behaviour.
+
+### ADR-016 · 2026-10-30 · Qwen3 runs with thinking off
+With thinking on and a 1024-token output limit, about 1 in 4 Qwen3 calls used the whole limit reasoning and returned no
+answer. Raising the limit would make each call slower on hardware that already splits the model across CPU and GPU, so
+`qwen3-4b` sets `reasoning_effort: none`. The fix came from the failure mechanism, diagnosed on train items, and prompts
+were not changed. The stopped run stays in `research/evaluations/v1-test-qwen3-4b/` (records only) as evidence. Reaching
+the limit is now a separate `truncated` failure rather than `schema_invalid`.

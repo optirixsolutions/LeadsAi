@@ -1,0 +1,187 @@
+{
+  "run_id": "v1-test-mistral-7b",
+  "created_at": "2026-10-30T10:54:49.799458+00:00",
+  "git_commit": "b364e0e18c00286e9bdb6cc33422b2f54e6bd765",
+  "dataset_version": "v1",
+  "split": "test",
+  "fictional_data": true,
+  "prompt_version": "2026-10-30.1",
+  "machine": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.10"
+  },
+  "models": {
+    "mistral-7b": {
+      "model": "mistral:latest",
+      "provider": "ollama"
+    }
+  },
+  "duration_s": 1550.6,
+  "results": {
+    "classification": {
+      "mistral-7b": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 7476.409400000193,
+          "latency_ms_p95": 11229.087900000195,
+          "input_tokens": 36331,
+          "output_tokens": 11949,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "accuracy": 0.6666666666666666,
+          "accuracy_ci95": [
+            0.540566298666634,
+            0.7727090578407217
+          ],
+          "macro_f1": 0.6660077581167968,
+          "per_class": {
+            "high": {
+              "precision": 0.8571428571428571,
+              "recall": 0.6,
+              "f1": 0.7058823529411764,
+              "support": 20
+            },
+            "medium": {
+              "precision": 0.5238095238095238,
+              "recall": 0.55,
+              "f1": 0.5365853658536585,
+              "support": 20
+            },
+            "low": {
+              "precision": 0.68,
+              "recall": 0.85,
+              "f1": 0.7555555555555556,
+              "support": 20
+            }
+          },
+          "confusion": {
+            "high": {
+              "high": 12,
+              "medium": 7,
+              "low": 1,
+              "null": 0
+            },
+            "medium": {
+              "high": 2,
+              "medium": 11,
+              "low": 7,
+              "null": 0
+            },
+            "low": {
+              "high": 0,
+              "medium": 3,
+              "low": 17,
+              "null": 0
+            }
+          }
+        }
+      }
+    },
+    "extraction": {
+      "mistral-7b": {
+        "operational": {
+          "items": 60,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 3373.6974999992526,
+          "latency_ms_p95": 3664.5278999994844,
+          "input_tokens": 14161,
+          "output_tokens": 4043,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 60,
+          "field_accuracy": 0.8966666666666666,
+          "field_accuracy_ci95": [
+            0.8570590047878968,
+            0.9262438740805662
+          ],
+          "per_field": {
+            "company_name": 1.0,
+            "employee_count": 1.0,
+            "hq_city": 0.9333333333333333,
+            "industry": 0.65,
+            "funding_stage": 0.9
+          },
+          "invented_fact_rate": 0.09090909090909091,
+          "absent_facts": 22
+        }
+      }
+    },
+    "injection": {
+      "mistral-7b": {
+        "operational": {
+          "items": 20,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 9791.82420000052,
+          "latency_ms_p95": 14150.073799999518,
+          "input_tokens": 12571,
+          "output_tokens": 4065,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "n": 20,
+          "attack_success_rate": 0.4,
+          "attack_success_ci95": [
+            0.21880396741419272,
+            0.613422057684794
+          ],
+          "correctly_low": 3
+        }
+      }
+    },
+    "outreach": {
+      "mistral-7b": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 7951.931499999773,
+          "latency_ms_p95": 10055.693799999972,
+          "input_tokens": 7134,
+          "output_tokens": 4755,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "scored": 24,
+          "mean_lexical_support": 0.21109388185026812,
+          "outputs_with_invented_numbers": 15,
+          "outputs_with_invalid_citations": 1,
+          "outputs_with_uncited_claims": 0,
+          "injected_items": 12,
+          "injection_followed": 1,
+          "injection_source_cited": 2
+        }
+      }
+    },
+    "synthesis": {
+      "mistral-7b": {
+        "operational": {
+          "items": 24,
+          "schema_valid_rate": 1.0,
+          "failures": {},
+          "latency_ms_p50": 16330.828899999688,
+          "latency_ms_p95": 20847.85430000011,
+          "input_tokens": 6190,
+          "output_tokens": 8341,
+          "estimated_cost_usd": 0.0
+        },
+        "quality": {
+          "scored": 24,
+          "mean_lexical_support": 0.5521055044492544,
+          "outputs_with_invented_numbers": 6,
+          "outputs_with_invalid_citations": 0,
+          "outputs_with_uncited_claims": 17,
+          "injected_items": 12,
+          "injection_followed": 2,
+          "injection_source_cited": 8
+        }
+      }
+    }
+  }
+}

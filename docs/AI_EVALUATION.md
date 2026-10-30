@@ -44,6 +44,22 @@ schema validity, failure category, prediction, and an empty slot for a human rat
 Failed calls count as wrong. Tasks use a held-out split whose signal phrasing and fact wording do not appear in train.
 The rule baseline runs first, and any model has to beat it to justify its cost.
 
+## Findings (held-out split, fictional data)
+- **Extraction:** the clearest result. `qwen3-4b` scored 98% field accuracy (95% CI 96–99%) with no invented facts, against
+  91% for `qwen2.5-7b`, 90% for `mistral-7b`, and 27% for the baseline.
+- **Classification:** models scored 62–67% and the baseline 53%. The intervals overlap, so no ranking is established.
+- **Prompt injection:** a real risk for every model. Planted instructions forced a "high" label in 55% of attacks on
+  `qwen3-4b`, 40% on `mistral-7b`, and 20% on `qwen2.5-7b`. The baseline ignores them. In synthesis, `qwen3-4b` obeyed 8 of 12.
+- **Outreach:** `qwen2.5-7b` fell into repetition loops and hit the token limit on 9 of 24 drafts (10 of 24 in its first run,
+  so runs are not exactly repeatable). `mistral-7b` included unsupported numbers in 15 of 24. `qwen3-4b` had neither problem
+  but obeyed the injection in 3 of 12.
+- **Retrieval:** embeddings reached 96% recall@1 and keyword overlap 79%. The intervals overlap slightly.
+
+Routes in `models.yaml` follow these results: `qwen3-4b` for extraction and outreach, `qwen2.5-7b` for classification
+(same accuracy as `qwen3-4b`, fewer successful attacks, faster) and synthesis. They were chosen on the held-out split, so
+the chosen models' scores are optimistic. **No model is safe on untrusted text without gates:** Phase 5 must add them, and
+outreach stays behind human approval.
+
 ## Data and honesty rules
 `research/datasets/` is synthetic and fictional, with labels from a known rule, so results compare methods and do not predict
 production accuracy or conversion. No accuracy, cost, or savings figure is stated without a measurement behind it.

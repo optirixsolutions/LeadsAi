@@ -1,9 +1,19 @@
 # Known Limitations
 
-Current as of Phase 3 (2026-10-30).
+Current as of Phase 4 (2026-10-30).
+
+## AI evaluation
+- The dataset is small, synthetic, and fictional, with rule-derived labels. Results compare methods; they do not predict
+  production accuracy or conversion. No human ratings have been collected.
+- The Hugging Face hosted route and the Colab paths in the notebooks have not been executed (no `HF_TOKEN` set, no Colab run).
+- CI has no GPU or model, so tests that call a model skip there and run only on a machine with Ollama.
+- Ollama ignores `context_tokens` from `models.yaml`. It loaded Qwen3 with a 40,960-token context, which took 9.2 GB and
+  split the model 31%/69% across CPU and GPU, so its latency here is not a best case.
+- Ollama's reported output tokens appear to leave out reasoning text, so token counts understate thinking runs.
+- Local cost covers tokens only, not hardware or power.
 
 ## Functional
-- No research, scoring, agents, or outreach yet (Phases 4–8).
+- No research, scoring, agents, or outreach in the product yet (Phases 5–8). The model layer is not wired into any API route.
 - **CSV import is synchronous** and capped at 5 MB / 10,000 rows in one transaction. It becomes a durable background
   job with progress tracking when the worker lands (Phase 6). Duplicate detection is by email only; leads without an
   email are never treated as duplicates.
@@ -38,6 +48,9 @@ Current as of Phase 3 (2026-10-30).
 - GitHub Actions workflow is written but has not run; no remote repository is configured.
 - No background worker, OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
 - The web build resolves the API URL for rewrites at **build time** (`SALESIQ_API_URL`); change it and rebuild per environment.
+- Host port 55432 is inside Windows' ephemeral range (49152–65535), so any local process can take it as a random socket
+  port. Docker then starts Postgres healthy but unpublished (`docker compose ps` shows only `5432/tcp`) and connections
+  time out. Workaround: set `SALESIQ_PG_PORT`, `SALESIQ_TEST_DB_HOST`, and the database URLs to a free port below 49152.
 - `make` is unavailable in plain PowerShell; use Git Bash/WSL or the raw commands in README.
 - Existing local Postgres volumes created before Phase 2 lack the `salesiq_app` and `salesiq_definer` roles; run the
   role statements from `infra/docker/postgres-init.sql` once, or recreate the volume (`docker compose down -v`).
