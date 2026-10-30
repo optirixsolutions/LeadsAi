@@ -6,6 +6,7 @@ from alembic.config import Config
 from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, inspect, text
 
+from app.core.db import get_engine
 from app.models import Base
 from tests.conftest import API_ROOT, ensure_app_role
 
@@ -18,6 +19,8 @@ def _config(db_url: str) -> Config:
 
 
 def _reset(db_url: str) -> None:
+    # Pooled app connections keep prepared statements that name types this drop recreates.
+    get_engine().dispose()
     engine = create_engine(db_url)
     ensure_app_role(engine)
     with engine.begin() as conn:

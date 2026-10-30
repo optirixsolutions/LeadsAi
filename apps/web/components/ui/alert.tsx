@@ -3,6 +3,7 @@ import { clsx } from "clsx";
 const TONES = {
   error: "border-danger/40 bg-danger/10 text-danger",
   success: "border-accent/40 bg-accent/10 text-accent",
+  warning: "border-amber-500/40 bg-amber-500/10 text-amber-300",
   info: "border-border bg-surface-raised text-fg-muted",
 } as const;
 

@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from app.agents.evaluation import baseline, metrics
+from app.agents.evaluation import baseline, gate_eval, metrics
 from app.agents.evaluation.runner import Dataset, summarize
 
 
@@ -137,6 +137,14 @@ def test_baseline_is_deterministic_and_never_fails() -> None:
         for i in data.grounding
         for c in baseline.synthesize(i).claims
     )
+
+
+def test_gate_report_counts_dataset_attacks_and_keeps_reworded_ones_separate() -> None:
+    data = Dataset.load("train")
+    report = gate_eval.input_gate(data)
+    assert report["attack_notes"] == [len(data.attacks), len(data.attacks)]
+    assert report["clean_notes_flagged"][0] == 0
+    assert report["reworded_attacks"][1] == len(gate_eval.REWORDED_ATTACKS)
 
 
 def test_summarize_reports_failures_and_treats_them_as_wrong() -> None:

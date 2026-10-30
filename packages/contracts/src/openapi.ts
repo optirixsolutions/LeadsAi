@@ -308,6 +308,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Assessment */
+        get: operations["get_assessment_api_v1_organizations__org_id__assessments__assessment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Review Assessment */
+        patch: operations["review_assessment_api_v1_organizations__org_id__assessments__assessment_id__patch"];
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/audit": {
         parameters: {
             query?: never;
@@ -359,6 +377,41 @@ export interface paths {
         head?: never;
         /** Update Company */
         patch: operations["update_company_api_v1_organizations__org_id__companies__company_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/icp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Icp */
+        get: operations["get_icp_api_v1_organizations__org_id__icp_get"];
+        put?: never;
+        /** Create Icp Version */
+        post: operations["create_icp_version_api_v1_organizations__org_id__icp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/icp/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Icp Versions */
+        get: operations["list_icp_versions_api_v1_organizations__org_id__icp_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/organizations/{org_id}/invitations": {
@@ -516,6 +569,110 @@ export interface paths {
         head?: never;
         /** Update Lead */
         patch: operations["update_lead_api_v1_organizations__org_id__leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Assessments */
+        get: operations["list_assessments_api_v1_organizations__org_id__leads__lead_id__assessments_get"];
+        put?: never;
+        /** Assess Lead */
+        post: operations["assess_lead_api_v1_organizations__org_id__leads__lead_id__assessments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/briefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Brief */
+        post: operations["request_brief_api_v1_organizations__org_id__leads__lead_id__briefs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/briefs/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Latest Brief */
+        get: operations["latest_brief_api_v1_organizations__org_id__leads__lead_id__briefs_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Evidence */
+        get: operations["list_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_get"];
+        put?: never;
+        /** Add Evidence */
+        post: operations["add_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/evidence/fetch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fetch Evidence */
+        post: operations["fetch_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_fetch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/leads/{lead_id}/evidence/{evidence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Review Evidence */
+        patch: operations["review_evidence_api_v1_organizations__org_id__leads__lead_id__evidence__evidence_id__patch"];
         trace?: never;
     };
     "/api/v1/organizations/{org_id}/leads/{lead_id}/notes": {
@@ -701,7 +858,114 @@ export interface components {
          * ActivityType
          * @enum {string}
          */
-        ActivityType: "created" | "imported" | "updated" | "status_changed" | "assigned" | "note" | "opportunity_created" | "stage_changed" | "deleted";
+        ActivityType: "created" | "imported" | "updated" | "status_changed" | "assigned" | "note" | "opportunity_created" | "stage_changed" | "deleted" | "research_added" | "assessed";
+        /**
+         * AssessmentDetail
+         * @description An assessment with the stored evidence behind it, as it is now.
+         */
+        AssessmentDetail: {
+            /** Components */
+            components: components["schemas"]["ScoreComponent"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By User Id */
+            created_by_user_id: string | null;
+            evaluation_status: components["schemas"]["EvaluationStatus"];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceOut"][];
+            /** Evidence Ids */
+            evidence_ids: string[];
+            fit: components["schemas"]["FitLabel"];
+            /**
+             * Icp Configuration Id
+             * Format: uuid
+             */
+            icp_configuration_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /** Missing Information */
+            missing_information: string[];
+            /** Model Version */
+            model_version: string;
+            /** Negative Signals */
+            negative_signals: components["schemas"]["Signal"][];
+            /** Positive Signals */
+            positive_signals: components["schemas"]["Signal"][];
+            /** Reasons */
+            reasons: components["schemas"]["CitedReason"][];
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By User Id */
+            reviewed_by_user_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /** AssessmentOut */
+        AssessmentOut: {
+            /** Components */
+            components: components["schemas"]["ScoreComponent"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By User Id */
+            created_by_user_id: string | null;
+            evaluation_status: components["schemas"]["EvaluationStatus"];
+            /** Evidence Ids */
+            evidence_ids: string[];
+            fit: components["schemas"]["FitLabel"];
+            /**
+             * Icp Configuration Id
+             * Format: uuid
+             */
+            icp_configuration_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /** Missing Information */
+            missing_information: string[];
+            /** Model Version */
+            model_version: string;
+            /** Negative Signals */
+            negative_signals: components["schemas"]["Signal"][];
+            /** Positive Signals */
+            positive_signals: components["schemas"]["Signal"][];
+            /** Reasons */
+            reasons: components["schemas"]["CitedReason"][];
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By User Id */
+            reviewed_by_user_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /** AssessmentReview */
+        AssessmentReview: {
+            /**
+             * Evaluation Status
+             * @enum {string}
+             */
+            evaluation_status: "approved" | "rejected";
+        };
         /** AuditEntryOut */
         AuditEntryOut: {
             /** Action */
@@ -736,6 +1000,63 @@ export interface components {
             /** Next Cursor */
             next_cursor: string | null;
         };
+        /** BriefClaim */
+        BriefClaim: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Text */
+            text: string;
+        };
+        /** BriefOut */
+        BriefOut: {
+            /** Claims */
+            claims: components["schemas"]["BriefClaim"][];
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Failure Category */
+            failure_category: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Latency Ms */
+            latency_ms: number | null;
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /** Missing Information */
+            missing_information: string[];
+            /** Model Key */
+            model_key: string;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Rejected Claims */
+            rejected_claims: components["schemas"]["RejectedClaim"][];
+            /** Served By */
+            served_by: string | null;
+            status: components["schemas"]["BriefStatus"];
+            /** Summary */
+            summary: string | null;
+        };
+        /**
+         * BriefStatus
+         * @enum {string}
+         */
+        BriefStatus: "running" | "completed" | "rejected" | "failed";
         /** BulkIn */
         BulkIn: {
             /**
@@ -752,6 +1073,13 @@ export interface components {
         BulkOut: {
             /** Affected */
             affected: number;
+        };
+        /** CitedReason */
+        CitedReason: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Text */
+            text: string;
         };
         /** CompanyDetailOut */
         CompanyDetailOut: {
@@ -863,10 +1191,183 @@ export interface components {
          * @enum {string}
          */
         DuplicatePolicy: "skip" | "update";
+        /**
+         * EvaluationStatus
+         * @enum {string}
+         */
+        EvaluationStatus: "pending_review" | "insufficient_evidence" | "approved" | "rejected";
+        /** EvidenceCreate */
+        EvidenceCreate: {
+            /** Content */
+            content: string;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** EvidenceFetch */
+        EvidenceFetch: {
+            /** Url */
+            url: string;
+        };
+        /** EvidenceOut */
+        EvidenceOut: {
+            /** Content */
+            content: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By User Id */
+            created_by_user_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By User Id */
+            reviewed_by_user_id: string | null;
+            /** Screen Flags */
+            screen_flags: string[];
+            source_type: components["schemas"]["EvidenceSource"];
+            /** Source Url */
+            source_url: string | null;
+            status: components["schemas"]["EvidenceStatus"];
+            /** Title */
+            title: string | null;
+        };
+        /** EvidenceReview */
+        EvidenceReview: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "accepted" | "rejected";
+        };
+        /**
+         * EvidenceSource
+         * @enum {string}
+         */
+        EvidenceSource: "manual_note" | "crm_record" | "fetched_page";
+        /**
+         * EvidenceStatus
+         * @enum {string}
+         */
+        EvidenceStatus: "accepted" | "quarantined" | "rejected";
+        /**
+         * FitLabel
+         * @enum {string}
+         */
+        FitLabel: "high" | "medium" | "low";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IcpCreate */
+        IcpCreate: {
+            criteria: components["schemas"]["IcpCriteria"];
+            /**
+             * @default {
+             *       "data_quality": 10,
+             *       "decision_maker": 10,
+             *       "icp_fit": 35,
+             *       "intent": 15,
+             *       "need": 20,
+             *       "negative": 25,
+             *       "timing": 10
+             *     }
+             */
+            weights: components["schemas"]["ScoringWeights"];
+        };
+        /**
+         * IcpCriteria
+         * @description Firmographic criteria and evidence keywords. Personal attributes have no place here.
+         */
+        IcpCriteria: {
+            /**
+             * Countries
+             * @default []
+             */
+            countries: string[];
+            /**
+             * Excluded Industries
+             * @default []
+             */
+            excluded_industries: string[];
+            /**
+             * Industries
+             * @default []
+             */
+            industries: string[];
+            /**
+             * Intent Keywords
+             * @default []
+             */
+            intent_keywords: string[];
+            /** Max Employees */
+            max_employees?: number | null;
+            /** Min Employees */
+            min_employees?: number | null;
+            /**
+             * Need Keywords
+             * @default []
+             */
+            need_keywords: string[];
+            /**
+             * Negative Keywords
+             * @default []
+             */
+            negative_keywords: string[];
+            /**
+             * Signal Ttl Days
+             * @default 180
+             */
+            signal_ttl_days: number;
+            /**
+             * Target Titles
+             * @default []
+             */
+            target_titles: string[];
+            /**
+             * Timing Keywords
+             * @default []
+             */
+            timing_keywords: string[];
+        };
+        /** IcpOut */
+        IcpOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By User Id */
+            created_by_user_id: string | null;
+            criteria: components["schemas"]["IcpCriteria"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Version */
+            version: number;
+            weights: components["schemas"]["ScoringWeights"];
         };
         /** ImportIn */
         ImportIn: {
@@ -1444,11 +1945,72 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** RejectedClaim */
+        RejectedClaim: {
+            /** Problems */
+            problems: string[];
+            /** Text */
+            text: string | null;
+        };
         /**
          * Role
          * @enum {string}
          */
         Role: "owner" | "admin" | "manager" | "sales_rep" | "analyst";
+        /** ScoreComponent */
+        ScoreComponent: {
+            /** Label */
+            label: string;
+            /** Name */
+            name: string;
+            /** Points */
+            points: number | null;
+            /** Raw */
+            raw: number | null;
+            /** Weight */
+            weight: number;
+        };
+        /**
+         * ScoringWeights
+         * @description Relative weights for the positive components; `negative` is points taken off the score.
+         */
+        ScoringWeights: {
+            /**
+             * Data Quality
+             * @default 10
+             */
+            data_quality: number;
+            /**
+             * Decision Maker
+             * @default 10
+             */
+            decision_maker: number;
+            /**
+             * Icp Fit
+             * @default 35
+             */
+            icp_fit: number;
+            /**
+             * Intent
+             * @default 15
+             */
+            intent: number;
+            /**
+             * Need
+             * @default 20
+             */
+            need: number;
+            /**
+             * Negative
+             * @default 25
+             */
+            negative: number;
+            /**
+             * Timing
+             * @default 10
+             */
+            timing: number;
+        };
         /** SessionOut */
         SessionOut: {
             /**
@@ -1477,6 +2039,33 @@ export interface components {
             last_seen_at: string;
             /** User Agent */
             user_agent: string | null;
+        };
+        /** Signal */
+        Signal: {
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Keyword */
+            keyword: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Snippet */
+            snippet: string;
+            source_type: components["schemas"]["EvidenceSource"];
+            /** Source Url */
+            source_url: string | null;
+            /** Type */
+            type: string;
         };
         /** StageCreate */
         StageCreate: {
@@ -2123,6 +2712,74 @@ export interface operations {
             };
         };
     };
+    get_assessment_api_v1_organizations__org_id__assessments__assessment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_assessment_api_v1_organizations__org_id__assessments__assessment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssessmentReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_audit_api_v1_organizations__org_id__audit_get: {
         parameters: {
             query?: {
@@ -2282,6 +2939,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_icp_api_v1_organizations__org_id__icp_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcpOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_icp_version_api_v1_organizations__org_id__icp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IcpCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcpOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_icp_versions_api_v1_organizations__org_id__icp_versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcpOut"][];
                 };
             };
             /** @description Validation Error */
@@ -2729,6 +3483,275 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assessments_api_v1_organizations__org_id__leads__lead_id__assessments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assess_lead_api_v1_organizations__org_id__leads__lead_id__assessments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_brief_api_v1_organizations__org_id__leads__lead_id__briefs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    latest_brief_api_v1_organizations__org_id__leads__lead_id__briefs_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fetch_evidence_api_v1_organizations__org_id__leads__lead_id__evidence_fetch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceFetch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_evidence_api_v1_organizations__org_id__leads__lead_id__evidence__evidence_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+                evidence_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvidenceReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
                 };
             };
             /** @description Validation Error */

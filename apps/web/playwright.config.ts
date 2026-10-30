@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Runs a production web build against a real API and database. Locally this uses the
 // docker compose Postgres/Redis; CI provides them as services. Tests create their own
 // uniquely named users and organizations, so they never depend on existing data.
+const apiUrl = new URL(process.env.SALESIQ_API_URL ?? "http://127.0.0.1:8000");
 const apiEnv = {
   SALESIQ_ENVIRONMENT: "test",
   SALESIQ_MAILER: "disabled",
@@ -25,9 +26,11 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // The web build's rewrites point at :8000 (the default SALESIQ_API_URL).
-      command: "uv run --project ../api uvicorn app.main:app --app-dir ../api --host 127.0.0.1 --port 8000",
-      url: "http://127.0.0.1:8000/api/v1/health/live",
+      // Must match the URL the web build's rewrites were built with. If another project holds
+      // :8000, build and test with SALESIQ_API_URL set to a free port; a server already on the
+      // port is reused, so a stranger's would otherwise answer these tests.
+      command: `uv run --project ../api uvicorn app.main:app --app-dir ../api --host 127.0.0.1 --port ${apiUrl.port}`,
+      url: `${apiUrl.origin}/api/v1/health/live`,
       env: apiEnv,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

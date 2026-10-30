@@ -52,6 +52,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   opportunity_created: "Opportunity created",
   stage_changed: "Stage changed",
   deleted: "Lead deleted",
+  research_added: "Research evidence added",
+  assessed: "Lead assessed",
 };
 
 export function describeActivity(a: Activity, members: Member[]): { title: string; detail: string } {
@@ -73,6 +75,10 @@ export function describeActivity(a: Activity, members: Member[]): { title: strin
       return { title, detail: `${String(d.name)} · ${String(d.stage)}` };
     case "note":
       return { title, detail: a.body ?? "" };
+    case "assessed":
+      return { title, detail: `Score ${String(d.score)} · ${String(d.fit)} fit` };
+    case "research_added":
+      return { title, detail: d.status === "quarantined" ? "Held back for review" : "" };
     default:
       return { title, detail: "" };
   }

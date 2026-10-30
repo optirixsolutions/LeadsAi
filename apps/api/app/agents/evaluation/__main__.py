@@ -3,6 +3,7 @@
 import argparse
 import json
 
+from app.agents.evaluation.gate_eval import write_gates_report
 from app.agents.evaluation.report import write_report
 from app.agents.evaluation.runner import ALL_TASKS, BASELINE, run
 from app.agents.llm import ModelRegistry
@@ -21,10 +22,16 @@ def main() -> None:
         "--status", action="store_true", help="Show which models can run, then exit"
     )
     parser.add_argument("--report", action="store_true", help="Write REPORT.md from past runs")
+    parser.add_argument("--gates", action="store_true", help="Write GATES.md; --models runs live")
     args = parser.parse_args()
 
     if args.report:
         print(write_report(args.split))
+        return
+
+    if args.gates:
+        models = [m.strip() for m in args.models.split(",") if m.strip() and m.strip() != BASELINE]
+        print(write_gates_report(args.split, models))
         return
 
     if args.status:

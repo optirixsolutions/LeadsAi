@@ -17,6 +17,8 @@ def get_engine() -> Engine:
         s.database_url,
         pool_size=s.database_pool_size,
         pool_pre_ping=True,
+        # Evidence and lead data must not end up in logged database errors.
+        hide_parameters=True,
         connect_args={"connect_timeout": s.database_connect_timeout_s},
     )
 

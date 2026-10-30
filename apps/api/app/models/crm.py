@@ -64,6 +64,8 @@ class ActivityType(enum.StrEnum):
     opportunity_created = "opportunity_created"
     stage_changed = "stage_changed"
     deleted = "deleted"
+    research_added = "research_added"
+    assessed = "assessed"
 
 
 class ImportStatus(enum.StrEnum):

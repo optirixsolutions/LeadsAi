@@ -24,20 +24,43 @@ class Permission(enum.StrEnum):
     pipeline_read = "pipeline:read"
     pipeline_write = "pipeline:write"  # create and move opportunities
     pipeline_configure = "pipeline:configure"  # stages
+    intelligence_read = "intelligence:read"  # ICP, evidence, assessments, briefs
+    research_write = "research:write"  # add or fetch evidence, request briefs
+    assessments_run = "assessments:run"
+    # Release quarantined evidence and approve assessments. Withheld from reps, who could
+    # otherwise add a planted instruction and then wave it through themselves.
+    intelligence_review = "intelligence:review"
+    icp_configure = "icp:configure"
 
 
 _ALL = frozenset(Permission)
 _READ = frozenset(
-    {Permission.org_read, Permission.members_read, Permission.leads_read, Permission.pipeline_read}
+    {
+        Permission.org_read,
+        Permission.members_read,
+        Permission.leads_read,
+        Permission.pipeline_read,
+        Permission.intelligence_read,
+    }
 )
-_SELL = _READ | {Permission.leads_write, Permission.pipeline_write}
+_SELL = _READ | {
+    Permission.leads_write,
+    Permission.pipeline_write,
+    Permission.research_write,
+    Permission.assessments_run,
+}
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.owner: _ALL,
     Role.admin: _ALL,
     # Managers run the team's data: bulk changes, imports, and exports.
     Role.manager: _SELL
-    | {Permission.leads_delete, Permission.leads_import, Permission.leads_export},
+    | {
+        Permission.leads_delete,
+        Permission.leads_import,
+        Permission.leads_export,
+        Permission.intelligence_review,
+    },
     Role.sales_rep: _SELL,
     # Read-only. Export is withheld: it is the easiest path to bulk data exfiltration.
     Role.analyst: _READ,

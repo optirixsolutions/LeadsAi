@@ -5,7 +5,12 @@ import { notFound } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardHeader, EmptyState } from "@/components/ui/card";
 import { LeadStatusBadge } from "@/components/ui/status-badge";
+import { AssessmentCard } from "@/features/intelligence/assessment-card";
+import { BriefCard } from "@/features/intelligence/brief-card";
+import { CompanyFacts } from "@/features/intelligence/company-facts";
+import { EvidenceCard } from "@/features/intelligence/evidence-card";
 import { LeadDetails, NoteForm, OpportunityForm, DeleteLeadButton } from "@/features/leads/lead-profile";
+import type { Assessment, AssessmentDetail, Brief, CompanyDetail, Evidence, Icp } from "@/lib/intelligence";
 import {
   describeActivity,
   formatDate,
@@ -25,10 +30,15 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const { org } = await requireOrg();
   const orgId = org.organization_id;
-  const [lead, members, stages] = await Promise.all([
-    orgGet<LeadDetail>(orgId, `/leads/${encodeURIComponent(id)}`),
+  const leadPath = `/leads/${encodeURIComponent(id)}`;
+  const [lead, members, stages, icp, evidence, assessments, brief] = await Promise.all([
+    orgGet<LeadDetail>(orgId, leadPath),
     getMembers(orgId),
     getStages(orgId),
+    orgGet<Icp | null>(orgId, "/icp"),
+    orgGet<Evidence[]>(orgId, `${leadPath}/evidence`),
+    orgGet<Assessment[]>(orgId, `${leadPath}/assessments`),
+    orgGet<Brief>(orgId, `${leadPath}/briefs/latest`),
   ]);
   if (!lead.ok) {
     if (lead.status === 404 || lead.status === 422) notFound();
@@ -38,6 +48,22 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const stageList = stages.ok ? stages.data : [];
   const stageName = (sid: string) => stageList.find((s) => s.id === sid)?.name ?? "Unknown stage";
   const can = (p: string) => hasPermission(org.permissions, p);
+
+  const latestId = assessments.ok ? assessments.data[0]?.id : undefined;
+  const [latest, company] = await Promise.all([
+    latestId ? orgGet<AssessmentDetail>(orgId, `/assessments/${latestId}`) : null,
+    l.company ? orgGet<CompanyDetail>(orgId, `/companies/${l.company.id}`) : null,
+  ]);
+  // Citations show these numbers, and the evidence list below shows the same ones.
+  const evidenceList = evidence.ok ? evidence.data : [];
+  const evidenceNumbers = new Map(evidenceList.map((e, i) => [e.id, evidenceList.length - i]));
+  const intelligenceError = [
+    !icp.ok && icp.message,
+    !evidence.ok && evidence.message,
+    !assessments.ok && assessments.message,
+    latest && !latest.ok && latest.message,
+    !brief.ok && brief.status !== 404 && brief.message,
+  ].find(Boolean);
 
   return (
     <>
@@ -61,6 +87,33 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <LeadDetails orgId={orgId} lead={l} members={members} canEdit={can("leads:write")} />
+
+          {intelligenceError && <Alert tone="error">Some research data could not be loaded: {intelligenceError}</Alert>}
+          <AssessmentCard
+            orgId={orgId}
+            leadId={l.id}
+            assessment={latest?.ok ? latest.data : null}
+            evidenceNumbers={evidenceNumbers}
+            hasIcp={icp.ok && icp.data !== null}
+            canRun={can("assessments:run")}
+            canReview={can("intelligence:review")}
+          />
+          <BriefCard
+            orgId={orgId}
+            leadId={l.id}
+            initial={brief.ok ? brief.data : null}
+            evidenceNumbers={evidenceNumbers}
+            canRequest={can("research:write")}
+          />
+          <EvidenceCard
+            orgId={orgId}
+            leadId={l.id}
+            evidence={evidenceList}
+            evidenceNumbers={evidenceNumbers}
+            companyDomain={company?.ok ? company.data.domain : null}
+            canWrite={can("research:write")}
+            canReview={can("intelligence:review")}
+          />
 
           <Card>
             <CardHeader title="Timeline" description="Every change to this lead, newest first" />
@@ -94,6 +147,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="space-y-6">
+          {company?.ok && <CompanyFacts key={company.data.id} orgId={orgId} company={company.data} canEdit={can("leads:write")} />}
           <Card>
             <CardHeader title="Opportunities" />
             {l.opportunities.length === 0 ? (
