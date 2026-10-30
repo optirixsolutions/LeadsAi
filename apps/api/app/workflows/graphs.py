@@ -64,8 +64,28 @@ def _build_lead_intelligence(owner: str) -> StateGraph[Any, Any, Any, Any]:
     return graph
 
 
+def _build_agent(owner: str) -> StateGraph[Any, Any, Any, Any]:
+    graph: StateGraph[Any, Any, Any, Any] = StateGraph(WorkflowState)
+    graph.add_node(
+        "validate_request", nodes.traced("validate_request", nodes.validate_request, owner)
+    )
+    graph.add_node("run_agent", nodes.traced("run_agent", nodes.run_agent(owner), owner))
+    graph.add_node("finalize", nodes.traced("finalize", nodes.finalize, owner))
+    graph.add_edge(START, "validate_request")
+    graph.add_edge("validate_request", "run_agent")
+    graph.add_edge("run_agent", "finalize")
+    graph.add_edge("finalize", END)
+    return graph
+
+
+_BUILDERS = {
+    WorkflowKind.research: _build_research,
+    WorkflowKind.lead_intelligence: _build_lead_intelligence,
+    WorkflowKind.agent: _build_agent,
+}
+
+
 def compile_graph(
     kind: WorkflowKind, owner: str, checkpointer: BaseCheckpointSaver[Any]
 ) -> CompiledStateGraph[Any, Any, Any, Any]:
-    builder = _build_research if kind == WorkflowKind.research else _build_lead_intelligence
-    return builder(owner).compile(checkpointer=checkpointer)
+    return _BUILDERS[kind](owner).compile(checkpointer=checkpointer)

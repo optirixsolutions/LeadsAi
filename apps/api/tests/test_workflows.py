@@ -166,6 +166,7 @@ def test_killed_worker_is_recovered_from_its_checkpoint(
         **os.environ,
         "SALESIQ_OLLAMA_BASE_URL": model.url,
         "SALESIQ_DATABASE_URL": APP_DB_URL,
+        "SALESIQ_WORKER_DATABASE_URL": os.environ["SALESIQ_WORKER_DATABASE_URL"],
         "SALESIQ_WORKER_LEASE_SECONDS": "2",
         "SALESIQ_WORKER_POLL_SECONDS": "0.2",
         "SALESIQ_WORKER_CONCURRENCY": "1",

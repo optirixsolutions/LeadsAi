@@ -3,6 +3,9 @@
 -- `salesiq_app` is the runtime role: not an owner, not a superuser, so row-level security applies.
 -- Local development credentials only; production roles are provisioned by the platform.
 CREATE ROLE salesiq_app LOGIN PASSWORD 'salesiq_app' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+-- Runs background work. It has the API role's rights inside a tenant, under the same row-level
+-- security, plus checkpoints and the claim functions, which the API role cannot reach.
+CREATE ROLE salesiq_worker LOGIN PASSWORD 'salesiq_worker' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
 -- Owns only the invitation_lookup() SECURITY DEFINER function. Cannot log in.
 CREATE ROLE salesiq_definer NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE BYPASSRLS;
 

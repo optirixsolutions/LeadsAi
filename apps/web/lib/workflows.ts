@@ -24,6 +24,7 @@ export const RUN_TONES: Record<string, string> = {
 export const KIND_LABELS: Record<string, string> = {
   lead_intelligence: "Research and qualification",
   research: "Research brief",
+  agent: "Agent run",
 };
 
 export const STEP_LABELS: Record<string, string> = {
@@ -33,6 +34,7 @@ export const STEP_LABELS: Record<string, string> = {
   validate_sources: "Check evidence",
   score_lead: "Score the lead",
   interpret: "Write the research brief",
+  run_agent: "Run the agent",
   quality_review: "Review the result",
   request_approval: "Wait for approval",
   apply_decision: "Apply the decision",

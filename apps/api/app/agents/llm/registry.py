@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import yaml
 from pydantic import BaseModel, ValidationError
@@ -14,13 +14,13 @@ from pydantic import BaseModel, ValidationError
 from app.agents.llm.client import OpenAICompatibleClient
 from app.agents.llm.types import (
     Capability,
-    ChatMessage,
     ChatResult,
     EmbeddingResult,
     LLMError,
     ModelConfig,
     ModelStatus,
     ProviderConfig,
+    ToolRequest,
     Usage,
     not_found,
     schema_invalid,
@@ -115,7 +115,7 @@ class ModelRegistry:
     def chat(
         self,
         key: str,
-        messages: list[ChatMessage],
+        messages: list[Any],
         *,
         schema: type[BaseModel] | None = None,
         temperature: float = 0.0,
@@ -153,10 +153,38 @@ class ModelRegistry:
         assert last is not None
         raise last
 
+    def chat_with_tools(
+        self,
+        key: str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+        timeout_s: float | None = None,
+    ) -> tuple[ChatResult, list[ToolRequest]]:
+        """One model turn that may ask for tools. No fallback: a different model mid-conversation
+        would make the run's result hard to interpret."""
+        m = self.model(key)
+        if Capability.tool_calling not in m.capabilities:
+            raise unsupported(f"Model '{m.key}' does not support tool calling")
+        call = partial(
+            self._clients[m.provider].chat_with_tools,
+            m.model,
+            messages,
+            tools,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=min(timeout_s, m.timeout_s) if timeout_s else m.timeout_s,
+            reasoning_effort=m.reasoning_effort,
+        )
+        (text, requests, usage, latency), attempts = self._with_retries(m, call)
+        return ChatResult(text, usage, latency, m.key, attempts), requests
+
     def structured(
         self,
         key: str,
-        messages: list[ChatMessage],
+        messages: list[Any],
         schema: type[T],
         *,
         temperature: float = 0.0,

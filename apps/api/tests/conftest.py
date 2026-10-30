@@ -26,6 +26,10 @@ os.environ.setdefault(
 os.environ.setdefault(
     "SALESIQ_MIGRATION_DATABASE_URL", f"postgresql+psycopg://salesiq:salesiq@{_HOST}/salesiq_test"
 )
+os.environ.setdefault(
+    "SALESIQ_WORKER_DATABASE_URL",
+    f"postgresql+psycopg://salesiq_worker:salesiq_worker@{_HOST}/salesiq_test",
+)
 os.environ.setdefault("SALESIQ_REDIS_URL", "redis://127.0.0.1:56379/1")
 os.environ.setdefault("SALESIQ_ENVIRONMENT", "test")
 os.environ.setdefault("SALESIQ_MAILER", "memory")
@@ -57,6 +61,10 @@ def ensure_app_role(admin: Engine) -> None:
             DO $$ BEGIN
               IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'salesiq_app') THEN
                 CREATE ROLE salesiq_app LOGIN PASSWORD 'salesiq_app'
+                  NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+              END IF;
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'salesiq_worker') THEN
+                CREATE ROLE salesiq_worker LOGIN PASSWORD 'salesiq_worker'
                   NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
               END IF;
               IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'salesiq_definer') THEN

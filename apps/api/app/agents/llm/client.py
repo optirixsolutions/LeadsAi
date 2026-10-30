@@ -1,5 +1,6 @@
 """HTTP client for OpenAI-compatible endpoints: Ollama, Hugging Face router, vLLM, and others."""
 
+import json
 import os
 import re
 import time
@@ -10,6 +11,7 @@ import httpx
 from app.agents.llm.types import (
     ChatMessage,
     ProviderConfig,
+    ToolRequest,
     Usage,
     bad_response,
     not_found,
@@ -112,6 +114,40 @@ class OpenAICompatibleClient:
             raise error
         return text, _usage(data), latency_ms
 
+    def chat_with_tools(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+        seed: int | None = 7,
+        timeout: float = 120,
+        reasoning_effort: str | None = None,
+    ) -> tuple[str, list[ToolRequest], Usage, float]:
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "tools": tools,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if seed is not None:
+            body["seed"] = seed
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
+        start = time.perf_counter()
+        data = self._post("chat/completions", body, model=model, timeout=timeout)
+        latency_ms = (time.perf_counter() - start) * 1000
+        try:
+            message = data["choices"][0]["message"]
+            text = _THINK.sub("", message.get("content") or "").strip()
+            requests = [_tool_request(c) for c in message.get("tool_calls") or []]
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            raise bad_response(f"{self.config.key}: response had no usable message") from exc
+        return text, requests, _usage(data), latency_ms
+
     def embed(
         self, model: str, inputs: list[str], *, timeout: float = 120
     ) -> tuple[list[list[float]], Usage, float]:
@@ -140,6 +176,26 @@ class OpenAICompatibleClient:
             ) from exc
         data = self._parse(r, "*")
         return {str(m.get("id")) for m in data.get("data", [])}
+
+
+def _reject_constant(name: str) -> None:
+    raise ValueError(f"{name} is not valid JSON")
+
+
+def _tool_request(call: dict[str, Any]) -> ToolRequest:
+    function = call["function"]
+    raw = function.get("arguments") or {}
+    try:
+        arguments = (
+            json.loads(raw, parse_constant=_reject_constant) if isinstance(raw, str) else raw
+        )
+    except (ValueError, RecursionError):
+        arguments = {}  # Unreadable arguments fail the tool's own validation, visibly.
+    if not isinstance(arguments, dict):
+        arguments = {}
+    return ToolRequest(
+        id=str(call.get("id") or function["name"]), name=str(function["name"]), arguments=arguments
+    )
 
 
 def _usage(data: dict[str, Any]) -> Usage:

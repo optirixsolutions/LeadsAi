@@ -9,6 +9,7 @@ from app.agents.llm.types import (
     LLMError,
     ModelConfig,
     ModelStatus,
+    ToolRequest,
     Usage,
 )
 
@@ -21,6 +22,7 @@ __all__ = [
     "ModelConfig",
     "ModelRegistry",
     "ModelStatus",
+    "ToolRequest",
     "Usage",
     "estimate_cost",
 ]

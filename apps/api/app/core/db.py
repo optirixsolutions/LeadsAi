@@ -28,6 +28,19 @@ def get_sessionmaker() -> sessionmaker[Session]:
     return sessionmaker(bind=get_engine(), expire_on_commit=False, autoflush=False)
 
 
+@lru_cache
+def get_worker_sessionmaker() -> sessionmaker[Session]:
+    s = get_settings()
+    engine = create_engine(
+        s.worker_database_url,
+        pool_size=s.database_pool_size,
+        pool_pre_ping=True,
+        hide_parameters=True,
+        connect_args={"connect_timeout": s.database_connect_timeout_s},
+    )
+    return sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
+
+
 def get_db() -> Iterator[Session]:
     """FastAPI dependency: one session per request.
 

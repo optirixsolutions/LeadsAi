@@ -23,6 +23,7 @@ def _enum(cls: type[enum.Enum], name: str) -> Enum:
 class WorkflowKind(enum.StrEnum):
     research = "research"
     lead_intelligence = "lead_intelligence"
+    agent = "agent"
 
 
 class WorkflowStatus(enum.StrEnum):
@@ -49,6 +50,16 @@ class WorkflowRun(IdMixin, Base):
         Index("ix_workflow_runs_lead", "lead_id", "created_at"),
         Index("ix_workflow_runs_org_created", "organization_id", "created_at"),
         Index("ix_workflow_runs_claim", "status", "created_at"),
+        # The same for work about the whole organization: one active run of each agent.
+        Index(
+            "uq_workflow_runs_active_org_role",
+            "organization_id",
+            text("(input->>'role')"),
+            unique=True,
+            postgresql_where=text(
+                "lead_id IS NULL AND status IN ('queued', 'running', 'waiting_approval')"
+            ),
+        ),
         # One active run per lead, so repeat clicks and retries cannot stack up.
         Index(
             "uq_workflow_runs_active_lead",
@@ -62,8 +73,9 @@ class WorkflowRun(IdMixin, Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
     )
-    lead_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False
+    # Empty for work about the whole organization, such as the pipeline analyst.
+    lead_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE")
     )
     kind: Mapped[WorkflowKind] = mapped_column(_enum(WorkflowKind, "workflow_kind"), nullable=False)
     status: Mapped[WorkflowStatus] = mapped_column(

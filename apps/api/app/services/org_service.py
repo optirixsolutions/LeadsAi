@@ -22,7 +22,7 @@ from app.core.security import new_token, token_digest
 from app.integrations.mailer import Email, Mailer
 from app.models import AuditLog, Invitation, Membership, Organization, Role, User
 from app.services import audit
-from app.services.auth_service import InvalidTokenError
+from app.services.auth_service import InvalidTokenError, revoke_mcp_tokens
 from app.services.pipeline_service import seed_default_stages
 
 
@@ -172,6 +172,7 @@ def remove_member(db: Session, ctx: OrgContext, membership_id: uuid.UUID) -> Non
         raise ForbiddenError("Your role cannot remove this member")
     if m.role == Role.owner and _owner_count(db, ctx.org_id) <= 1:
         raise ConflictError("An organization must keep at least one owner")
+    revoke_mcp_tokens(db, m.user_id, ctx.org_id)
     db.delete(m)
     audit.record(
         db,

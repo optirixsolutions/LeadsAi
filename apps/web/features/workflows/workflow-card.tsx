@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/client-api";
 import { formatDateTime } from "@/lib/format";
 import { isActive, parseUrls, shouldPoll, type WorkflowRun } from "@/lib/workflows";
 
+import { StartAgent } from "../agents/start-agent";
 import { RunBadge } from "./run-badge";
 
 const POLL_MS = 3000;
@@ -122,6 +123,12 @@ export function WorkflowCard({
               Run workflow
             </Button>
           </form>
+        )}
+        {canRun && !(run && isActive(run.status)) && (
+          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+            <StartAgent orgId={orgId} role="research" label="Run research agent" leadId={leadId} />
+            <StartAgent orgId={orgId} role="qualification" label="Run qualification agent" leadId={leadId} />
+          </div>
         )}
       </div>
     </Card>

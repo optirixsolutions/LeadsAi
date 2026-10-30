@@ -18,8 +18,13 @@ from sqlalchemy.orm import Session
 
 from app.agents.llm import LLMError
 from app.core.auth import OrgContext, worker_context
-from app.core.db import get_sessionmaker, set_tenant_context
-from app.core.errors import AppError, LeaseLostError, RequestInvalidError
+from app.core.db import get_worker_sessionmaker, set_tenant_context
+from app.core.errors import (
+    AppError,
+    LeaseLostError,
+    RequestInvalidError,
+    WorkflowStoppedError,
+)
 from app.core.permissions import Permission, has_permission
 from app.integrations.fetcher import FetchBlockedError, FetchFailedError
 from app.models import (
@@ -38,19 +43,11 @@ from app.models import (
     WorkflowRun,
     WorkflowStep,
 )
-from app.services import audit, brief_service, intelligence_service
+from app.services import agent_service, audit, brief_service, intelligence_service
 from app.services.lead_service import get_lead, record_activity
 from app.workflows.state import WorkflowState
 
 log = logging.getLogger(__name__)
-
-
-class WorkflowStoppedError(Exception):
-    """The run must end now, without being treated as a failure of the step."""
-
-    def __init__(self, reason: str) -> None:
-        super().__init__(reason)
-        self.reason = reason
 
 
 def _now() -> datetime:
@@ -92,7 +89,7 @@ def traced(name: str, fn: NodeFn, owner: str) -> Any:
     def node(state: WorkflowState) -> dict[str, Any]:
         run_id = uuid.UUID(state["run_id"])
         org_id = uuid.UUID(state["org_id"])
-        with get_sessionmaker()() as db:
+        with get_worker_sessionmaker()() as db:
             ctx = worker_context(db, org_id, _acting_user(db, state))
             # Checked at every step: a role can change while a run waits or is resumed later.
             if not has_permission(ctx.role, Permission.workflows_run):
@@ -190,7 +187,8 @@ def _trace_detail(output: dict[str, Any]) -> dict[str, Any]:
 
 
 def validate_request(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[str, Any]:
-    get_lead(db, ctx, uuid.UUID(state["lead_id"]))
+    if state.get("lead_id"):
+        get_lead(db, ctx, uuid.UUID(str(state["lead_id"])))
     return {}
 
 
@@ -208,7 +206,7 @@ def gather_evidence(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[
     problems: list[str] = []
     for url in urls:
         try:
-            intelligence_service.fetch_evidence(db, ctx, uuid.UUID(state["lead_id"]), url)
+            intelligence_service.fetch_evidence(db, ctx, uuid.UUID(str(state["lead_id"])), url)
             db.commit()
             set_tenant_context(db, user_id=ctx.user_id, org_id=ctx.org_id)
         except (FetchBlockedError, FetchFailedError) as exc:
@@ -228,7 +226,7 @@ def validate_sources(db: Session, ctx: OrgContext, state: WorkflowState) -> dict
     rows = db.execute(
         select(ResearchEvidence.id, ResearchEvidence.status, ResearchEvidence.source_type).where(
             ResearchEvidence.organization_id == ctx.org_id,
-            ResearchEvidence.lead_id == uuid.UUID(state["lead_id"]),
+            ResearchEvidence.lead_id == uuid.UUID(str(state["lead_id"])),
         )
     ).all()
     usable = [
@@ -244,7 +242,7 @@ def validate_sources(db: Session, ctx: OrgContext, state: WorkflowState) -> dict
 
 def score_lead(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[str, Any]:
     assessment = intelligence_service.assess_lead(
-        db, ctx, uuid.UUID(state["lead_id"]), workflow_run_id=uuid.UUID(state["run_id"])
+        db, ctx, uuid.UUID(str(state["lead_id"])), workflow_run_id=uuid.UUID(state["run_id"])
     )
     return {
         "assessment_id": str(assessment.id),
@@ -259,7 +257,7 @@ def interpret(owner: str) -> NodeFn:
 
     def run(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[str, Any]:
         outcome = brief_service.write_brief(
-            db, ctx, uuid.UUID(state["lead_id"]), uuid.UUID(state["run_id"]), owner=owner
+            db, ctx, uuid.UUID(str(state["lead_id"])), uuid.UUID(state["run_id"]), owner=owner
         )
         return {
             "brief_id": str(outcome.brief_id),
@@ -267,6 +265,21 @@ def interpret(owner: str) -> NodeFn:
             "brief_failure": outcome.failure,
             "usage": outcome.usage,
         }
+
+    return run
+
+
+def run_agent(owner: str) -> NodeFn:
+    """A bounded agent, whose answer the deterministic review checks before it is stored."""
+
+    def run(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[str, Any]:
+        return agent_service.run_step(
+            db,
+            ctx,
+            uuid.UUID(state["run_id"]),
+            owner=owner,
+            session_factory=get_worker_sessionmaker(),
+        )
 
     return run
 
@@ -301,7 +314,7 @@ def _proposal(
         FitLabel.high.value: LeadStatus.qualified,
         FitLabel.low.value: LeadStatus.disqualified,
     }.get(state.get("fit") or "")
-    lead = get_lead(db, ctx, uuid.UUID(state["lead_id"]))
+    lead = get_lead(db, ctx, uuid.UUID(str(state["lead_id"])))
     if target is None or lead.status == target:
         return None
     return {
@@ -329,7 +342,7 @@ def apply_decision(db: Session, ctx: OrgContext, state: WorkflowState) -> dict[s
         raise RequestInvalidError("The person who decided can no longer review assessments")
     lead = db.scalar(
         select(Lead)
-        .where(Lead.id == uuid.UUID(state["lead_id"]), Lead.deleted_at.is_(None))
+        .where(Lead.id == uuid.UUID(str(state["lead_id"])), Lead.deleted_at.is_(None))
         .with_for_update()
     )
     if lead is None:

@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     migration_database_url: str | None = (
         "postgresql+psycopg://salesiq:salesiq@127.0.0.1:55432/salesiq"
     )
+    # Workers are the only role that can claim work across tenants or touch checkpoints. Inside
+    # a tenant's data it has exactly the API role's rights, with the same row-level security.
+    worker_database_url: str = (
+        "postgresql+psycopg://salesiq_worker:salesiq_worker@127.0.0.1:55432/salesiq"
+    )
     database_pool_size: int = Field(default=5, ge=1, le=100)
     database_connect_timeout_s: int = Field(default=5, ge=1, le=60)
 
@@ -53,6 +58,10 @@ class Settings(BaseSettings):
     mailer: Literal["log", "memory", "disabled"] = "log"
 
     # A worker renews its lease at a third of this. If it dies, the run is recovered after it.
+    mcp_host: str = "127.0.0.1"
+    mcp_port: int = Field(default=8100, ge=1, le=65535)
+    # The address clients use. Required beyond localhost, where it must be HTTPS.
+    mcp_public_url: str | None = None
     worker_lease_seconds: int = Field(default=60, ge=2, le=3600)
     worker_poll_seconds: float = Field(default=2.0, gt=0, le=60)
     worker_concurrency: int = Field(default=2, ge=1, le=32)
@@ -85,6 +94,15 @@ class Settings(BaseSettings):
                 raise RuntimeError(
                     "Only SALESIQ_MAILER=disabled is allowed until a real mailer exists"
                 )
+
+
+def validate_worker_runtime(settings: Settings) -> None:
+    """The API does not use this role, so only the processes that do are checked for it."""
+    settings.validate_for_runtime()
+    if settings.environment in ("staging", "production") and (
+        "salesiq_worker:salesiq_worker@" in settings.worker_database_url
+    ):
+        raise RuntimeError("SALESIQ_WORKER_DATABASE_URL must be set outside development")
 
 
 @lru_cache

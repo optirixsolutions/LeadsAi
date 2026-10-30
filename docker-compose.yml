@@ -38,7 +38,6 @@ services:
     environment:
       # Runtime connects as the non-superuser app role so row-level security applies.
       SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
-      SALESIQ_MIGRATION_DATABASE_URL: postgresql+psycopg://salesiq:salesiq@postgres:5432/salesiq
       SALESIQ_REDIS_URL: redis://redis:6379/0
     ports:
       - "127.0.0.1:8000:8000"
@@ -46,6 +45,42 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    profiles: ["app"]
+
+  # Schema changes, as a one-off job: `docker compose run --rm migrate`. Only this holds the owner
+  # URL, so a compromised API or worker has no route to it.
+  migrate:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    command: [".venv/bin/alembic", "upgrade", "head"]
+    healthcheck:
+      disable: true
+    environment:
+      SALESIQ_MIGRATION_DATABASE_URL: postgresql+psycopg://salesiq:salesiq@postgres:5432/salesiq
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["migrate"]
+
+  # For outside MCP clients. Every request needs a token; see docs/DEPLOYMENT.md.
+  mcp:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    command: [".venv/bin/python", "-m", "app.mcp.http"]
+    healthcheck:
+      disable: true
+    environment:
+      SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
+      SALESIQ_REDIS_URL: redis://redis:6379/0
+      SALESIQ_MCP_HOST: 0.0.0.0
+      SALESIQ_MCP_PUBLIC_URL: http://localhost:8100
+    ports:
+      - "127.0.0.1:8100:8100"
+    depends_on:
+      postgres:
         condition: service_healthy
     profiles: ["app"]
 
@@ -65,6 +100,7 @@ services:
         required: false
     environment:
       SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
+      SALESIQ_WORKER_DATABASE_URL: postgresql+psycopg://salesiq_worker:salesiq_worker@postgres:5432/salesiq
       SALESIQ_REDIS_URL: redis://redis:6379/0
       # Inside a container, 127.0.0.1 is the container. Ollama usually runs on the host.
       SALESIQ_OLLAMA_BASE_URL: ${SALESIQ_OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}

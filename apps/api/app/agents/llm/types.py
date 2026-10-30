@@ -2,7 +2,7 @@
 
 import enum
 from dataclasses import dataclass, field
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -62,6 +62,15 @@ class ChatResult:
     attempts: int = 1
     # Models that failed before this one answered; empty when the primary succeeded.
     fallback_from: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ToolRequest:
+    """A model asking for a tool. A request only: nothing has been authorized or run."""
+
+    id: str
+    name: str
+    arguments: dict[str, Any]
 
 
 @dataclass(frozen=True)

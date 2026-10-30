@@ -19,8 +19,8 @@ from sqlalchemy.engine import make_url
 from app.agents.llm import LLMError
 from app.core.auth import worker_context
 from app.core.config import get_settings
-from app.core.db import get_sessionmaker, set_tenant_context
-from app.core.errors import AppError, LeaseLostError, RequestInvalidError
+from app.core.db import get_worker_sessionmaker, set_tenant_context
+from app.core.errors import AppError, LeaseLostError, RequestInvalidError, WorkflowStoppedError
 from app.core.permissions import Permission, has_permission
 from app.integrations.fetcher import FetchFailedError
 from app.models import (
@@ -36,7 +36,6 @@ from app.models import (
 )
 from app.services import audit, csv_service
 from app.workflows.graphs import compile_graph
-from app.workflows.nodes import WorkflowStoppedError
 from app.workflows.state import STATE_VERSION, WorkflowState
 
 log = logging.getLogger(__name__)
@@ -80,14 +79,14 @@ class Claim:
 
 
 def checkpoint_conninfo() -> str:
-    """The app role's own connection, as libpq understands it, scoped to the checkpoint schema."""
-    url = make_url(get_settings().database_url).set(drivername="postgresql")
+    """The worker role's connection, as libpq understands it, for the checkpoint schema."""
+    url = make_url(get_settings().worker_database_url).set(drivername="postgresql")
     return url.render_as_string(hide_password=False)
 
 
 def claim_next(owner: str, lease_s: int) -> Claim | None:
     """Claim through a narrow SECURITY DEFINER function, as this needs to see every tenant."""
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         row = db.execute(
             text("SELECT * FROM workflow_claim(:owner, :lease, :per_org)"),
             {"owner": owner, "lease": lease_s, "per_org": MAX_RUNNING_PER_ORG},
@@ -110,7 +109,7 @@ class _Heartbeat(threading.Thread):
     def run(self) -> None:
         while not self._stop_event.wait(max(1.0, self._lease_s / 3)):
             try:
-                with get_sessionmaker()() as db:
+                with get_worker_sessionmaker()() as db:
                     set_tenant_context(db, user_id=self._claim.actor_id, org_id=self._claim.org_id)
                     db.execute(
                         update(WorkflowRun)
@@ -132,7 +131,7 @@ class _Heartbeat(threading.Thread):
 
 def _finish(claim: Claim, owner: str, **values: Any) -> bool:
     """Write the outcome only if this worker still holds the lease. Returns whether it did."""
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         set_tenant_context(db, user_id=claim.actor_id, org_id=claim.org_id)
         updated = db.scalar(
             update(WorkflowRun)
@@ -190,7 +189,7 @@ def _finish(claim: Claim, owner: str, **values: Any) -> bool:
 
 def _mark_interrupted_steps(claim: Claim) -> None:
     """Steps still marked running were cut off by a crash; the trace should say so."""
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         set_tenant_context(db, user_id=claim.actor_id, org_id=claim.org_id)
         db.execute(
             update(WorkflowStep)
@@ -201,7 +200,7 @@ def _mark_interrupted_steps(claim: Claim) -> None:
 
 
 def _pending_decision(claim: Claim) -> str | None:
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         set_tenant_context(db, user_id=claim.actor_id, org_id=claim.org_id)
         decision = db.scalar(
             select(WorkflowRun.approval_decision).where(WorkflowRun.id == claim.run_id)
@@ -220,12 +219,12 @@ def _initial_state(claim: Claim) -> WorkflowState:
     }
 
 
-def _lead_id(claim: Claim) -> str:
-    with get_sessionmaker()() as db:
+def _lead_id(claim: Claim) -> str | None:
+    with get_worker_sessionmaker()() as db:
         set_tenant_context(db, user_id=claim.actor_id, org_id=claim.org_id)
         lead_id = db.scalar(select(WorkflowRun.lead_id).where(WorkflowRun.id == claim.run_id))
         db.commit()
-    return str(lead_id)
+    return str(lead_id) if lead_id else None
 
 
 def _classify(exc: Exception) -> tuple[str, str]:
@@ -249,7 +248,7 @@ def checkpoint_serde() -> JsonPlusSerializer:
 
 
 def _fetch_problems(claim: Claim) -> list[str]:
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         set_tenant_context(db, user_id=claim.actor_id, org_id=claim.org_id)
         details = db.scalars(
             select(WorkflowStep.detail)
@@ -264,7 +263,7 @@ def _fetch_problems(claim: Claim) -> list[str]:
 def sweep_checkpoints() -> int:
     """Delete working state nothing will read again. Successful runs clean up after themselves,
     but cancelled runs, old failures, and runs of deleted organizations would otherwise stay."""
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         threads = db.scalars(
             text("SELECT workflow_finished_threads(:days)"), {"days": FAILED_RETENTION_DAYS}
         ).all()
@@ -401,6 +400,9 @@ def _record_outcome(
             "brief_id": state.get("brief_id"),
             "brief_status": state.get("brief_status"),
             "fetch_problems": _fetch_problems(claim),
+            "agent_id": state.get("agent_id"),
+            "agent_status": state.get("agent_status"),
+            "agent_failure": state.get("agent_failure"),
             "approval": state.get("approval"),
             "proposal_applied": state.get("proposal_applied"),
             "usage": state.get("usage"),
@@ -414,7 +416,7 @@ def _record_outcome(
 def run_next_import(owner: str) -> bool:
     """Process one queued CSV import, in one transaction. A crash rolls it all back, and the
     lease lets another worker take it over."""
-    with get_sessionmaker()() as db:
+    with get_worker_sessionmaker()() as db:
         row = db.execute(
             text("SELECT * FROM import_claim(:owner, :lease)"),
             {"owner": owner, "lease": IMPORT_LEASE_S},

@@ -23,7 +23,7 @@ class WorkflowState(TypedDict, total=False):
     run_id: str
     org_id: str
     actor_id: str
-    lead_id: str
+    lead_id: str | None
     icp_version: int | None
     evidence_ids: list[str]
     quarantined_count: int
@@ -40,4 +40,8 @@ class WorkflowState(TypedDict, total=False):
     proposal: dict[str, Any] | None
     approval: str | None
     proposal_applied: bool
+    agent_id: str | None
+    agent_status: str | None
+    agent_failure: str | None
+    agent_notes: int
     usage: Usage

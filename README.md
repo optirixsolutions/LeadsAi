@@ -36,7 +36,7 @@ Model work needs [Ollama](https://ollama.com) with the models in `apps/api/app/a
 - Readiness: http://127.0.0.1:8000/api/v1/health/ready
 
 Full stack in containers: `docker compose --profile app up -d --build`, then
-`docker compose run --rm api .venv/bin/alembic upgrade head`.
+`docker compose run --rm migrate`.
 
 ## Checks
 ```bash

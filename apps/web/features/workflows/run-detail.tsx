@@ -81,9 +81,11 @@ export function RunDetail({
       <div className="flex flex-wrap items-center gap-3">
         <RunBadge status={run.status} />
         <span className="text-sm text-fg-muted">{KIND_LABELS[run.kind] ?? run.kind}</span>
-        <Link href={`/leads/${run.lead_id}`} className="text-sm text-accent hover:underline">
-          View lead
-        </Link>
+        {run.lead_id && (
+          <Link href={`/leads/${run.lead_id}`} className="text-sm text-accent hover:underline">
+            View lead
+          </Link>
+        )}
         <div className="ml-auto flex gap-2">
           {canRun && run.resumable && (
             <Button size="sm" loading={busy === "resume"} onClick={() => act("resume", "resume")}>

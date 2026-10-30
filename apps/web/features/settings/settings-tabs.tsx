@@ -8,6 +8,7 @@ const TABS = [
   { href: "/settings/team", label: "Team" },
   { href: "/settings/organization", label: "Organization" },
   { href: "/settings/icp", label: "ICP and scoring" },
+  { href: "/settings/tokens", label: "MCP tokens" },
   { href: "/settings/account", label: "Account" },
 ];
 

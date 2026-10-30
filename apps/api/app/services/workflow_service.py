@@ -35,13 +35,15 @@ def _now() -> datetime:
 def enqueue(
     db: Session,
     ctx: OrgContext,
-    lead_id: uuid.UUID,
+    lead_id: uuid.UUID | None,
     kind: WorkflowKind,
     *,
     urls: list[str] | None = None,
     propose_status: bool = False,
+    role: str | None = None,
 ) -> WorkflowRun:
-    get_lead(db, ctx, lead_id)
+    if lead_id is not None:
+        get_lead(db, ctx, lead_id)
     active = db.scalar(
         select(func.count())
         .select_from(WorkflowRun)
@@ -54,7 +56,7 @@ def enqueue(
         lead_id=lead_id,
         kind=kind,
         status=WorkflowStatus.queued,
-        input={"urls": urls or [], "propose_status": propose_status},
+        input={"urls": urls or [], "propose_status": propose_status, "role": role},
         deadline_at=_now() + RUN_TIME_LIMIT,
         created_by_user_id=ctx.user_id,
     )
@@ -62,7 +64,8 @@ def enqueue(
     try:
         db.flush()
     except IntegrityError as exc:
-        raise ConflictError("A workflow is already active for this lead") from exc
+        what = "this lead" if lead_id else "this agent"
+        raise ConflictError(f"A workflow is already active for {what}") from exc
     audit.record(
         db,
         "workflow.started",
@@ -70,7 +73,7 @@ def enqueue(
         actor_id=ctx.user_id,
         target_type="workflow_run",
         target_id=run.id,
-        data={"kind": kind.value, "lead_id": str(lead_id)},
+        data={"kind": kind.value, "lead_id": str(lead_id) if lead_id else None, "role": role},
     )
     return run
 
@@ -92,8 +95,11 @@ def list_runs(
     # A run's result goes with its lead, like the lead's other records.
     query = (
         select(WorkflowRun)
-        .join(Lead, Lead.id == WorkflowRun.lead_id)
-        .where(WorkflowRun.organization_id == ctx.org_id, Lead.deleted_at.is_(None))
+        .outerjoin(Lead, Lead.id == WorkflowRun.lead_id)
+        .where(
+            WorkflowRun.organization_id == ctx.org_id,
+            WorkflowRun.lead_id.is_(None) | Lead.deleted_at.is_(None),
+        )
     )
     if lead_id:
         query = query.where(WorkflowRun.lead_id == lead_id)
@@ -103,11 +109,11 @@ def list_runs(
 def get_run(db: Session, ctx: OrgContext, run_id: uuid.UUID) -> WorkflowRun:
     run = db.scalar(
         select(WorkflowRun)
-        .join(Lead, Lead.id == WorkflowRun.lead_id)
+        .outerjoin(Lead, Lead.id == WorkflowRun.lead_id)
         .where(
             WorkflowRun.id == run_id,
             WorkflowRun.organization_id == ctx.org_id,
-            Lead.deleted_at.is_(None),
+            WorkflowRun.lead_id.is_(None) | Lead.deleted_at.is_(None),
         )
     )
     if run is None:

@@ -16,7 +16,7 @@ models:
     provider: ollama
     model: hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M
     source: https://huggingface.co/Qwen/Qwen3-4B-GGUF
-    capabilities: [chat, structured_output]
+    capabilities: [chat, structured_output, tool_calling]
     context_tokens: 4096
     price_input_per_mtok: 0
     price_output_per_mtok: 0
@@ -27,7 +27,7 @@ models:
   qwen2.5-7b:
     provider: ollama
     model: qwen2.5:latest
-    capabilities: [chat, structured_output]
+    capabilities: [chat, structured_output, tool_calling]
     context_tokens: 4096
     price_input_per_mtok: 0
     price_output_per_mtok: 0
@@ -64,4 +64,5 @@ routes:
   extraction: qwen3-4b
   synthesis: qwen2.5-7b
   outreach: qwen3-4b
+  agents: qwen2.5-7b
   embeddings: nomic-embed

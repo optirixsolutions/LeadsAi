@@ -13,7 +13,7 @@ from types import FrameType
 
 import redis
 
-from app.core.config import get_settings
+from app.core.config import get_settings, validate_worker_runtime
 from app.observability.logging import configure_logging
 from app.workflows.runner import run_once, sweep_checkpoints
 from app.workflows.state import HEARTBEAT_KEY
@@ -61,6 +61,7 @@ def _work(owner: str, stop: threading.Event) -> None:
 
 def main() -> None:
     settings = get_settings()
+    validate_worker_runtime(settings)
     configure_logging(settings.log_level, f"{settings.service_name}-worker", settings.log_json)
     stop = threading.Event()
 

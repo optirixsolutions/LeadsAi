@@ -28,7 +28,7 @@ class WorkflowRunOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    lead_id: uuid.UUID
+    lead_id: uuid.UUID | None
     kind: WorkflowKind
     status: WorkflowStatus
     current_step: str | None

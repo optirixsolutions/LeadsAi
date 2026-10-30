@@ -12,12 +12,17 @@ const apiEnv = {
   // Every e2e browser shares one IP; rate limiting itself is covered by API tests.
   SALESIQ_LOGIN_RATE_LIMIT_PER_MINUTE: "1000",
   ...(process.env.SALESIQ_DATABASE_URL ? { SALESIQ_DATABASE_URL: process.env.SALESIQ_DATABASE_URL } : {}),
+  ...(process.env.SALESIQ_WORKER_DATABASE_URL
+    ? { SALESIQ_WORKER_DATABASE_URL: process.env.SALESIQ_WORKER_DATABASE_URL }
+    : {}),
   ...(process.env.SALESIQ_REDIS_URL ? { SALESIQ_REDIS_URL: process.env.SALESIQ_REDIS_URL } : {}),
 };
 
 export default defineConfig({
   testDir: "tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
+  // Parallel browsers, the API, and a worker share one machine, and the lead page is request-heavy.
+  expect: { timeout: 10_000 },
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },

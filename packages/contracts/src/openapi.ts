@@ -291,6 +291,74 @@ export interface paths {
         patch: operations["update_organization_api_v1_organizations__org_id__patch"];
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/agent-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Agent Runs */
+        get: operations["list_agent_runs_api_v1_organizations__org_id__agent_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/agent-runs/{agent_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Agent Run */
+        get: operations["get_agent_run_api_v1_organizations__org_id__agent_runs__agent_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_v1_organizations__org_id__agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/agents/{role}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Agent */
+        post: operations["start_agent_api_v1_organizations__org_id__agents__role__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/analytics/overview": {
         parameters: {
             query?: never;
@@ -709,6 +777,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/mcp-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tokens */
+        get: operations["list_tokens_api_v1_organizations__org_id__mcp_tokens_get"];
+        put?: never;
+        /** Create Token */
+        post: operations["create_token_api_v1_organizations__org_id__mcp_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/mcp-tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke Token */
+        delete: operations["revoke_token_api_v1_organizations__org_id__mcp_tokens__token_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/members": {
         parameters: {
             query?: never;
@@ -981,6 +1084,139 @@ export interface components {
          * @enum {string}
          */
         ActivityType: "created" | "imported" | "updated" | "status_changed" | "assigned" | "note" | "opportunity_created" | "stage_changed" | "deleted" | "research_added" | "assessed";
+        /** AgentInfo */
+        AgentInfo: {
+            /** Description */
+            description: string;
+            /** Label */
+            label: string;
+            /** Max Model Turns */
+            max_model_turns: number;
+            /** Max Tool Calls */
+            max_tool_calls: number;
+            /** Needs Lead */
+            needs_lead: boolean;
+            role: components["schemas"]["AgentRole"];
+            /** Tools */
+            tools: string[];
+        };
+        /**
+         * AgentRole
+         * @enum {string}
+         */
+        AgentRole: "research" | "qualification" | "pipeline";
+        /** AgentRunDetail */
+        AgentRunDetail: {
+            /** Claims */
+            claims: components["schemas"]["CitedClaim"][];
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Failure Category */
+            failure_category: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Lead Id */
+            lead_id: string | null;
+            /** Missing Information */
+            missing_information: string[];
+            /** Model Key */
+            model_key: string;
+            /** Model Turns */
+            model_turns: number;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Rejected Claims */
+            rejected_claims: components["schemas"]["RejectedAgentClaim"][];
+            /** Review Notes */
+            review_notes: string[];
+            role: components["schemas"]["AgentRole"];
+            /** Sources */
+            sources: {
+                [key: string]: string;
+            };
+            status: components["schemas"]["AgentStatus"];
+            /** Stop Reason */
+            stop_reason: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Tool Call Count */
+            tool_call_count: number;
+            /** Tool Calls */
+            tool_calls: components["schemas"]["ToolCallOut"][];
+            /**
+             * Workflow Run Id
+             * Format: uuid
+             */
+            workflow_run_id: string;
+        };
+        /** AgentRunOut */
+        AgentRunOut: {
+            /** Claims */
+            claims: components["schemas"]["CitedClaim"][];
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Failure Category */
+            failure_category: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Lead Id */
+            lead_id: string | null;
+            /** Missing Information */
+            missing_information: string[];
+            /** Model Key */
+            model_key: string;
+            /** Model Turns */
+            model_turns: number;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Rejected Claims */
+            rejected_claims: components["schemas"]["RejectedAgentClaim"][];
+            /** Review Notes */
+            review_notes: string[];
+            role: components["schemas"]["AgentRole"];
+            status: components["schemas"]["AgentStatus"];
+            /** Stop Reason */
+            stop_reason: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Tool Call Count */
+            tool_call_count: number;
+            /**
+             * Workflow Run Id
+             * Format: uuid
+             */
+            workflow_run_id: string;
+        };
+        /** AgentStart */
+        AgentStart: {
+            /** Lead Id */
+            lead_id?: string | null;
+        };
+        /**
+         * AgentStatus
+         * @enum {string}
+         */
+        AgentStatus: "running" | "completed" | "rejected" | "failed";
         /**
          * AssessmentDetail
          * @description An assessment with the stored evidence behind it, as it is now.
@@ -1195,6 +1431,20 @@ export interface components {
         BulkOut: {
             /** Affected */
             affected: number;
+        };
+        /** CatalogOut */
+        CatalogOut: {
+            /** Agents */
+            agents: components["schemas"]["AgentInfo"][];
+            /** Tools */
+            tools: components["schemas"]["ToolInfo"][];
+        };
+        /** CitedClaim */
+        CitedClaim: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Text */
+            text: string;
         };
         /** CitedReason */
         CitedReason: {
@@ -2069,6 +2319,13 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** RejectedAgentClaim */
+        RejectedAgentClaim: {
+            /** Problems */
+            problems: string[];
+            /** Text */
+            text: string | null;
+        };
         /** RejectedClaim */
         RejectedClaim: {
             /** Problems */
@@ -2243,10 +2500,126 @@ export interface components {
          * @enum {string}
          */
         StepStatus: "running" | "succeeded" | "failed" | "interrupted" | "waiting";
+        /** TokenCreate */
+        TokenCreate: {
+            /** Current Password */
+            current_password?: string | null;
+            /**
+             * Expires In Days
+             * @default 30
+             */
+            expires_in_days: number;
+            /** Name */
+            name: string;
+            /** @default read */
+            scope: components["schemas"]["TokenScope"];
+        };
+        /**
+         * TokenCreated
+         * @description The only response that ever contains the secret.
+         */
+        TokenCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            scope: components["schemas"]["TokenScope"];
+            /** Secret */
+            secret: string;
+        };
         /** TokenIn */
         TokenIn: {
             /** Token */
             token: string;
+        };
+        /** TokenOut */
+        TokenOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            scope: components["schemas"]["TokenScope"];
+        };
+        /**
+         * TokenScope
+         * @enum {string}
+         */
+        TokenScope: "read" | "write";
+        /** ToolCallOut */
+        ToolCallOut: {
+            /** Arguments */
+            arguments: {
+                [key: string]: string;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Error Category */
+            error_category: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Side Effect */
+            side_effect: string;
+            status: components["schemas"]["ToolCallStatus"];
+            /** Tool */
+            tool: string;
+        };
+        /**
+         * ToolCallStatus
+         * @enum {string}
+         */
+        ToolCallStatus: "ok" | "denied" | "invalid" | "error";
+        /** ToolInfo */
+        ToolInfo: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Permission */
+            permission: string;
+            /** Side Effect */
+            side_effect: string;
         };
         /** UserOut */
         UserOut: {
@@ -2292,7 +2665,7 @@ export interface components {
          * WorkflowKind
          * @enum {string}
          */
-        WorkflowKind: "research" | "lead_intelligence";
+        WorkflowKind: "research" | "lead_intelligence" | "agent";
         /** WorkflowRunDetail */
         WorkflowRunDetail: {
             /** Approval Decision */
@@ -2331,11 +2704,8 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["WorkflowKind"];
-            /**
-             * Lead Id
-             * Format: uuid
-             */
-            lead_id: string;
+            /** Lead Id */
+            lead_id: string | null;
             /** Max Attempts */
             max_attempts: number;
             /** Result */
@@ -2388,11 +2758,8 @@ export interface components {
              */
             id: string;
             kind: components["schemas"]["WorkflowKind"];
-            /**
-             * Lead Id
-             * Format: uuid
-             */
-            lead_id: string;
+            /** Lead Id */
+            lead_id: string | null;
             /** Max Attempts */
             max_attempts: number;
             /** Result */
@@ -2969,6 +3336,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganizationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agent_runs_api_v1_organizations__org_id__agent_runs_get: {
+        parameters: {
+            query?: {
+                lead_id?: string | null;
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_agent_run_api_v1_organizations__org_id__agent_runs__agent_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agent_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentRunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_v1_organizations__org_id__agents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_agent_api_v1_organizations__org_id__agents__role__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role: components["schemas"]["AgentRole"];
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentRunOut"];
                 };
             };
             /** @description Validation Error */
@@ -4126,6 +4625,102 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WorkflowRunOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tokens_api_v1_organizations__org_id__mcp_tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_token_api_v1_organizations__org_id__mcp_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_token_api_v1_organizations__org_id__mcp_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -3,6 +3,7 @@
 import argparse
 import json
 
+from app.agents.evaluation.agent_eval import write_agent_report
 from app.agents.evaluation.gate_eval import write_gates_report
 from app.agents.evaluation.report import write_report
 from app.agents.evaluation.runner import ALL_TASKS, BASELINE, run
@@ -23,10 +24,16 @@ def main() -> None:
     )
     parser.add_argument("--report", action="store_true", help="Write REPORT.md from past runs")
     parser.add_argument("--gates", action="store_true", help="Write GATES.md; --models runs live")
+    parser.add_argument("--agents", action="store_true", help="Attack real agents: AGENTS.md")
     args = parser.parse_args()
 
     if args.report:
         print(write_report(args.split))
+        return
+
+    if args.agents:
+        models = [m.strip() for m in args.models.split(",") if m.strip() and m.strip() != BASELINE]
+        print(write_agent_report(models))
         return
 
     if args.gates:

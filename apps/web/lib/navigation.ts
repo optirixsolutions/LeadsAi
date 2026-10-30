@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { label: "Outreach", href: "/outreach", icon: Inbox, phase: 8 },
   { label: "Workflows", href: "/workflows", icon: Workflow },
-  { label: "Agents", href: "/agents", icon: Bot, phase: 7 },
+  { label: "Agents", href: "/agents", icon: Bot },
   { label: "Analytics", href: "/analytics", icon: BarChart3, phase: 9 },
   { label: "Integrations", href: "/integrations", icon: Plug, phase: 10 },
   { label: "System status", href: "/status", icon: Activity },

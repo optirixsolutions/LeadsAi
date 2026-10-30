@@ -18,7 +18,7 @@ from app.core.security import (
     verify_password,
 )
 from app.integrations.mailer import Email, Mailer
-from app.models import AuthToken, TokenPurpose, User, UserSession
+from app.models import AuthToken, McpToken, TokenPurpose, User, UserSession
 from app.services import audit
 
 
@@ -135,6 +135,15 @@ def list_sessions(db: Session, user_id: uuid.UUID) -> list[UserSession]:
     )
 
 
+def revoke_mcp_tokens(db: Session, user_id: uuid.UUID, org_id: uuid.UUID | None = None) -> None:
+    """A token must not outlast the thing that justified it: a stolen session could otherwise
+    keep its access after the password is changed, or a removed member after being re-invited."""
+    stmt = update(McpToken).where(McpToken.user_id == user_id, McpToken.revoked_at.is_(None))
+    if org_id is not None:
+        stmt = stmt.where(McpToken.organization_id == org_id)
+    db.execute(stmt.values(revoked_at=_now()))
+
+
 def change_password(
     db: Session, user: User, *, current: str, new: str, keep_session: uuid.UUID
 ) -> None:
@@ -142,6 +151,7 @@ def change_password(
         raise InvalidCredentialsError("Current password is incorrect")
     user.password_hash = hash_password(new)
     revoke_all_sessions(db, user.id, except_session=keep_session)
+    revoke_mcp_tokens(db, user.id)
     audit.record(
         db, "auth.password_changed", actor_id=user.id, target_type="user", target_id=user.id
     )
@@ -245,6 +255,7 @@ def reset_password(db: Session, token: str, new_password: str) -> User:
     if user.email_verified_at is None:
         user.email_verified_at = _now()
     revoke_all_sessions(db, user.id)
+    revoke_mcp_tokens(db, user.id)
     audit.record(
         db, "auth.password_reset_completed", actor_id=user.id, target_type="user", target_id=user.id
     )

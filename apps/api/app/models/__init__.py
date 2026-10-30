@@ -1,3 +1,12 @@
+from app.models.agent import (
+    AgentRole,
+    AgentRun,
+    AgentStatus,
+    McpToken,
+    TokenScope,
+    ToolCall,
+    ToolCallStatus,
+)
 from app.models.auth import AuthToken, Invitation, TokenPurpose, UserSession
 from app.models.base import Base
 from app.models.crm import (
@@ -38,6 +47,9 @@ __all__ = [
     "DEFAULT_STAGES",
     "Activity",
     "ActivityType",
+    "AgentRole",
+    "AgentRun",
+    "AgentStatus",
     "AuditLog",
     "AuthToken",
     "Base",
@@ -55,6 +67,7 @@ __all__ = [
     "LeadAssessment",
     "LeadImport",
     "LeadStatus",
+    "McpToken",
     "Membership",
     "Opportunity",
     "Organization",
@@ -65,6 +78,9 @@ __all__ = [
     "StageKind",
     "StepStatus",
     "TokenPurpose",
+    "TokenScope",
+    "ToolCall",
+    "ToolCallStatus",
     "User",
     "UserSession",
     "WorkflowKind",
