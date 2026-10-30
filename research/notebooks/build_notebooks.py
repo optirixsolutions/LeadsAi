@@ -241,11 +241,13 @@ input, a permission check inside the tool, and tenant scoping. Phase 7 builds th
 The tool reads the fictional dataset; it is an in-memory demo server, not a deployed one."""),
         ("code", SETUP),
         ("code", """
+import logging
 from mcp import Client
 from mcp.server.mcpserver import MCPServer
 from pydantic import BaseModel
 from app.agents.evaluation.runner import Dataset
 
+logging.disable(logging.ERROR)  # The denial below is expected; its server traceback is only noise.
 leads = Dataset.load("train").prospects
 # Tenant and role are set by trusted server code, never by the model or the tool arguments.
 SESSION = {"org": "org-a", "role": "analyst"}

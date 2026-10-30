@@ -58,9 +58,10 @@ models:
     timeout_s: 120
 
 # Task type -> preferred model. Unavailable models fall back per their own `fallback` list.
+# Chosen from research/evaluations/REPORT.md, so treat the chosen models' scores there as optimistic.
 routes:
-  classification: qwen3-4b
+  classification: qwen2.5-7b
   extraction: qwen3-4b
   synthesis: qwen2.5-7b
-  outreach: qwen2.5-7b
+  outreach: qwen3-4b
   embeddings: nomic-embed

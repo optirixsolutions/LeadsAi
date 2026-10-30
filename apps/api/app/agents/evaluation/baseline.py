@@ -95,7 +95,7 @@ def synthesize(item: dict[str, Any]) -> SynthesisOut:
     """Extractive brief: copies evidence verbatim, so it is grounded by construction."""
     facts = _factual(item)
     return SynthesisOut(
-        summary=f"{item['company']}: {len(facts)} evidence items collected.",
+        summary=f"{item['company']}: facts copied from the collected evidence.",
         claims=[Claim(text=e["text"], evidence_ids=[e["id"]]) for e in facts],
         missing_information=["Budget", "Decision timeline"],
     )
