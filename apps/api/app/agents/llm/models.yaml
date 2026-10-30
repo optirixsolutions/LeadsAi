@@ -1,0 +1,64 @@
+# Model registry. Every entry is a real model; there is no mock provider.
+# Base URLs may be overridden with SALESIQ_OLLAMA_BASE_URL / SALESIQ_HF_BASE_URL.
+# Prices are USD per million tokens: 0 = runs locally (hardware and power not counted),
+# omitted = unknown. Ollama "-cloud" models are deliberately excluded (remote, not local).
+
+providers:
+  ollama:
+    base_url: http://127.0.0.1:11434/v1
+  huggingface:
+    # Hosted Inference Providers router; needs HF_TOKEN and may bill the token owner.
+    base_url: https://router.huggingface.co/v1
+    api_key_env: HF_TOKEN
+
+models:
+  qwen3-4b:
+    provider: ollama
+    model: hf.co/Qwen/Qwen3-4B-GGUF:Q4_K_M
+    source: https://huggingface.co/Qwen/Qwen3-4B-GGUF
+    capabilities: [chat, structured_output]
+    context_tokens: 4096
+    price_input_per_mtok: 0
+    price_output_per_mtok: 0
+    timeout_s: 180
+    fallback: [qwen2.5-7b]
+  qwen2.5-7b:
+    provider: ollama
+    model: qwen2.5:latest
+    capabilities: [chat, structured_output]
+    context_tokens: 4096
+    price_input_per_mtok: 0
+    price_output_per_mtok: 0
+    timeout_s: 180
+  mistral-7b:
+    provider: ollama
+    model: mistral:latest
+    capabilities: [chat, structured_output]
+    context_tokens: 4096
+    price_input_per_mtok: 0
+    price_output_per_mtok: 0
+    timeout_s: 180
+  nomic-embed:
+    provider: ollama
+    model: hf.co/nomic-ai/nomic-embed-text-v1.5-GGUF:Q4_K_M
+    source: https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF
+    capabilities: [embeddings]
+    context_tokens: 2048
+    price_input_per_mtok: 0
+    price_output_per_mtok: 0
+    timeout_s: 60
+  # Hosted option for Colab or machines without a GPU. Not exercised unless HF_TOKEN is set.
+  hf-qwen3-8b:
+    provider: huggingface
+    model: Qwen/Qwen3-8B
+    source: https://huggingface.co/Qwen/Qwen3-8B
+    capabilities: [chat, structured_output]
+    timeout_s: 120
+
+# Task type -> preferred model. Unavailable models fall back per their own `fallback` list.
+routes:
+  classification: qwen3-4b
+  extraction: qwen3-4b
+  synthesis: qwen2.5-7b
+  outreach: qwen2.5-7b
+  embeddings: nomic-embed

@@ -1,0 +1,34 @@
+{
+  "version": "v1",
+  "seed": 20261030,
+  "fictional": true,
+  "icp": {
+    "target_industries": [
+      "B2B SaaS",
+      "Fintech",
+      "Logistics Technology"
+    ],
+    "employee_range": [
+      50,
+      1000
+    ],
+    "target_countries": [
+      "United States",
+      "Canada",
+      "United Kingdom",
+      "Germany"
+    ],
+    "decision_maker_titles": [
+      "VP of Sales",
+      "Chief Revenue Officer",
+      "Head of Revenue Operations",
+      "Director of Sales"
+    ],
+    "exclusions": [
+      "Government"
+    ],
+    "description": "Mid-market B2B software-driven companies with a sales team that has an active need to improve lead qualification and CRM data."
+  },
+  "canary": "canary-7731@evil.example",
+  "labeling": "Rule over latent attributes; see generate.py fit_label. Not real sales outcomes."
+}
