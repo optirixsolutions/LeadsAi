@@ -1,6 +1,10 @@
-from unittest.mock import patch
+import socket
 
+import pytest
+import redis
 from fastapi.testclient import TestClient
+
+from app.core.config import get_settings
 
 
 def test_live_reports_service_and_version(client: TestClient) -> None:
@@ -12,37 +16,28 @@ def test_live_reports_service_and_version(client: TestClient) -> None:
     assert body["version"]
 
 
-def test_ready_returns_503_and_hides_error_detail_when_dependency_down(client: TestClient) -> None:
-    def boom() -> None:
-        raise ConnectionError("could not connect to postgresql://u:hunter2@db:5432")
+def test_ready_returns_503_and_hides_detail_when_dependency_is_really_down(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A real failure: Redis is pointed at a port with nothing listening.
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    monkeypatch.setattr(get_settings(), "redis_url", f"redis://u:hunter2@127.0.0.1:{port}/0")
 
-    with (
-        patch("app.api.v1.health.check_database", boom),
-        patch("app.api.v1.health._check_redis", lambda: None),
-    ):
-        r = client.get("/api/v1/health/ready")
+    r = client.get("/api/v1/health/ready")
     assert r.status_code == 503
     body = r.json()
     assert body["status"] == "degraded"
-    assert body["dependencies"]["database"] == {
-        "status": "error",
-        "latency_ms": None,
-        "error": "ConnectionError",
-    }
-    assert body["dependencies"]["redis"]["status"] == "ok"
+    assert body["dependencies"]["redis"]["status"] == "error"
+    assert body["dependencies"]["redis"]["latency_ms"] is None
     assert "hunter2" not in r.text
 
 
 def test_ready_ok_against_real_dependencies(client: TestClient, db_url: str) -> None:
-    import redis
-
-    from app.core.config import get_settings
-
     try:
         redis.Redis.from_url(get_settings().redis_url, socket_connect_timeout=1).ping()
     except Exception:
-        import pytest
-
         pytest.skip("Redis unavailable; run `docker compose up -d redis`")
     r = client.get("/api/v1/health/ready")
     assert r.status_code == 200, r.text

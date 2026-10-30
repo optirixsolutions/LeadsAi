@@ -139,6 +139,7 @@ class ModelRegistry:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=m.timeout_s,
+                reasoning_effort=m.reasoning_effort,
             )
             try:
                 (text, usage, latency), attempts = self._with_retries(m, call)

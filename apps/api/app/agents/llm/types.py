@@ -35,6 +35,8 @@ class ModelConfig(BaseModel):
     # Tried in order on transient failure. Never used to hide a security or validation error.
     fallback: tuple[str, ...] = ()
     source: str | None = None
+    # Sent as-is when set. "none" stops thinking models spending the output budget on reasoning.
+    reasoning_effort: str | None = None
 
 
 class ProviderConfig(BaseModel):
@@ -117,6 +119,11 @@ def bad_response(message: str) -> LLMError:
 
 def schema_invalid(message: str) -> LLMError:
     return LLMError(message, category="schema_invalid")
+
+
+def truncated(message: str) -> LLMError:
+    """The output limit ended generation before a usable answer. Not the same as bad output."""
+    return LLMError(message, category="truncated")
 
 
 def unsupported(message: str) -> LLMError:

@@ -15,6 +15,7 @@ from app.agents.llm.types import (
     not_found,
     resources,
     timed_out,
+    truncated,
     unauthorized,
     unavailable,
 )
@@ -79,6 +80,7 @@ class OpenAICompatibleClient:
         max_tokens: int = 1024,
         seed: int | None = 7,
         timeout: float = 120,
+        reasoning_effort: str | None = None,
     ) -> tuple[str, Usage, float]:
         body: dict[str, Any] = {
             "model": model,
@@ -88,6 +90,8 @@ class OpenAICompatibleClient:
         }
         if seed is not None:
             body["seed"] = seed
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
         if json_schema is not None:
             body["response_format"] = {
                 "type": "json_schema",
@@ -97,10 +101,16 @@ class OpenAICompatibleClient:
         data = self._post("chat/completions", body, model=model, timeout=timeout)
         latency_ms = (time.perf_counter() - start) * 1000
         try:
-            text = data["choices"][0]["message"]["content"] or ""
+            choice = data["choices"][0]
+            text = _THINK.sub("", choice["message"]["content"] or "").strip()
         except (KeyError, IndexError, TypeError) as exc:
             raise bad_response(f"{self.config.key}: response had no message content") from exc
-        return _THINK.sub("", text).strip(), _usage(data), latency_ms
+        # Cut-off JSON can never validate, and empty text means the budget went on reasoning.
+        if choice.get("finish_reason") == "length" and (json_schema is not None or not text):
+            error = truncated(f"'{model}' reached the {max_tokens} token limit before finishing")
+            error.details["raw"] = text[:2000]
+            raise error
+        return text, _usage(data), latency_ms
 
     def embed(
         self, model: str, inputs: list[str], *, timeout: float = 120

@@ -160,6 +160,19 @@ def test_real_structured_output_validates_against_schema() -> None:
 
 
 @needs_ollama
+def test_output_limit_is_reported_as_truncation_not_bad_json() -> None:
+    with pytest.raises(LLMError) as info:
+        ModelRegistry().structured(
+            MODEL,
+            [{"role": "user", "content": "Acme is headquartered in Leeds. What city?"}],
+            _Fact,
+            max_tokens=2,
+        )
+    assert info.value.category == "truncated"
+    assert not info.value.transient, "the same limit would cut off a retry too"
+
+
+@needs_ollama
 def test_missing_model_gives_clear_error(tmp_path: Path) -> None:
     with pytest.raises(LLMError) as info:
         _registry(tmp_path).chat("missing", [{"role": "user", "content": "hi"}])

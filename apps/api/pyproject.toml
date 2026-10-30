@@ -21,6 +21,8 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
     "ipykernel>=7.4.0",
+    "jupyter-client>=8.10.0",
+    "mcp>=2.3.0",
     "mypy>=2.4.1",
     "nbclient>=0.11.0",
     "nbformat>=5.11.1",
@@ -50,6 +52,7 @@ ignore = ["S101"]
 "app/agents/evaluation/metrics.py" = ["E501"]
 "app/agents/evaluation/baseline.py" = ["E501"]
 "app/agents/evaluation/runner.py" = ["E501"]
+"app/agents/evaluation/report.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

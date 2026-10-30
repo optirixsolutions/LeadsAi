@@ -22,5 +22,6 @@ Start every session by reading `docs/IMPLEMENTATION_ROADMAP.md` (current phase, 
 - New tables: add the model, then `uv run alembic revision --autogenerate`, review it, and keep `tests/test_migrations.py` green.
 - Tests hit only the `salesiq_test` database (enforced in `tests/conftest.py`).
 - UI: no hardcoded metrics, no dead controls. Unbuilt pages are non-link nav items tagged with their phase.
-- No real emails, paid model calls, or external mutations without explicit approval; use mocks.
+- No real emails, paid model calls, or external mutations without explicit approval.
+- No mock model providers. AI work runs on real local models (Ollama, open models from Hugging Face); see `apps/api/app/agents/llm/models.yaml`. Test failure paths with real failures, such as a closed port or a missing model.
 - Record architecture decisions in `docs/DECISIONS.md`; record gaps in `docs/KNOWN_LIMITATIONS.md`.

@@ -275,6 +275,7 @@ def _operational(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "items": len(rows),
         "schema_valid_rate": sum(r["schema_valid"] for r in rows) / len(rows) if rows else 0.0,
         "failures": dict(Counter(r["failure_category"] for r in rows if r["failure_category"])),
+        "fallbacks": sum(1 for r in rows if r.get("fallback_from")),
         "latency_ms_p50": metrics.percentile(latencies, 0.5),
         "latency_ms_p95": metrics.percentile(latencies, 0.95),
         "input_tokens": sum(r["input_tokens"] or 0 for r in rows),

@@ -1,28 +1,55 @@
 # AI Strategy and Evaluation
 
-Status: design only. Implementation starts in Phase 4.
+Results: [research/evaluations/REPORT.md](../research/evaluations/REPORT.md).
 
-## Provider abstraction
-`app/agents/llm/` (Phase 4) defines a provider-independent interface with adapters for hosted providers, a local
-Ollama-compatible endpoint, and a deterministic **mock** provider used by default in tests and when no key is configured.
+## Real models only
+There is no mock provider (decision ADR-015). Evaluations and workflows call real models:
+| Key | Model | Source | Role |
+|---|---|---|---|
+| `qwen3-4b` | `Qwen/Qwen3-4B-GGUF` Q4_K_M (2.33 GB, Apache-2.0) | Hugging Face, via Ollama | Local |
+| `qwen2.5-7b` | `qwen2.5:latest` | Already on the dev machine, via Ollama | Local |
+| `mistral-7b` | `mistral:latest` | Already on the dev machine, via Ollama | Local |
+| `nomic-embed` | `nomic-ai/nomic-embed-text-v1.5-GGUF` Q4_K_M (0.08 GB, Apache-2.0) | Hugging Face, via Ollama | Embeddings |
+| `hf-qwen3-8b` | `Qwen/Qwen3-8B` | Hugging Face hosted router | Optional hosted route for Colab; needs `HF_TOKEN`, may bill the owner; not yet exercised |
 
-Each model configuration records: provider, model ID, capabilities (structured output, tool calling, embeddings),
-context limit, input/output price, timeout, retry policy, concurrency limit, fallback, availability.
+Ollama `-cloud` entries are deliberately excluded because they run remotely.
 
-Routing is per task type (classification, extraction, research synthesis, drafting, embeddings) and considers capability,
-quality from evaluations, latency, and budget. A fallback may never downgrade a security check or fabricate success.
-Consequential actions are gated by deterministic permission checks and human approval, never model confidence.
+## Provider layer (`apps/api/app/agents/llm/`)
+- One OpenAI-compatible client serves Ollama, the Hugging Face router, vLLM, and similar endpoints. New protocols add a client.
+- `models.yaml` records provider, model, capabilities, context, prices, timeout, retries, concurrency, and fallback.
+- Availability is checked by asking the provider. Missing models, missing keys, and out-of-memory conditions are distinct, clear errors.
+- Retries and fallback apply only to transient failures. A fallback is reported in `fallback_from`, never hidden, and invalid output is an error rather than a guess.
+- Unknown prices stay unknown: `estimate_cost` returns `None`, not zero. Local cost is $0 in tokens and excludes hardware and power.
+- Consequential actions are gated by deterministic permission checks and human approval, never by model confidence.
 
-## Evaluation record
-Every run stores: task type, dataset version, model + config, prompt version, input/output tokens, latency, estimated cost,
-schema validity, grounding score, human rating (optional), failure category.
+## Evaluation (`apps/api/app/agents/evaluation/`)
+```bash
+cd apps/api
+uv run python -m app.agents.evaluation --status
+uv run python -m app.agents.evaluation --models baseline,qwen3-4b --split test
+uv run python -m app.agents.evaluation --report
+```
+Each run writes `research/evaluations/<run_id>/records.jsonl` and `summary.json`, and never overwrites an earlier run.
+Every record stores: task, dataset version, model and what actually served it, prompt version, tokens, latency, estimated cost,
+schema validity, failure category, prediction, and an empty slot for a human rating. Each run stamps its git commit.
 
-## Method
-1. Synthetic, clearly labelled fictional B2B prospect dataset with labelled train/held-out splits.
-2. Deterministic baseline (rules for ICP fit and scoring) before any model comparison.
-3. Compare models on held-out data only; report measured numbers with sample sizes.
-4. Grounding check: every claim in a research brief or draft must cite stored evidence IDs; unsupported claims fail.
-5. Prompt-injection suite: imported content containing instructions must not change tool use or output policy.
-6. No fine-tuning until baseline evaluation shows a measured gap it would close.
+| Task | Measures |
+|---|---|
+| Classification | Accuracy with 95% Wilson interval, macro F1, confusion matrix |
+| Extraction | Field accuracy, plus the rate of invented facts when the text states nothing |
+| Injection | How often low-fit leads with planted instructions get labelled high |
+| Synthesis, outreach | Lexical support, invented numbers, invalid or missing citations, injected source cited or obeyed |
+| Retrieval | Recall@1 and MRR, keyword overlap against real embeddings |
 
-No accuracy, precision, recall, cost, or savings figure is reported without an actual measurement behind it.
+Failed calls count as wrong. Tasks use a held-out split whose signal phrasing and fact wording do not appear in train.
+The rule baseline runs first, and any model has to beat it to justify its cost.
+
+## Data and honesty rules
+`research/datasets/` is synthetic and fictional, with labels from a known rule, so results compare methods and do not predict
+production accuracy or conversion. No accuracy, cost, or savings figure is stated without a measurement behind it.
+Lexical support is a screening heuristic. Fine-tuning waits until evaluation shows a gap it would close.
+
+## Notebooks
+`research/notebooks/` holds 01–06, generated by `build_notebooks.py` so setup cannot drift. Notebooks import the same backend
+modules and stop with a clear error if no real model is reachable. On Colab, use a clone of this repository with `HF_TOKEN` as a
+Colab secret, or a local model server. Colab is for experiments only, never production. It has no GPU guarantee or persistence.

@@ -21,6 +21,8 @@ models:
     price_input_per_mtok: 0
     price_output_per_mtok: 0
     timeout_s: 180
+    # With thinking on, about 1 in 4 calls used all 1024 output tokens reasoning and returned nothing.
+    reasoning_effort: none
     fallback: [qwen2.5-7b]
   qwen2.5-7b:
     provider: ollama
