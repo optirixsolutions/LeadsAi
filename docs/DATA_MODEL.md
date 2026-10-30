@@ -58,11 +58,18 @@ All four have RLS enabled and forced. The app role has no DELETE on any of them.
 
 Workers cross tenants only through `workflow_claim()` and `import_claim()`, which return IDs. See SECURITY.md.
 
+## Implemented (migration `280aff41aff2`)
+| Table | Key columns | Notes |
+|---|---|---|
+| `agent_runs` | `workflow_run_id` (unique), `lead_id`, `role`, `status`, `claims`, `rejected_claims`, `missing_information`, `review_notes`, `sources`, usage, `failure_category` | RLS forced. Agent definitions are code, not rows |
+| `tool_calls` | `tool`, `side_effect`, `status`, `arguments`, `error_category`, `duration_ms`, actor, run, token | RLS forced, append-only. `arguments` holds validated IDs only, never free text |
+| `mcp_tokens` | `user_id`, `name`, `token_hash` (unique), `scope`, `expires_at`, `revoked_at`, `last_used_at` | No RLS, because tokens are looked up by digest before a tenant is known. Every other query filters by user and organization |
+| `workflow_runs` (changed) | `lead_id` is now optional | At most one active run per lead, and one per agent for work about the whole organization |
+
 ## Planned
 | Phase | Tables |
 |---|---|
 | 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
-| 7 | `agent_definitions`, `agent_runs`, `tool_calls` |
 | 8 | `outreach_drafts`, `campaigns`, `suppression_entries`, `approval_requests`, `deliveries` |
 | 4/10 | `model_configurations`, `model_evaluations`, `usage_records`, `integration_connections`, `webhook_events`, `plans`, `entitlements`, `subscriptions` |
 

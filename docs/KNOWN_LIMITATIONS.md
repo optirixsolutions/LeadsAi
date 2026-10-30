@@ -1,11 +1,23 @@
 # Known Limitations
 
-Current as of Phase 6 (2026-10-30).
+Current as of Phase 7 (2026-10-31).
+
+## Agents and MCP
+- **Agent text can still carry a planted message.** Agents cannot act on it, but a reader might. See `research/evaluations/AGENTS.md`. Items an
+  agent lists as unknown need no support from sources, so "call the CFO today" could pass as one, and CRM fields such as a title reach the model
+  unscreened and can be cited.
+- Outreach, follow-up, and integration tools, and the outreach and follow-up agents, do not exist yet because what they act on does not (Phases 8 to 10).
+- `tool_calls` and agent `sources` have no retention limit. Rate-limited calls leave no row, so a flood is visible only in logs.
+- Rate limits fail open if Redis is down, and the MCP server has no limit per IP for traffic without a valid token. Token lookups are by digest.
+- Each model call's timeout shrinks as a run nears its time limit, but the client's retries still apply, so a run can overrun by a few calls.
+- MCP metadata names an authorization server that does not exist, because tokens come from Settings, not an OAuth flow. Clients that insist on
+  OAuth discovery will not connect.
+- Whether Ollama truncates a long conversation at its context limit was not tested. Tool results are capped to keep this unlikely.
+- There is no per-organization token budget across runs. Local models cost nothing per token, but this is needed before any paid route.
+- The MCP and migrate containers have not been built or run; the server was tested as a local process over real HTTP.
 
 ## Workflows
-- **The API and workers share a database role.** So the API could write to checkpoint tables or call the claim functions if it were
-  compromised. Reading checkpoints is now strict, so a planted row cannot run code, but a separate worker role is still planned first
-  in Phase 7. Checkpoint tables have no tenant column and no RLS, and hold only IDs, statuses, and counts.
+- Checkpoint tables have no tenant column and no RLS. They hold only IDs, statuses, and counts, and only the worker role can reach them.
 - Runs waiting for approval never expire. They hold their lead's active slot and one of the organization's 20, until someone decides
   or cancels.
 - Each start of a run counts as an attempt, and workers do not release leases on shutdown. Restarting a worker therefore delays its
@@ -17,6 +29,7 @@ Current as of Phase 6 (2026-10-30).
 - Imports above 1,000 rows wait for a worker, and an organization can queue 3 at a time. Each still runs as one transaction with one
   query per row (36 s for the largest file), and its file sits in the database until processed.
 - The worker container has not been built or run. It was tested as a local process.
+- A lead's page makes about 10 API calls per render, which is noticeable under load.
 - Upgrading `langgraph-checkpoint-postgres` may need a new migration (see DEPLOYMENT.md).
 
 ## Sales intelligence
@@ -50,7 +63,7 @@ Current as of Phase 6 (2026-10-30).
 - Local cost covers tokens only, not hardware or power.
 
 ## Functional
-- No agents or outreach in the product yet (Phases 6–8).
+- No outreach in the product yet (Phase 8).
 - CSV imports are capped at 5 MB / 10,000 rows in one transaction, with no progress within a run. Duplicate detection is by email
   only; leads without an email are never treated as duplicates.
 - No tasks/follow-ups table yet (planned with the Follow-up agent), no custom-field definitions (values are free-form

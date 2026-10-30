@@ -1,7 +1,7 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 6 complete → next is Phase 7 (MCP server and bounded agents).
-**Last updated:** 2026-10-30
+**Current phase:** Phase 7 complete → next is Phase 8 (outreach and approvals).
+**Last updated:** 2026-10-31
 
 ## Phase status
 | Phase | Scope | Status |
@@ -13,8 +13,8 @@
 | 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Done (Colab paths and hosted route not executed) |
 | 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet; CI not run) |
 | 6 | LangGraph workflows with Postgres checkpoints | Done (container worker not run; CI not run) |
-| 7 | MCP server and bounded agents | Next |
-| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Pending |
+| 7 | MCP server and bounded agents | Done (containers not run; CI not run) |
+| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Next |
 | 9 | Full dashboard and analytics | Pending |
 | 10 | Integrations, quotas, entitlements | Pending |
 | 11 | Hardening and release | Pending |
@@ -113,15 +113,26 @@ with no duplicate assessment, brief, or activity. A test kills a real worker pro
   checkpoints, orphaned checkpoints, a leftover brief blocking its lead, unbounded import queues, unfair claims, and a late answer
   overwriting a newer one. One finding was only partly fixed: see the first item in KNOWN_LIMITATIONS.
 
-## Tests run (2026-10-30, local Windows machine)
+## Phase 7 — completed
+Acceptance met: authorized tools work, unauthorized calls fail and are logged, and agent output passes a deterministic review before it is stored.
+- **Worker role:** workers connect as `salesiq_worker`, and the API can no longer reach checkpoints or claim work (ADR-029).
+- **MCP server:** 16 tools over real services on the official SDK, in memory for agents and over HTTP with tokens for outside clients (ADR-026, ADR-028).
+- **Agents:** research, qualification, and pipeline analyst, as workflow steps with the same trace and recovery. Read-only tools, one lead, hard
+  limits (ADR-027). Attacks measured against real models in `research/evaluations/AGENTS.md`.
+- **Web:** Agents page, run view with sources and every tool call, agent buttons on the lead page, Settings → MCP tokens.
+- **Independent review** found no authorization bypass, no cross-tenant path, and no write path for an agent. Fixed with tests: malformed calls
+  that could skip the audit log, free text in the log, agent budgets that could be exceeded, cancellation ignored mid-run, tokens surviving a
+  password change or removal, MCP bypassing REST rate limits, one rep filling the queue, a migration that failed open, and the API holding the owner URL.
+
+## Tests run (2026-10-31, local Windows machine)
 Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 344 passed, 0 skipped, including real calls to local Ollama models and a killed worker process |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (75 files) |
-| Web `vitest` | 34 passed |
+| API `pytest` | 401 passed, 0 skipped, including real Ollama models, real MCP over HTTP, and a killed worker process |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (87 files) |
+| Web `vitest` | 37 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API, worker, Postgres) | 39 passed, 3 skipped (sidebar tests are desktop-only) |
+| Playwright (desktop + mobile, real API, worker, Postgres) | 45 passed, 3 skipped (sidebar tests are desktop-only) |
 | `docker compose config` | Valid; the images and the containerized worker were not built or run |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
@@ -129,11 +140,11 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- None for Phase 7. Real email (Phase 8) needs a provider choice and explicit approval.
+- Sending real email needs a provider choice and explicit approval. Phase 8 can be built and tested fully up to that point without one.
 
-## Next concrete steps (Phase 7)
-1. Separate database role for workers, so the API cannot reach checkpoints or claim functions (see KNOWN_LIMITATIONS).
-2. MCP server on the official SDK, with typed tools and authorization inside every tool, over real services and no mock tools.
-3. Tools carry the actor and tenant from the server side, never from the model. No SQL, shell, or arbitrary HTTP tools.
-4. Bounded agents with step, time, and token limits, running as workflow steps so they get the same trace and recovery.
-5. Evaluate tool use against injection before an agent can act, and tune on train only.
+## Next concrete steps (Phase 8)
+1. Outreach drafts: a bounded agent writes, using only cited facts, and every draft is a record a person can edit.
+2. Suppression lists and opt-outs, checked by fixed rules at draft time and again at dispatch.
+3. Approval requests through the workflow interrupt from Phase 6, recorded under the person who approves.
+4. A dispatch adapter that refuses to send without an approval record and a final policy check. No real provider without explicit approval.
+5. Outreach and follow-up tools for MCP, with sending never available as a tool.

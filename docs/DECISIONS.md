@@ -123,3 +123,28 @@ ships a client for it.
 The largest allowed import took 36 s when measured, which is too long for a web request. Most files are far smaller, so up to 1,000
 rows still finish immediately, and the shared code means both paths behave the same. A queued file is personal data, so it is
 stored only until processed and is cleared in the transaction that finishes the import.
+
+### ADR-026 · 2026-10-31 · Identity for tools comes from the server, and every call passes one executor
+A tool call is a request, not an authorization. Identity comes from a verified token or the workflow that started an agent, tool schemas
+have no field for organization or user, and `mcp/registry.py:execute` checks membership, scope, role, and lead binding on every call. The
+server dispatches straight to it instead of using the SDK's per-tool argument handling, so that unknown tools and malformed arguments are
+refused and logged like any other call.
+
+### ADR-027 · 2026-10-31 · Agents only read, and the quality reviewer is not a model
+Planted instructions cannot be reliably detected, so what limits them is what an agent can do. Agents get a short list of read-only tools,
+are bound to one lead, and have hard limits on turns, tool calls, tokens, and time. Their answers pass fixed rules. A model reviewer could
+be talked past in the way Phase 4 measured. CrewAI is not used, because nothing here needs agents to collaborate. Outreach and follow-up
+agents wait for what they act on to exist.
+
+### ADR-028 · 2026-10-31 · Tools exist only where a real service stands behind them
+The specification's catalog includes outreach, follow-up, and integration tools, and suggests mock implementations. The project owner ruled
+out mocks (ADR-015), and a tool over nothing would be a dead control, so those tools arrive with their services in Phases 8 to 10.
+
+### ADR-029 · 2026-10-31 · Workers have their own database role
+`salesiq_worker` inherits the API role's rights inside a tenant, under the same RLS, and is alone able to use checkpoints and claim functions.
+A compromised API therefore cannot claim work or write a checkpoint. The migration fails if the role is missing, because recording the
+separation when it has not happened would be worse than stopping. Migrations run as a separate one-off job, so neither service holds the owner URL.
+
+### ADR-030 · 2026-10-31 · MCP tokens are personal, revocable, and never exceed their owner
+A token acts as its owner with their role at the time of each call, and a read token cannot use write tools. Changing a password or leaving an
+organization revokes tokens, and a write token needs the current password to create, so a stolen session cannot mint lasting write access.

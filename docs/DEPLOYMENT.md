@@ -11,16 +11,21 @@ Status: container images and compose are verified locally. No production environ
 ## Local full stack
 ```bash
 docker compose --profile app up -d --build --wait
-docker compose run --rm api .venv/bin/alembic upgrade head
+docker compose run --rm migrate
 ```
-The `api` service has both URLs set: it runs as `salesiq_app`, and Alembic uses `SALESIQ_MIGRATION_DATABASE_URL`.
+The `api` service runs as `salesiq_app`, and only the one-off `migrate` service holds the owner URL (`SALESIQ_MIGRATION_DATABASE_URL`).
 
 ## Worker
-The `worker` service uses the API image and runs `python -m app.tasks.worker`. It has no HTTP port, and it connects as `salesiq_app`
-like the API. Run as many as you like: claims are atomic. `SALESIQ_WORKER_CONCURRENCY` sets runs per process, and
+The `worker` service uses the API image and runs `python -m app.tasks.worker`. It has no HTTP port, and it connects
+as `salesiq_worker` (`SALESIQ_WORKER_DATABASE_URL`). Run as many as you like: claims are atomic. `SALESIQ_WORKER_CONCURRENCY` sets runs per process, and
 `SALESIQ_WORKER_LEASE_SECONDS` sets how long a dead worker's run waits before recovery. It reaches Ollama on the Docker host by default;
 set `SALESIQ_OLLAMA_BASE_URL` to use another model server. On stop, a worker finishes what it can within 10 seconds, and anything
 unfinished is recovered by another worker when its lease expires.
+
+## MCP server
+`python -m app.mcp.http` (the `mcp` service) serves outside MCP clients at `/mcp`, and every request needs a token from Settings → MCP tokens.
+It binds to localhost by default and serves only the host in `SALESIQ_MCP_PUBLIC_URL`. Outside development that URL must be HTTPS, so put TLS
+in front of it. Set `SALESIQ_MCP_HOST` to listen beyond localhost. It connects as `salesiq_app` and needs no worker rights.
 
 Upgrading `langgraph-checkpoint-postgres` may add checkpoint migrations, which the app role cannot run. Add an Alembic revision that
 runs its setup as the schema owner in the same release.
@@ -30,6 +35,7 @@ runs its setup as the schema owner in the same release.
 |---|---|---|
 | Schema owner | LOGIN, owns `public` | Runs migrations only (`SALESIQ_MIGRATION_DATABASE_URL`) |
 | `salesiq_app` | LOGIN, NOSUPERUSER, NOBYPASSRLS, not an owner | API runtime (`SALESIQ_DATABASE_URL`). Connecting as an owner or superuser silently disables RLS |
+| `salesiq_worker` | LOGIN, NOSUPERUSER, NOBYPASSRLS | Worker runtime (`SALESIQ_WORKER_DATABASE_URL`). Must exist before migrating; the migration fails otherwise. An existing local database needs it created once, from `infra/docker/postgres-init.sql` |
 | `salesiq_definer` | NOLOGIN, BYPASSRLS | Owns `invitation_lookup()`, `workflow_claim()`, and `import_claim()`; creating it needs a superuser (or a managed-Postgres admin role) |
 
 `infra/docker/postgres-init.sql` holds the local versions of these statements. Migrations grant privileges to these

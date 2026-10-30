@@ -59,6 +59,17 @@ TypeScript types are generated into `packages/contracts/src/openapi.ts`.
 | POST | `/organizations/{org_id}/workflows/{id}/decision` | `intelligence:review` | `{decision: approved\|rejected}` for a run in `waiting_approval`; audited |
 | GET | `/workers/health` | session | `{alive}`: whether a background worker reported in recently |
 
+| GET | `/organizations/{org_id}/agents` | `workflows:read` | Agent roles, their tools and limits, and the whole tool catalog |
+| POST | `/organizations/{org_id}/agents/{role}/runs` | `workflows:run` | `{lead_id}` for `research` and `qualification`; none for `pipeline`. 202, queued. 409 if one is already active for that lead or agent |
+| GET | `/organizations/{org_id}/agent-runs[?lead_id]`, `/agent-runs/{id}` | `workflows:read` | Newest 50 / one run with its findings, sources, and tool calls. Removed claim wording needs `intelligence:review` |
+| GET / POST / DELETE | `/organizations/{org_id}/mcp-tokens[/{id}]` | `workflows:read`, own tokens only | List / create (`current_password` is required for `scope: write`; the secret appears only in this response) / revoke |
+
+**MCP server** (`python -m app.mcp.http`, streamable HTTP at `/mcp`): every request needs `Authorization: Bearer <token>`. Tools: `search_leads`,
+`get_lead_profile`, `create_lead`, `update_lead`, `list_lead_activities`, `get_research_evidence`, `search_company_research`, `save_research_evidence`,
+`get_lead_score`, `evaluate_lead_fit`, `get_icp_configuration`, `get_pipeline_summary`, `list_open_opportunities`, `get_opportunity_details`,
+`get_workflow_status`, `request_action_approval`. Failed calls return `is_error` with text `category: message`. A tool can ask for a status change
+to be approved, but no tool can approve one.
+
 `POST /lead-imports` returns 202 with status `queued` above 1,000 rows; poll `GET /lead-imports/{id}`. `POST /leads/{id}/briefs` queues
 a research run, so it now also needs a running worker.
 
@@ -68,4 +79,4 @@ References to other records (company, lead, stage, owner) that are not in the ca
 Scores rank a lead against the organization's ICP. They are deterministic, are not conversion probabilities, and are never
 changed by model output. Research older than the ICP's `signal_ttl_days` does not count toward them.
 
-Planned groups: `tasks`, `outreach`, `approvals`, `agents`, `integrations`, `usage`.
+Planned groups: `tasks`, `outreach`, `approvals`, `integrations`, `usage`.

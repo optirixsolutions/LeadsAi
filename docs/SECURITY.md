@@ -9,7 +9,7 @@
 | CSRF | SameSite=Lax + session-bound HMAC token on mutations; JSON-only pre-session endpoints | Done (Phase 2) |
 | Account enumeration / credential stuffing | Uniform login errors, dummy-hash timing equalization, indistinguishable reset requests, rate limits | Done (Phase 2); lockout DoS noted in KNOWN_LIMITATIONS |
 | Prompt injection via imported content | Scores never read model output; input and output gates; quarantine with human release; tool permissions in code, not prompts | Gates and scoring done (Phase 5), measured in `research/evaluations/GATES.md`, and the input gate is easy to evade by rewording; tools Phase 7 |
-| Unsafe tool calls / confused deputy | MCP tools carry actor + tenant context; authorization inside each tool; no SQL/shell/arbitrary HTTP tools | Phase 7 |
+| Unsafe tool calls / confused deputy | Identity set by the server, never by arguments; one executor checks membership, scope, role, and binding on every call; no SQL/shell/arbitrary HTTP tools | Done (Phase 7) |
 | Unauthorized external communication | Approval record + final policy check at dispatch; suppression lists; tests for bypass | Phase 8 |
 | SSRF | Research fetcher with per-hop allowlist, connection pinned to a checked public IP, size limit and a deadline on every socket call | Done (Phase 5) |
 | SQL injection | ORM / bound parameters only; no string-built SQL | Ongoing |
@@ -91,11 +91,27 @@ findings were fixed with tests except where KNOWN_LIMITATIONS says otherwise.
 | LangSmith tracing stays off, even if the environment enables it | `workflows/runner.py` | `test_tracing_stays_off_even_if_the_environment_turns_it_on` |
 | Limits: active runs and queued imports per org, fair claims, rate limits on starts, resumes, and imports | services, migrations | `test_org_limit_on_active_runs`, `test_queue_of_large_imports_is_bounded_per_org` |
 
+## Controls implemented (Phase 7)
+An independent review found no authorization bypass, no cross-tenant path, and no write path an agent can reach. Its other findings were
+fixed with tests except where KNOWN_LIMITATIONS says otherwise.
+| Control | Where | Tests |
+|---|---|---|
+| Every tool call authorized and logged in one place, including refused, invalid, and unknown calls | `mcp/registry.py:execute` | `test_every_kind_of_bad_call_over_http_is_refused_and_logged` |
+| Tools take no identity, and extra arguments are refused | input models, `execute` | `test_tools_cannot_be_told_who_to_act_as`, `test_arguments_cannot_smuggle_an_identity` |
+| Agents: read-only tool list, one lead, hard limits on turns, tool calls, tokens, time, and result size | `agents/roles.py`, `agents/runtime.py` | `test_hostile_model_cannot_write_leave_its_lead_or_invent_tools`, `test_many_parallel_requests_cannot_exceed_the_tool_budget_or_grow_the_prompt`, `test_token_budget_ends_the_run_without_another_model_call` |
+| Agent answers pass a deterministic review, and citations resolve to what the agent was shown | `agent_service.review` | `test_agent_answer_is_checked_and_traced_to_its_sources` |
+| Tool results and refusals are marked as data; cancellation applies between model turns | `agents/runtime.py` | `test_refusal_text_is_marked_as_data_and_does_not_echo_the_name`, `test_cancelling_stops_an_agent_between_turns` |
+| Audit log is append-only and holds validated IDs only; odd tool names cannot reach it | `tool_calls` grants, `_log_name` | `test_tool_log_is_append_only_and_tenant_scoped`, `test_odd_tool_names_cannot_write_to_the_log_or_break_the_call` |
+| Tokens: digest stored, shown once, limited by scope and current role; revoked on password change and removal; write tokens need the password | `mcp/http.py`, `token_service.py` | `test_token_loses_power_as_soon_as_its_owner_does`, `test_password_change_revokes_tokens`, `test_removal_revokes_tokens_for_good`, `test_write_token_needs_the_password` |
+| MCP HTTP serves only its configured host, with limits on request size and HTTPS required outside development | `mcp/http.py` | `test_http_refuses_missing_wrong_revoked_and_expired_tokens` |
+| API role cannot reach checkpoints or claim functions | migration `280aff41aff2` | `test_api_role_cannot_reach_worker_only_things` |
+
 ## Database roles
 | Role | Login | Superuser | BYPASSRLS | Used for |
 |---|---|---|---|---|
 | schema owner (`salesiq` locally) | yes | dev only | — | Alembic migrations only |
 | `salesiq_app` | yes | no | no | API runtime; subject to RLS |
+| `salesiq_worker` | yes | no | no | Worker runtime: the API role's rights under the same RLS, plus checkpoints and claim functions |
 | `salesiq_definer` | no | no | yes | Owns `invitation_lookup()`, `workflow_claim()`, `import_claim()`, `workflow_finished_threads()` |
 
 Every migration that adds a table must also grant `salesiq_app` exactly the privileges it needs and add RLS policies
