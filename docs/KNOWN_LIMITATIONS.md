@@ -130,7 +130,7 @@ Current as of Phase 11 (2026-10-31). What was verified is in RELEASE_CHECKLIST.m
 - Not yet tested: absolute session TTL expiry, behaviour when an HTTP server omits `Content-Length` on bodies.
 
 ## Operational
-- One browser test, `sign out, then sign back in` on mobile, failed once and passed on reruns, unexplained. Browser tests also time out when real models or image builds load the machine.
+- Two browser tests on mobile are flaky, unexplained: `sign out, then sign back in` failed once locally, and `a workflow runs in the background and its steps can be followed` needed CI's one retry on `23e6f8e`. Browser tests also time out when real models or image builds load the machine.
 - Empty files named after fragments of code (`tuple[User`, `str`) keep appearing in `apps/api` and `apps/web`. Twelve were committed by accident. The source is not known, so check `git status` before committing.
 - CI builds the images but does not run them. Running the stack in containers was done by hand, with `scripts/release_smoke.py`.
 - No OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
