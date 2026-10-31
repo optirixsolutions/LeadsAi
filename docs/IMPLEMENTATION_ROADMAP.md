@@ -134,6 +134,7 @@ Acceptance met: no message leaves without a valid approval and a final server-si
 - **Suppression:** addresses and domains, checked at drafting, at the approval request, and at sending. A signed link in every email opts someone out for good (ADR-037).
 - **Web:** Outreach with drafts, approvals, suppression list, and settings; an outreach card on the lead page; a public unsubscribe page.
 - **MCP:** three new tools can draft and ask. No tool can approve or send.
+- **Measured against real models:** planted text reached 7 of 12 drafts, 3 of them with no flag, so human approval is doing real work. See AI_EVALUATION.md.
 - **Independent review** found no way to send without valid approval, no role or tenant bypass, and no injection. Fixed with tests: an opt-out lost when another entry already
   existed, opt-out links that could point at localhost, bad requests using up real opt-outs, token-written drafts labelled as a person's, planted links passing the contact check,
   one word clearing the edit requirement, odd line breaks in a subject counting against limits, relay refusals suppressing good addresses, a late result overwriting a person's

@@ -7,7 +7,8 @@ Current as of Phase 8 (2026-10-31).
   login, and external hosts are written but unexercised. Delivery status stops at "a mail server accepted it", with no bounce or open tracking, so a later
   bounce does not add an address to the suppression list.
 - **The sender identity is not verified.** An admin can enter any sender address, and nothing here sets up SPF, DKIM, or DMARC.
-- Planted text can reach a draft, and the person reviewing it is the last line of defence. See `research/evaluations/AGENTS.md`. The link check covers only what its pattern
+- **Planted text reaches drafts, sometimes with no flag.** In the measurement, models repeated 7 of 12 attacks, and 3 of those drafts had no flag, because a planted number counts as
+  supported by the planted source. The person reviewing is the last line of defence. See `research/evaluations/AGENTS.md`. The link check covers only what its pattern
   recognizes, so "evil dot com" would not be flagged, and it also flags harmless text such as `Node.js`. Rewording a flagged link clears the flag.
 - **Sender details are not part of an approval.** An admin who changes the sender name, address, or footer afterward changes approved email without a new approval. Only
   owners and admins can do this, and they can approve anyway, and the change is audited.
