@@ -30,6 +30,19 @@ from app.models import Membership, Role, User, UserSession
 
 SESSION_COOKIE = "salesiq_session"
 CSRF_COOKIE = "salesiq_csrf"
+# A browser only accepts this prefix from HTTPS, for the whole host, with no Domain, so a
+# compromised sibling subdomain cannot plant a cookie. It needs HTTPS, so it is not used locally.
+_HOST_PREFIX = "__Host-"
+
+
+def session_cookie_name() -> str:
+    return (_HOST_PREFIX if get_settings().cookie_secure else "") + SESSION_COOKIE
+
+
+def csrf_cookie_name() -> str:
+    return (_HOST_PREFIX if get_settings().cookie_secure else "") + CSRF_COOKIE
+
+
 CSRF_HEADER = "x-csrf-token"
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 _LAST_SEEN_RESOLUTION = timedelta(minutes=5)
@@ -95,7 +108,7 @@ def _now() -> datetime:
 
 
 def get_principal(request: Request, db: DbDep) -> Principal:
-    token = request.cookies.get(SESSION_COOKIE)
+    token = request.cookies.get(session_cookie_name())
     if not token:
         raise UnauthorizedError("Authentication required")
 
@@ -193,12 +206,12 @@ def set_session_cookies(response: Response, token: str) -> None:
     s = get_settings()
     max_age = s.session_ttl_hours * 3600
     common = {"max_age": max_age, "secure": s.cookie_secure, "samesite": "lax", "path": "/"}
-    response.set_cookie(SESSION_COOKIE, token, httponly=True, **common)  # type: ignore[arg-type]
+    response.set_cookie(session_cookie_name(), token, httponly=True, **common)  # type: ignore[arg-type]
     # Readable by the web app so it can echo it in the CSRF header.
-    response.set_cookie(CSRF_COOKIE, csrf_token_for(token), httponly=False, **common)  # type: ignore[arg-type]
+    response.set_cookie(csrf_cookie_name(), csrf_token_for(token), httponly=False, **common)  # type: ignore[arg-type]
 
 
 def clear_session_cookies(response: Response) -> None:
     s = get_settings()
-    for name in (SESSION_COOKIE, CSRF_COOKIE):
+    for name in (session_cookie_name(), csrf_cookie_name()):
         response.delete_cookie(name, path="/", secure=s.cookie_secure, samesite="lax")

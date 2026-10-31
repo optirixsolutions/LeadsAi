@@ -1,6 +1,6 @@
 # Deployment
 
-Status: container images and compose are verified locally. No production environment exists yet.
+Status: every image was built and the full stack run from an empty database on one development machine. No production environment exists yet. See RELEASE_CHECKLIST.md.
 
 ## Images
 | Image | Dockerfile | Context | Notes |
@@ -10,8 +10,10 @@ Status: container images and compose are verified locally. No production environ
 
 ## Local full stack
 ```bash
-docker compose --profile app up -d --build --wait
-docker compose run --rm migrate
+docker compose up -d --wait postgres redis
+docker compose --profile migrate run --rm migrate
+docker compose --profile app up -d --build
+python scripts/release_smoke.py http://127.0.0.1:3000 http://127.0.0.1:8100 localhost:8100
 ```
 The `api` service runs as `salesiq_app`, and only the one-off `migrate` service holds the owner URL (`SALESIQ_MIGRATION_DATABASE_URL`).
 
@@ -93,7 +95,24 @@ Rate limits key on the client IP. Run uvicorn with `--forwarded-allow-ips=<trust
 proxy (load balancer and the Next.js rewrite hop) forwards `X-Forwarded-For`. Otherwise every user shares one bucket.
 Never trust forwarded headers from arbitrary sources.
 
-## Backups and recovery (to be completed in Phase 11)
-- Managed Postgres with point-in-time recovery; daily snapshot retention per plan.
-- Quarterly restore drill into a scratch environment; record results here.
-- Redis holds only cache, rate-limit, and coordination state; it is not a system of record.
+## Backups and recovery
+Back up three things separately, because each is useless without the others in some way:
+- **The database,** by your provider's point-in-time recovery where possible, or `pg_dump -Fc`.
+- **`SALESIQ_CREDENTIALS_KEY`.** Without it, a restored database has passwords nobody can read, and each provider has to be connected again. Keep it out of the database backup.
+- **`SALESIQ_SECRET_KEY`.** Without it, sessions end, and opt-out links in emails already sent stop working. That last one matters: those people can still ask by replying, but the link fails.
+
+To restore:
+```bash
+pg_dump -U salesiq -d salesiq -Fc -f salesiq.dump
+createdb -U salesiq salesiq_restored
+pg_restore -U salesiq -d salesiq_restored --exit-on-error salesiq.dump
+```
+The roles `salesiq_app`, `salesiq_worker`, and `salesiq_definer` belong to the server and not the dump, so create them first on a new server (`infra/docker/postgres-init.sql`). Then compare row counts, confirm that the app role sees nothing with no tenant set, and run `python scripts/release_smoke.py`.
+
+Run a restore drill every quarter and record it here.
+
+| Date | Where | Result |
+|---|---|---|
+| 2026-10-31 | Local container, small database | Counts for 6 tables matched. 27 tables under forced RLS and 32 policies intact. The app role saw 0 leads with no tenant set, and was refused a delete |
+
+Redis holds only cache, rate-limit, and coordination state, and is not a system of record. A lost worker's runs recover on their own when their leases expire.

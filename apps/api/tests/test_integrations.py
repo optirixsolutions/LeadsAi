@@ -499,6 +499,9 @@ def test_the_development_billing_adapter_refuses_production(
 ) -> None:
     owner, org = make_org()
     monkeypatch.setattr(get_settings(), "environment", "staging")
+    # Outside development the session cookie has another name.
+    session = owner.api.http.cookies.get("salesiq_session")
+    owner.api.http.cookies.set("__Host-salesiq_session", session)
     r = owner.api.post(f"/organizations/{org}/billing/development-plan", {"plan": "unlimited"})
     assert r.status_code == 403 and r.json()["error"]["code"] == "billing_unavailable"
 

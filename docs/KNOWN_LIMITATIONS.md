@@ -1,6 +1,6 @@
 # Known Limitations
 
-Current as of Phase 10 (2026-10-31).
+Current as of Phase 11 (2026-10-31). What was verified is in RELEASE_CHECKLIST.md.
 
 ## Integrations, quotas, and billing
 - **No real provider has been connected.** SMTP and webhooks were tested against a real server on this machine and real signed requests. STARTTLS, provider login, name resolution with
@@ -17,7 +17,7 @@ Current as of Phase 10 (2026-10-31).
 - Rejected webhook requests share one limit per IP, which behind a proxy needs the forwarded-address setup in DEPLOYMENT.md.
 
 ## Analytics
-- Figures are computed on each request, with no caching or pre-aggregation, and have not been measured on a large organization. Indexes were not added for them.
+- Figures are computed on each request, with no caching. On 50,000 leads the report took about 75 ms, on rows with no assessments, so larger or fully scored organizations are not measured.
 - Days and all displayed times are UTC. There are no per-user time zones, and no export of a report.
 - Campaign metrics do not exist, because campaigns do not. Delivery counts stop at "accepted by a mail server".
 - The leads table can be filtered by fit but not sorted by score.
@@ -43,7 +43,6 @@ Current as of Phase 10 (2026-10-31).
 - Campaigns, sequences, and follow-ups do not exist. Each email is written, approved, and sent one at a time. Plain text only.
 - A person can approve their own request if they hold `outreach:approve` (ADR-036).
 - There is no retention limit on drafts or deliveries, and approved outreach is not exportable.
-- The opt-out page's rate limit shares one bucket per IP, and behind a proxy that needs the forwarded-address setup in DEPLOYMENT.md.
 
 ## Agents and MCP
 - **Agent text can still carry a planted message.** Agents cannot act on it, but a reader might. See `research/evaluations/AGENTS.md`. Items an
@@ -56,7 +55,6 @@ Current as of Phase 10 (2026-10-31).
 - MCP metadata names an authorization server that does not exist, because tokens come from Settings, not an OAuth flow. Clients that insist on
   OAuth discovery will not connect.
 - Whether Ollama truncates a long conversation at its context limit was not tested. Tool results are capped to keep this unlikely.
-- The MCP and migrate containers have not been built or run; the server was tested as a local process over real HTTP.
 
 ## Workflows
 - Checkpoint tables have no tenant column and no RLS. They hold only IDs, statuses, and counts, and only the worker role can reach them.
@@ -70,7 +68,6 @@ Current as of Phase 10 (2026-10-31).
 - A deadline is checked between steps, so a run can overrun by up to one model call (about 9 minutes at worst).
 - Imports above 1,000 rows wait for a worker, and an organization can queue 3 at a time. Each still runs as one transaction with one
   query per row (36 s for the largest file), and its file sits in the database until processed.
-- The worker container has not been built or run. It was tested as a local process.
 - A lead's page makes about 11 API calls per render, which is noticeable under load.
 - Upgrading `langgraph-checkpoint-postgres` may need a new migration (see DEPLOYMENT.md).
 
@@ -127,13 +124,14 @@ Current as of Phase 10 (2026-10-31).
   rewrite or a load balancer shares one IP unless uvicorn's `--forwarded-allow-ips` is set to the trusted proxy and the
   proxy forwards `X-Forwarded-For`. Must be configured per deployment (see DEPLOYMENT.md).
 - **Rate limiter fails open** when Redis is down (deliberate, to avoid locking everyone out; readiness reports Redis down).
-- **Cookie prefixes:** cookies are not yet `__Host-` prefixed, so a compromised sibling subdomain could plant cookies.
-  Planned for staging/production in Phase 11, along with a CSP.
+- **CSP:** it allows inline scripts, because Next's bootstrap needs them without per-request nonces, so it limits where scripts come from and what a page can reach, but does not stop an inline injection by itself.
 - `users`, `user_sessions`, and `auth_tokens` are not under RLS; the app role can read them. Isolation there relies on
   application code (every query filters by the authenticated user or a token digest).
 - Not yet tested: absolute session TTL expiry, behaviour when an HTTP server omits `Content-Length` on bodies.
 
 ## Operational
+- One browser test, `sign out, then sign back in` on mobile, failed once and passed on reruns, unexplained. Browser tests also time out when real models or image builds load the machine.
+- Empty files named after fragments of code (`tuple[User`, `str`) keep appearing in `apps/api` and `apps/web`. Twelve were committed by accident. The source is not known, so check `git status` before committing.
 - GitHub Actions workflow is written but has not run; no remote repository is configured.
 - No OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
 - The web build resolves the API URL for rewrites at **build time** (`SALESIQ_API_URL`); change it and rebuild per environment.

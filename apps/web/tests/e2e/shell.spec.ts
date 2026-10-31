@@ -30,6 +30,22 @@ test("navigation reaches status page", async ({ page, isMobile }) => {
   await expect(page).toHaveURL(/\/status$/);
 });
 
+test("the content security policy is sent, and the app works under it", async ({ page }) => {
+  const problems: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error" && m.text().includes("Content Security Policy")) problems.push(m.text());
+  });
+  const response = await page.goto("/status");
+  const policy = response?.headers()["content-security-policy"] ?? "";
+  expect(policy).toContain("default-src 'self'");
+  expect(policy).toContain("frame-ancestors 'none'");
+  expect(policy).not.toContain("unsafe-eval");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.goto("/analytics");
+  await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
 test("every module in the sidebar is a real page", async ({ page, isMobile }) => {
   test.skip(isMobile, "sidebar hidden on mobile");
   await page.goto("/");

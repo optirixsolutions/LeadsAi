@@ -20,7 +20,10 @@ export function proxy(request: NextRequest) {
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
   }
-  if (request.cookies.has("salesiq_session")) return NextResponse.next();
+  // Outside development the API sets this with the __Host- prefix.
+  if (request.cookies.has("salesiq_session") || request.cookies.has("__Host-salesiq_session")) {
+    return NextResponse.next();
+  }
 
   const url = request.nextUrl.clone();
   url.pathname = "/login";

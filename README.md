@@ -2,7 +2,7 @@
 
 Evidence-driven revenue intelligence and sales automation platform.
 
-> Status: foundation (Phase 1). See [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md).
+> Status: all build phases done, not deployed. See [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for what has and has not been verified.
 
 ## Prerequisites
 - Docker with Compose v2
@@ -35,8 +35,9 @@ Model work needs [Ollama](https://ollama.com) with the models in `apps/api/app/a
 - API docs: http://127.0.0.1:8000/api/docs
 - Readiness: http://127.0.0.1:8000/api/v1/health/ready
 
-Full stack in containers: `docker compose --profile app up -d --build`, then
-`docker compose run --rm migrate`.
+Full stack in containers: `docker compose up -d --wait postgres redis`, then `docker compose --profile migrate run --rm migrate`, then
+`docker compose --profile app up -d --build`. If ports are taken, set `SALESIQ_API_PORT`, `SALESIQ_WEB_PORT`, `SALESIQ_MCP_PORT`, `SALESIQ_PG_PORT`, and `SALESIQ_REDIS_PORT`.
+Then `python scripts/release_smoke.py <web url> <mcp url> localhost:8100` walks a disposable deployment end to end.
 
 ## Checks
 ```bash
@@ -55,6 +56,7 @@ pnpm --filter @salesiq/web build && pnpm --filter @salesiq/web test:e2e
 | Doc | Purpose |
 |---|---|
 | [PRODUCT_SPEC](docs/PRODUCT_SPEC.md) | What SalesIQ does and for whom |
+| [RELEASE_CHECKLIST](docs/RELEASE_CHECKLIST.md) | What was verified, and what still needs the owner |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | Components, boundaries, request flow |
 | [DATA_MODEL](docs/DATA_MODEL.md) | Schema and tenancy rules |
 | [API_SPEC](docs/API_SPEC.md) | Conventions and endpoints |

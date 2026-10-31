@@ -230,3 +230,29 @@ def test_password_is_hashed_with_argon2(make_user: Any, clean_db: Engine) -> Non
     with clean_db.connect() as conn:
         h = conn.execute(text("SELECT password_hash FROM users")).scalar_one()
     assert h.startswith("$argon2id$") and PASSWORD not in h
+
+
+def test_cookies_use_the_host_prefix_outside_development(
+    make_user: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A browser accepts this prefix only over HTTPS, for the host, with no Domain."""
+    from app.core.config import get_settings
+
+    make_user("host-prefix@example.com")
+    # The app refuses to start as staging with development secrets, so these are made first.
+    api, plain, prefixed = Api(), Api(), Api()
+    monkeypatch.setattr(get_settings(), "environment", "staging")
+    r = api.post("/auth/login", {"email": "host-prefix@example.com", "password": PASSWORD})
+    assert r.status_code == 200, r.text
+    cookies = r.headers.get_list("set-cookie")
+    session = next(c for c in cookies if c.startswith("__Host-salesiq_session="))
+    csrf = next(c for c in cookies if c.startswith("__Host-salesiq_csrf="))
+    for cookie in (session, csrf):
+        assert "Secure" in cookie and "Path=/" in cookie and "Domain" not in cookie
+    assert "HttpOnly" in session and "HttpOnly" not in csrf
+    token = session.split(";")[0].split("=", 1)[1]
+    # A cookie with the plain name is not looked at, so one planted by a neighbor does nothing.
+    plain.http.cookies.set("salesiq_session", token)
+    assert plain.get("/auth/me").status_code == 401
+    prefixed.http.cookies.set("__Host-salesiq_session", token)
+    assert prefixed.get("/auth/me").status_code == 200

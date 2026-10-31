@@ -13,7 +13,7 @@
 | Unauthorized external communication | Approval bound to exact text and address; final policy check at dispatch; suppression lists; no tool can approve or send; SMTP limited to loopback by default; tests for bypass | Done (Phase 8) |
 | SSRF | Research fetcher with per-hop allowlist, connection pinned to a checked public IP, size limit and a deadline on every socket call | Done (Phase 5) |
 | SQL injection | ORM / bound parameters only; no string-built SQL | Ongoing |
-| XSS | React escaping; no `dangerouslySetInnerHTML` on untrusted content; CSP | CSP in Phase 11 |
+| XSS | React escaping; no `dangerouslySetInnerHTML` on untrusted content; CSP limiting script origins and connections, which allows inline scripts because of Next's bootstrap | Done (Phase 11) |
 | Webhook forgery / replay | HMAC signatures over time and body, a 5-minute window, event-ID dedupe, tenant trusted only after the signature | Done (Phase 10) |
 | Resource exhaustion / abuse | Rate limits (Redis), request size caps, agent step/time/budget limits | Phases 2, 6 |
 | Credential leakage | Env-only secrets; log redaction; provider credentials encrypted with AES-256-GCM, never returned, destroyed on removal | Done (Phase 10) |

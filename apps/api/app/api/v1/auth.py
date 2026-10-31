@@ -7,12 +7,12 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import select
 
 from app.core.auth import (
-    SESSION_COOKIE,
     DbDep,
     PrincipalDep,
     clear_session_cookies,
     require_json,
     restore_context,
+    session_cookie_name,
     set_session_cookies,
 )
 from app.core.config import get_settings
@@ -87,7 +87,7 @@ def login(
     limiter.hit(f"login:ip:{_ip(request)}", limit * 5)
     user = auth_service.authenticate(db, email=body.email, password=body.password)
     # Signing in again from the same browser replaces, rather than orphans, its old session.
-    if previous := request.cookies.get(SESSION_COOKIE):
+    if previous := request.cookies.get(session_cookie_name()):
         auth_service.revoke_session_token(db, previous)
     _, token = auth_service.create_session(
         db, user, ip=_ip(request), user_agent=request.headers.get("user-agent")

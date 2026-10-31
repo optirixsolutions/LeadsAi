@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 10 complete → next is Phase 11 (hardening and release).
+**Current phase:** All 12 phases built. Not deployed. What remains needs the owner: see RELEASE_CHECKLIST.md.
 **Last updated:** 2026-10-31
 
 ## Phase status
@@ -17,7 +17,7 @@
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider; CI not run) |
 | 9 | Full dashboard and analytics | Done (no independent review, since it only reads; CI not run) |
 | 10 | Integrations, quotas, entitlements | Done (real provider not connected; CI not run) |
-| 11 | Hardening and release | Next |
+| 11 | Hardening and release | Done locally (no deployment, CI, or real provider) |
 
 ## Phase 0 — audit findings
 - Repository was empty (no git, no code). Greenfield build following the spec layout.
@@ -161,16 +161,24 @@ Acceptance met in the form the owner chose: integrations work with configured cr
   a new host by editing the connection, a downgraded organization still using its connection, queued imports and queued or resumed runs passing a limit, emails of unknown outcome not counting, a
   provider event lost if it arrived during sending, startup accepting a bad plan or key, and a 500 on an odd signature. One was documented and not fixed: tokens from a cancelled run are not counted.
 
+## Phase 11 — completed
+Acceptance met: the release checklist is complete, with honest results. See RELEASE_CHECKLIST.md.
+- **Containers:** every image built and the stack run for the first time, from an empty volume. A script walks it end to end with a real model.
+- **Recovery:** a restore drill passed, and the three things to back up are documented.
+- **Hardening:** a CSP, and `__Host-` cookies outside development.
+- **Measured:** 50,000 leads on the slow read paths, which needed no new index. Nothing was optimized without a measurement behind it.
+- **Found on the way:** Settings tabs on phones pushed controls out of reach, caught by browser tests after Phase 10 added a tab.
+
 ## Tests run (2026-10-31, local Windows machine)
 Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 513 passed (511 in the full run, and the 2 stale tests it found, fixed and rerun alone), 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
+| API `pytest` | 514 passed: 512 in the last full run, and 2 it found out of date after the cookie change, fixed and rerun with their files (74 passed). Includes real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
 | API `ruff check`, `ruff format`, `mypy --strict` | Clean (104 files) |
 | Web `vitest` | 49 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 59 passed, 3 skipped (sidebar tests are desktop-only) in the last run. The run before it had 1 failure, `sign out, then sign back in` on mobile, not explained. Timing failures also appear when real models or image builds load the machine |
-| `docker compose config` | Valid; the images and the containerized worker were not built or run |
+| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 61 passed, 3 skipped (sidebar tests are desktop-only), in two runs in a row on an idle machine. An earlier run had 1 failure, `sign out, then sign back in` on mobile, not explained. Timing failures also appear when real models or image builds load the machine |
+| Containers | Every image built; the stack run from an empty volume; `scripts/release_smoke.py` passed with a real model through the container worker |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
@@ -179,9 +187,5 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 ## Known blockers
 - Sending real email needs provider credentials and explicit approval. Everything up to that point is built, and tested locally.
 
-## Next concrete steps (Phase 11)
-1. Build and run every container, and run the migration job as it would run in a release.
-2. Create a remote repository, if the owner wants one, so CI can run for the first time.
-3. Verify a clean installation from the README on an empty machine or container.
-4. Full security pass, a CSP, `__Host-` cookies, and a load test of the slow paths recorded in KNOWN_LIMITATIONS.
-5. Document backups and recovery, and run a restore drill.
+## Next concrete steps
+The build plan is finished. What comes next needs the owner, and is listed in RELEASE_CHECKLIST.md: a remote repository so CI can run, a real email provider, a hosting choice, and a legal review of outreach.

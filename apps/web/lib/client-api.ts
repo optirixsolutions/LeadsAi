@@ -20,7 +20,7 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = {};
   if (init.body !== undefined) headers["content-type"] = "application/json";
   if (method !== "GET") {
-    const csrf = readCookie("salesiq_csrf");
+    const csrf = readCookie("__Host-salesiq_csrf") ?? readCookie("salesiq_csrf");
     if (csrf) headers["x-csrf-token"] = csrf;
   }
   let res: Response;
