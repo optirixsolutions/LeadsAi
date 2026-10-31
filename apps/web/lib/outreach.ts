@@ -65,6 +65,7 @@ export const DELIVERY_ERRORS: Record<string, string> = {
 export const FLAG_LABELS: Record<string, string> = {
   unknown_citation: "The model cited a source that does not exist.",
   unsupported_number: "It contains a number the sources do not show.",
+  contains_number: "It contains a number. Check it, even if a source shows it, because a source can be planted.",
   low_support: "Little of this text matches the sources.",
   contains_contact: "It contains a link or address. Take it out before asking for approval. You can add your own.",
   instruction_like: "It reads like instructions and not like an email.",

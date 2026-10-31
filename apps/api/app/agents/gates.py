@@ -214,6 +214,9 @@ def check_email(email: OutreachOut, evidence: Mapping[str, str]) -> EmailReview:
         review.flags.append("unknown_citation")
     if sources and unsupported_numbers(text, sources):
         review.flags.append("unsupported_number")
+    elif has_number(text):
+        # Being in a source proves little, because a source is how it would have been planted.
+        review.flags.append("contains_number")
     if sources and lexical_support(text, sources) < MIN_EMAIL_SUPPORT:
         review.flags.append("low_support")
     review.flagged_contacts = find_contacts(text)
@@ -228,12 +231,18 @@ def find_contacts(text: str) -> list[str]:
     return list(dict.fromkeys(m.lower().rstrip(".,;:!?)") for m in _ANY_CONTACT.findall(text)))
 
 
+def has_number(text: str) -> bool:
+    return any(c.isdigit() for c in text)
+
+
 def review_unsourced(subject: str, body: str) -> EmailReview:
     """For text that arrives through a token, with no sources to check it against."""
     text = f"{subject}\n{body}"
     review = EmailReview(subject=subject, body=body)
     if screen_evidence(text):
         review.flags.append("instruction_like")
+    if has_number(text):
+        review.flags.append("contains_number")
     review.flagged_contacts = find_contacts(text)
     if review.flagged_contacts:
         review.flags.append("contains_contact")

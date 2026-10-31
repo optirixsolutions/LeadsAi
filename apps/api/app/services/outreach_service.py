@@ -16,7 +16,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.agents.gates import _has_hidden_characters, review_unsourced
+from app.agents.gates import _has_hidden_characters, has_number, review_unsourced
 from app.core.auth import OrgContext
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.models import (
@@ -273,6 +273,8 @@ def update_draft(
     draft.needs_edit = bool(draft.flagged_contacts)
     if not draft.needs_edit:
         draft.flags = [f for f in draft.flags if f != "contains_contact"]
+    if not has_number(text):
+        draft.flags = [f for f in draft.flags if f not in ("contains_number", "unsupported_number")]
     draft.rejection_note = None
     draft.updated_by_user_id = ctx.user_id
     db.flush()
