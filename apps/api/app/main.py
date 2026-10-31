@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import __version__
 from app.api.v1 import (
     agents,
+    analytics,
     auth,
     health,
     intelligence,
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     v1.include_router(workflows.router)
     v1.include_router(agents.router)
     v1.include_router(outreach.router)
+    v1.include_router(analytics.router)
     v1.include_router(outreach.public_router)
     app.include_router(v1)
     return app

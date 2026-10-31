@@ -34,8 +34,8 @@ test("unbuilt modules are not links", async ({ page, isMobile }) => {
   test.skip(isMobile, "sidebar hidden on mobile");
   await page.goto("/");
   const sidebar = page.getByRole("complementary", { name: "Sidebar" });
-  await expect(sidebar.getByRole("link", { name: /Analytics/ })).toHaveCount(0);
-  await expect(sidebar.getByText("Analytics")).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: /Integrations/ })).toHaveCount(0);
+  await expect(sidebar.getByText("Integrations")).toBeVisible();
 });
 
 test("sidebar collapses", async ({ page, isMobile }) => {

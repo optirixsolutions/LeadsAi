@@ -9,13 +9,23 @@ from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import Select, String, cast, func, or_, select, tuple_, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.auth import OrgContext
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.pagination import decode_cursor, encode_cursor
-from app.models import Activity, ActivityType, Company, Lead, LeadStatus, Membership, Opportunity
+from app.models import (
+    Activity,
+    ActivityType,
+    Company,
+    Lead,
+    LeadAssessment,
+    LeadStatus,
+    Membership,
+    Opportunity,
+)
 from app.schemas.crm import (
     BulkIn,
     CompanyIn,
@@ -235,6 +245,7 @@ class LeadFilters:
     company_id: uuid.UUID | None = None
     source: str | None = None
     import_id: uuid.UUID | None = None
+    fit: str | None = None  # a fit label, or "none" for leads not scored yet
 
 
 SORTS = {"created_at", "updated_at", "last_name", "email"}
@@ -278,7 +289,31 @@ def _filtered(ctx: OrgContext, f: LeadFilters) -> Select[Lead, Company]:
         stmt = stmt.where(Lead.source == f.source)
     if f.import_id:
         stmt = stmt.where(Lead.import_id == f.import_id)
+    if f.fit:
+        latest = latest_assessments()
+        stmt = stmt.outerjoin(latest, latest.c.lead_id == Lead.id)
+        stmt = stmt.where(latest.c.fit.is_(None) if f.fit == "none" else latest.c.fit == f.fit)
     return stmt
+
+
+def latest_assessments() -> Any:
+    """Each lead's most recent assessment. Row-level security scopes this to the tenant."""
+    return (
+        select(LeadAssessment.lead_id, LeadAssessment.score, LeadAssessment.fit)
+        .ext(distinct_on(LeadAssessment.lead_id))
+        .order_by(LeadAssessment.lead_id, LeadAssessment.created_at.desc())
+        .subquery()
+    )
+
+
+def latest_scores(db: Session, lead_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple[int, str]]:
+    if not lead_ids:
+        return {}
+    latest = latest_assessments()
+    rows = db.execute(
+        select(latest.c.lead_id, latest.c.score, latest.c.fit).where(latest.c.lead_id.in_(lead_ids))
+    )
+    return {lead_id: (score, fit.value) for lead_id, score, fit in rows}
 
 
 def list_leads(

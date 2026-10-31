@@ -12,9 +12,9 @@ import { requireOrg } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Leads" };
 
-type Search = { q?: string; status?: string; owner?: string; sort?: string; cursor?: string; import_id?: string };
+type Search = { q?: string; status?: string; fit?: string; owner?: string; sort?: string; cursor?: string; import_id?: string };
 
-const PASSTHROUGH = ["q", "status", "owner", "sort", "import_id"] as const;
+const PASSTHROUGH = ["q", "status", "fit", "owner", "sort", "import_id"] as const;
 
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;

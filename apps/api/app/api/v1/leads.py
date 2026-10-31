@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
@@ -60,6 +60,7 @@ def _filters(
     company_id: uuid.UUID | None = None,
     source: Annotated[str | None, Query(max_length=80)] = None,
     import_id: uuid.UUID | None = None,
+    fit: Literal["high", "medium", "low", "none"] | None = None,
 ) -> LeadFilters:
     return LeadFilters(
         q=q or None,
@@ -69,6 +70,7 @@ def _filters(
         company_id=company_id,
         source=source,
         import_id=import_id,
+        fit=fit,
     )
 
 
@@ -90,8 +92,15 @@ def list_leads(
     rows, next_cursor, total = lead_service.list_leads(
         db, ctx, filters, sort=sort, limit=limit, cursor=cursor
     )
+    scores = lead_service.latest_scores(db, [lead.id for lead, _ in rows])
+    items = []
+    for lead, company in rows:
+        score, fit = scores.get(lead.id, (None, None))
+        items.append(
+            lead_service.to_out(lead, company).model_copy(update={"score": score, "fit": fit})
+        )
     return LeadPage(
-        items=[lead_service.to_out(lead, company) for lead, company in rows],
+        items=items,
         next_cursor=next_cursor,
         total=total,
     )

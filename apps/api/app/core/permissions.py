@@ -33,6 +33,7 @@ class Permission(enum.StrEnum):
     icp_configure = "icp:configure"
     workflows_read = "workflows:read"
     workflows_run = "workflows:run"  # start, cancel, and resume
+    analytics_read = "analytics:read"
     outreach_read = "outreach:read"
     outreach_write = "outreach:write"  # draft, edit, ask for approval, add to suppression
     outreach_send = "outreach:send"  # send what someone with outreach:approve has approved
@@ -51,6 +52,7 @@ _READ = frozenset(
         Permission.intelligence_read,
         Permission.workflows_read,
         Permission.outreach_read,
+        Permission.analytics_read,
     }
 )
 _SELL = _READ | {

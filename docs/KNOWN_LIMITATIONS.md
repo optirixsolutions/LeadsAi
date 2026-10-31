@@ -1,14 +1,22 @@
 # Known Limitations
 
-Current as of Phase 8 (2026-10-31).
+Current as of Phase 9 (2026-10-31).
+
+## Analytics
+- Figures are computed on each request, with no caching or pre-aggregation, and have not been measured on a large organization. Indexes were not added for them.
+- Days and all displayed times are UTC. There are no per-user time zones, and no export of a report.
+- Campaign metrics do not exist, because campaigns do not. Delivery counts stop at "accepted by a mail server".
+- The leads table can be filtered by fit but not sorted by score.
+- Median approval wait and win rate use whatever closed in the window, however few, with the sample shown beside them. They are not forecasts.
+- Screenshots of the new charts could not be taken because the app window was hidden. Their content and phone-width layout were checked by reading the page and measuring it.
 
 ## Outreach
 - **No email has reached a real mailbox, or passed through a real provider.** Sending was tested only against a real SMTP server on this machine. STARTTLS,
   login, and external hosts are written but unexercised. Delivery status stops at "a mail server accepted it", with no bounce or open tracking, so a later
   bounce does not add an address to the suppression list.
 - **The sender identity is not verified.** An admin can enter any sender address, and nothing here sets up SPF, DKIM, or DMARC.
-- **Planted text reaches drafts, sometimes with no flag.** In the measurement, models repeated 7 of 12 attacks, and 3 of those drafts had no flag, because a planted number counts as
-  supported by the planted source. The person reviewing is the last line of defence. See `research/evaluations/AGENTS.md`. The link check covers only what its pattern
+- **Planted text reaches drafts, and a flag is not proof of an attack.** In the measurement, models repeated 8 of 12 attacks. Every number in model text is flagged, which fired on all 12 drafts, so
+  it may stop being read, and text with no digits gets no flag from it. The person reviewing is the last line of defence. See `research/evaluations/AGENTS.md`. The link check covers only what its pattern
   recognizes, so "evil dot com" would not be flagged, and it also flags harmless text such as `Node.js`. Rewording a flagged link clears the flag.
 - **Sender details are not part of an approval.** An admin who changes the sender name, address, or footer afterward changes approved email without a new approval. Only
   owners and admins can do this, and they can approve anyway, and the change is audited.
@@ -50,7 +58,7 @@ Current as of Phase 8 (2026-10-31).
 - Imports above 1,000 rows wait for a worker, and an organization can queue 3 at a time. Each still runs as one transaction with one
   query per row (36 s for the largest file), and its file sits in the database until processed.
 - The worker container has not been built or run. It was tested as a local process.
-- A lead's page makes about 10 API calls per render, which is noticeable under load.
+- A lead's page makes about 11 API calls per render, which is noticeable under load.
 - Upgrading `langgraph-checkpoint-postgres` may need a new migration (see DEPLOYMENT.md).
 
 ## Sales intelligence
@@ -71,7 +79,6 @@ Current as of Phase 8 (2026-10-31).
   block. They were not rerun, so the live rows in `GATES.md` are the only results on the current prompt.
 - The fetcher has not been run against the public internet, only real local servers, so TLS paths are unexercised by tests.
 - `lead_id` foreign keys do not include `organization_id`; RLS checks the org column, and every path validates the lead first.
-- Leads list and Overview do not show scores yet (Phase 9).
 
 ## AI evaluation
 - The dataset is small, synthetic, and fictional, with rule-derived labels. Results compare methods; they do not predict

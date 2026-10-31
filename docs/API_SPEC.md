@@ -104,4 +104,9 @@ Send blockers: `dispatch_disabled`, `external_not_allowed`, `sends_off`, `sender
 A delivery's `accepted` means a mail server took the message, not that anyone received it. `POST /agents/outreach/runs` starts the outreach agent, and
 its run's `outreach_draft_id` names the draft. MCP adds `create_outreach_draft`, `get_outreach_draft`, and `request_outreach_approval`. No tool approves or sends.
 
+## Analytics (Phase 9)
+`GET /analytics/report?days=7|30|90` and `GET /analytics/attention`, under `/organizations/{id}`, need `analytics:read`. Everything is counted from stored records at request
+time, and days are UTC. A rate or median is `null` when there is nothing to base it on, never zero. Money is reported per currency and never added across currencies.
+`GET /leads` now returns `score` and `fit` from each lead's latest assessment, and takes `fit=high|medium|low|none`.
+
 Planned groups: `tasks`, `integrations`, `usage`.

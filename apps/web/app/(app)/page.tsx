@@ -14,6 +14,7 @@ import {
   type Overview,
   type StageSummary,
 } from "@/lib/crm";
+import { attentionItems, type Attention } from "@/lib/analytics";
 import { getMembers, orgGet } from "@/lib/org-api";
 import { requireOrg } from "@/lib/session";
 
@@ -31,11 +32,13 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 
 export default async function OverviewPage() {
   const { org } = await requireOrg();
-  const [overview, summary, members] = await Promise.all([
+  const [overview, summary, members, attention] = await Promise.all([
     orgGet<Overview>(org.organization_id, "/analytics/overview"),
     orgGet<{ stages: StageSummary[] }>(org.organization_id, "/pipeline/summary"),
     getMembers(org.organization_id),
+    orgGet<Attention>(org.organization_id, "/analytics/attention"),
   ]);
+  const waiting = attention.ok ? attentionItems(attention.data) : [];
 
   return (
     <>
@@ -43,6 +46,21 @@ export default async function OverviewPage() {
         title="Overview"
         description={`Pipeline and lead activity for ${org.organization_name}, computed from stored records.`}
       />
+      {waiting.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader title="Waiting on someone" />
+          <ul className="divide-y divide-border">
+            {waiting.map((item) => (
+              <li key={item.key}>
+                <Link href={item.href} className="flex items-center gap-3 px-5 py-2.5 text-sm hover:bg-surface-raised">
+                  <span className="w-8 font-semibold tabular-nums">{formatNumber(item.count)}</span>
+                  <span className="text-fg-muted">{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       {!overview.ok ? (
         <Alert tone="error">Could not load metrics: {overview.message}</Alert>
       ) : overview.data.leads_total === 0 && overview.data.open_opportunities === 0 ? (

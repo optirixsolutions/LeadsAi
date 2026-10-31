@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Outreach", href: "/outreach", icon: Inbox },
   { label: "Workflows", href: "/workflows", icon: Workflow },
   { label: "Agents", href: "/agents", icon: Bot },
-  { label: "Analytics", href: "/analytics", icon: BarChart3, phase: 9 },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Integrations", href: "/integrations", icon: Plug, phase: 10 },
   { label: "System status", href: "/status", icon: Activity },
   { label: "Settings", href: "/settings", icon: Settings },

@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 8 complete → next is Phase 9 (dashboard and analytics).
+**Current phase:** Phase 9 complete → next is Phase 10 (integrations, quotas, entitlements).
 **Last updated:** 2026-10-31
 
 ## Phase status
@@ -15,8 +15,8 @@
 | 6 | LangGraph workflows with Postgres checkpoints | Done (container worker not run; CI not run) |
 | 7 | MCP server and bounded agents | Done (containers not run; CI not run) |
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider; CI not run) |
-| 9 | Full dashboard and analytics | Next |
-| 10 | Integrations, quotas, entitlements | Pending |
+| 9 | Full dashboard and analytics | Done (no independent review, since it only reads; CI not run) |
+| 10 | Integrations, quotas, entitlements | Next |
 | 11 | Hardening and release | Pending |
 
 ## Phase 0 — audit findings
@@ -134,22 +134,30 @@ Acceptance met: no message leaves without a valid approval and a final server-si
 - **Suppression:** addresses and domains, checked at drafting, at the approval request, and at sending. A signed link in every email opts someone out for good (ADR-037).
 - **Web:** Outreach with drafts, approvals, suppression list, and settings; an outreach card on the lead page; a public unsubscribe page.
 - **MCP:** three new tools can draft and ask. No tool can approve or send.
-- **Measured against real models:** planted text reached 7 of 12 drafts, 3 of them with no flag, so human approval is doing real work. See AI_EVALUATION.md.
+- **Measured against real models:** planted text reached 8 of 12 drafts, so human approval is doing real work. Flagging every number fired on all 12, which is a blunt signal. See AI_EVALUATION.md.
 - **Independent review** found no way to send without valid approval, no role or tenant bypass, and no injection. Fixed with tests: an opt-out lost when another entry already
   existed, opt-out links that could point at localhost, bad requests using up real opt-outs, token-written drafts labelled as a person's, planted links passing the contact check,
   one word clearing the edit requirement, odd line breaks in a subject counting against limits, relay refusals suppressing good addresses, a late result overwriting a person's
   answer, and a downgrade that left rows older code cannot read. One was documented and not fixed: sender details are not part of an approval (see KNOWN_LIMITATIONS).
 - Also removed 12 empty files committed by accident in earlier phases.
 
+## Phase 9 — completed
+Acceptance met: the primary journeys work end to end, from a lead through scoring, a draft, approval, sending, and seeing it counted. Only Integrations remains unbuilt.
+- **Analytics page:** leads, fit, outreach, approvals, pipeline, workflows, and agents over 7, 30, or 90 days, all counted from stored records, with a table view of each chart.
+- **Overview:** a list of what is waiting on someone, linking to it. It appears only when something is.
+- **Leads:** the latest score and fit in the table, with a fit filter that also applies to exports.
+- **Outreach:** a status filter, so links from Overview land on what they name.
+- Reviewed by its author only, not independently, because it only reads. Tests cover tenant isolation, roles, deleted leads, and that currencies are never added together.
+
 ## Tests run (2026-10-31, local Windows machine)
 Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 454 passed, 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (94 files) |
-| Web `vitest` | 42 passed |
+| API `pytest` | 463 passed, 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (97 files) |
+| Web `vitest` | 46 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 51 passed, 3 skipped (sidebar tests are desktop-only) |
+| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 55 passed, 3 skipped (sidebar tests are desktop-only). Two later runs on an idle machine. An earlier run, while real models were loading the machine, had 12 failures, mostly timeouts, and one `Internal Server Error` that did not recur and was not explained |
 | `docker compose config` | Valid; the images and the containerized worker were not built or run |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
@@ -159,8 +167,8 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 ## Known blockers
 - Sending real email needs a provider choice and explicit approval. Everything up to that point is built and tested.
 
-## Next concrete steps (Phase 9)
-1. Overview and leads list show scores, signals, pending approvals, and outreach drafts.
-2. Analytics from stored records only: pipeline, outreach volume, approval wait times, workflow health.
-3. Connect the remaining pages to APIs, with responsive behavior checked at phone width.
-4. Reduce the lead page's API calls, which were already about 10 per render before the outreach card.
+## Next concrete steps (Phase 10)
+1. Connection management for provider adapters, with encrypted credentials.
+2. A real email provider adapter, only with an explicit choice and approval from the owner.
+3. Quotas and entitlements, including a per-organization token budget before any paid model route.
+4. Integration health monitoring, and documented external configuration.

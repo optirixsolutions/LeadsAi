@@ -359,6 +359,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/analytics/attention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Attention */
+        get: operations["attention_api_v1_organizations__org_id__analytics_attention_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/analytics/overview": {
         parameters: {
             query?: never;
@@ -368,6 +385,23 @@ export interface paths {
         };
         /** Analytics Overview */
         get: operations["analytics_overview_api_v1_organizations__org_id__analytics_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/analytics/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report */
+        get: operations["report_api_v1_organizations__org_id__analytics_report_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1449,6 +1483,21 @@ export interface components {
          * @enum {string}
          */
         AgentStatus: "running" | "completed" | "rejected" | "failed";
+        /** AnalyticsReport */
+        AnalyticsReport: {
+            approvals: components["schemas"]["ApprovalStats"];
+            /** Days */
+            days: number;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            leads: components["schemas"]["LeadStats"];
+            outreach: components["schemas"]["OutreachStats"];
+            pipeline: components["schemas"]["PipelineStats"];
+            workflows: components["schemas"]["WorkflowStats"];
+        };
         /** ApprovalDecision */
         ApprovalDecision: {
             /** Content Hash */
@@ -1539,6 +1588,17 @@ export interface components {
         ApprovalRejection: {
             /** Note */
             note: string;
+        };
+        /** ApprovalStats */
+        ApprovalStats: {
+            /** Approved */
+            approved: number;
+            /** Median Wait Hours */
+            median_wait_hours: number | null;
+            /** Rejected */
+            rejected: number;
+            /** Waiting */
+            waiting: number;
         };
         /**
          * ApprovalStatus
@@ -1651,6 +1711,22 @@ export interface components {
              * @enum {string}
              */
             evaluation_status: "approved" | "rejected";
+        };
+        /**
+         * Attention
+         * @description What is waiting on a person right now.
+         */
+        Attention: {
+            /** Approvals Waiting */
+            approvals_waiting: number;
+            /** Drafts Ready To Send */
+            drafts_ready_to_send: number;
+            /** Outcomes Unknown */
+            outcomes_unknown: number;
+            /** Workflows Failed 7D */
+            workflows_failed_7d: number;
+            /** Workflows Waiting */
+            workflows_waiting: number;
         };
         /** AuditEntryOut */
         AuditEntryOut: {
@@ -1880,6 +1956,16 @@ export interface components {
             industry?: string | null;
             /** Name */
             name?: string | null;
+        };
+        /** DayCount */
+        DayCount: {
+            /** Count */
+            count: number;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
         };
         /** DeliveryOut */
         DeliveryOut: {
@@ -2155,6 +2241,13 @@ export interface components {
          * @enum {string}
          */
         EvidenceStatus: "accepted" | "quarantined" | "rejected";
+        /** FailureCount */
+        FailureCount: {
+            /** Category */
+            category: string;
+            /** Count */
+            count: number;
+        };
         /**
          * FitLabel
          * @enum {string}
@@ -2429,6 +2522,8 @@ export interface components {
             email: string | null;
             /** First Name */
             first_name: string | null;
+            /** Fit */
+            fit?: string | null;
             /**
              * Id
              * Format: uuid
@@ -2446,6 +2541,8 @@ export interface components {
             owner_user_id: string | null;
             /** Phone */
             phone: string | null;
+            /** Score */
+            score?: number | null;
             /** Source */
             source: string | null;
             status: components["schemas"]["LeadStatus"];
@@ -2475,6 +2572,8 @@ export interface components {
             email: string | null;
             /** First Name */
             first_name: string | null;
+            /** Fit */
+            fit?: string | null;
             /**
              * Id
              * Format: uuid
@@ -2490,6 +2589,8 @@ export interface components {
             owner_user_id: string | null;
             /** Phone */
             phone: string | null;
+            /** Score */
+            score?: number | null;
             /** Source */
             source: string | null;
             status: components["schemas"]["LeadStatus"];
@@ -2511,6 +2612,21 @@ export interface components {
             next_cursor: string | null;
             /** Total */
             total: number;
+        };
+        /** LeadStats */
+        LeadStats: {
+            /** Added By Day */
+            added_by_day: components["schemas"]["DayCount"][];
+            /** Assessments Awaiting Review */
+            assessments_awaiting_review: number;
+            /** By Fit */
+            by_fit: {
+                [key: string]: number;
+            };
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
         };
         /**
          * LeadStatus
@@ -2803,6 +2919,23 @@ export interface components {
             /** Timezone */
             timezone: string;
         };
+        /** OutreachStats */
+        OutreachStats: {
+            /** Accepted By Day */
+            accepted_by_day: components["schemas"]["DayCount"][];
+            /** Deliveries By Status */
+            deliveries_by_status: {
+                [key: string]: number;
+            };
+            /** Drafts By Status */
+            drafts_by_status: {
+                [key: string]: number;
+            };
+            /** Suppressions By Reason */
+            suppressions_by_reason: {
+                [key: string]: number;
+            };
+        };
         /**
          * OverviewOut
          * @description Aggregates computed from stored records at request time. No estimates.
@@ -2852,6 +2985,21 @@ export interface components {
              * Format: email
              */
             email: string;
+        };
+        /** PipelineStats */
+        PipelineStats: {
+            /** Lost */
+            lost: number;
+            /** Opened */
+            opened: number;
+            /** Win Rate */
+            win_rate: number | null;
+            /** Won */
+            won: number;
+            /** Won Value */
+            won_value: {
+                [key: string]: string;
+            };
         };
         /** PipelineSummaryOut */
         PipelineSummaryOut: {
@@ -3393,6 +3541,25 @@ export interface components {
              * @default []
              */
             urls: string[];
+        };
+        /** WorkflowStats */
+        WorkflowStats: {
+            /** Agent Runs By Status */
+            agent_runs_by_status: {
+                [key: string]: number;
+            };
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** Failures */
+            failures: components["schemas"]["FailureCount"][];
+            /** Median Minutes */
+            median_minutes: number | null;
+            /** Tool Calls */
+            tool_calls: number;
+            /** Tool Calls Refused */
+            tool_calls_refused: number;
         };
         /**
          * WorkflowStatus
@@ -4090,6 +4257,37 @@ export interface operations {
             };
         };
     };
+    attention_api_v1_organizations__org_id__analytics_attention_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attention"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     analytics_overview_api_v1_organizations__org_id__analytics_overview_get: {
         parameters: {
             query?: never;
@@ -4108,6 +4306,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_api_v1_organizations__org_id__analytics_report_get: {
+        parameters: {
+            query?: {
+                days?: "7" | "30" | "90";
+            };
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsReport"];
                 };
             };
             /** @description Validation Error */
@@ -4775,6 +5006,7 @@ export interface operations {
                 company_id?: string | null;
                 source?: string | null;
                 import_id?: string | null;
+                fit?: ("high" | "medium" | "low" | "none") | null;
             };
             header?: never;
             path: {
@@ -4885,6 +5117,7 @@ export interface operations {
                 company_id?: string | null;
                 source?: string | null;
                 import_id?: string | null;
+                fit?: ("high" | "medium" | "low" | "none") | null;
             };
             header?: never;
             path: {

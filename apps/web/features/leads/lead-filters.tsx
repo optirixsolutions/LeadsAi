@@ -63,6 +63,18 @@ export function LeadFilters({ members }: { members: Member[] }) {
         ))}
       </SelectField>
       <SelectField
+        label="Fit"
+        value={params.get("fit") ?? ""}
+        onChange={(e) => apply({ fit: e.target.value })}
+        className="sm:w-36"
+      >
+        <option value="">Any fit</option>
+        <option value="high">High fit</option>
+        <option value="medium">Medium fit</option>
+        <option value="low">Low fit</option>
+        <option value="none">Not scored yet</option>
+      </SelectField>
+      <SelectField
         label="Owner"
         value={params.get("owner") ?? ""}
         onChange={(e) => apply({ owner: e.target.value })}

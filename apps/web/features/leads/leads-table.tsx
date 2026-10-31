@@ -10,6 +10,7 @@ import { Card, EmptyState } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { SelectField } from "@/components/ui/field";
 import { LeadStatusBadge } from "@/components/ui/status-badge";
+import { FIT_LABELS } from "@/lib/analytics";
 import { apiRequest } from "@/lib/client-api";
 import { formatDate, LEAD_STATUSES, leadName, memberName, STATUS_LABELS, type Lead, type Member } from "@/lib/crm";
 
@@ -173,6 +174,7 @@ export function LeadsTable({
               <th className="px-4 py-2 font-medium">Lead</th>
               <th className="hidden px-4 py-2 font-medium md:table-cell">Company</th>
               <th className="px-4 py-2 font-medium">Status</th>
+              <th className="hidden px-4 py-2 font-medium sm:table-cell">Score</th>
               <th className="hidden px-4 py-2 font-medium lg:table-cell">Owner</th>
               <th className="hidden px-4 py-2 font-medium lg:table-cell">Source</th>
               <th className="hidden px-4 py-2 font-medium sm:table-cell">Added</th>
@@ -210,6 +212,15 @@ export function LeadsTable({
                 <td className="hidden px-4 py-3 text-fg-muted md:table-cell">{lead.company?.name ?? "—"}</td>
                 <td className="px-4 py-3">
                   <LeadStatusBadge status={lead.status} />
+                </td>
+                <td className="hidden whitespace-nowrap px-4 py-3 text-fg-muted sm:table-cell">
+                  {lead.score === null || lead.score === undefined ? (
+                    "—"
+                  ) : (
+                    <>
+                      <span className="tabular-nums text-fg">{lead.score}</span> · {FIT_LABELS[lead.fit ?? ""] ?? lead.fit}
+                    </>
+                  )}
                 </td>
                 <td className="hidden px-4 py-3 text-fg-muted lg:table-cell">{memberName(members, lead.owner_user_id)}</td>
                 <td className="hidden px-4 py-3 text-fg-muted lg:table-cell">{lead.source ?? "—"}</td>

@@ -181,6 +181,9 @@ class LeadOut(BaseModel):
     import_id: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
+    # The latest assessment, in lists. Ranks a lead; it is not a chance of buying.
+    score: int | None = None
+    fit: str | None = None
 
 
 class LeadPage(BaseModel):
