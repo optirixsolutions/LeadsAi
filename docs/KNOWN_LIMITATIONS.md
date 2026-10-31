@@ -132,7 +132,7 @@ Current as of Phase 11 (2026-10-31). What was verified is in RELEASE_CHECKLIST.m
 ## Operational
 - One browser test, `sign out, then sign back in` on mobile, failed once and passed on reruns, unexplained. Browser tests also time out when real models or image builds load the machine.
 - Empty files named after fragments of code (`tuple[User`, `str`) keep appearing in `apps/api` and `apps/web`. Twelve were committed by accident. The source is not known, so check `git status` before committing.
-- GitHub Actions workflow is written but has not run; no remote repository is configured.
+- CI builds the images but does not run them. Running the stack in containers was done by hand, with `scripts/release_smoke.py`.
 - No OpenTelemetry export, or error-monitoring integration yet (planned Phases 6, 11).
 - The web build resolves the API URL for rewrites at **build time** (`SALESIQ_API_URL`); change it and rebuild per environment.
 - Host port 55432 is inside Windows' ephemeral range (49152–65535), so any local process can take it as a random socket

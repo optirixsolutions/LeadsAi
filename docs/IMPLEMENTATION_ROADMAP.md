@@ -7,17 +7,17 @@
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Repository audit, architecture, docs | Done |
-| 1 | Foundation: monorepo, API, web, DB, Docker, CI | Done (CI workflow not yet run on GitHub) |
-| 2 | Auth, organizations, memberships, permissions, audit, isolation tests | Done (CI not yet run on GitHub) |
-| 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done (CI not yet run on GitHub) |
+| 1 | Foundation: monorepo, API, web, DB, Docker, CI | Done |
+| 2 | Auth, organizations, memberships, permissions, audit, isolation tests | Done |
+| 3 | Leads, companies, activities, CSV import/export, dedupe, pipeline | Done |
 | 4 | Research lab: notebooks, synthetic data, provider abstraction, eval baseline | Done (Colab paths and hosted route not executed) |
-| 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet; CI not run) |
-| 6 | LangGraph workflows with Postgres checkpoints | Done (container worker not run; CI not run) |
-| 7 | MCP server and bounded agents | Done (containers not run; CI not run) |
-| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider; CI not run) |
-| 9 | Full dashboard and analytics | Done (no independent review, since it only reads; CI not run) |
-| 10 | Integrations, quotas, entitlements | Done (real provider not connected; CI not run) |
-| 11 | Hardening and release | Done locally (no deployment, CI, or real provider) |
+| 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet) |
+| 6 | LangGraph workflows with Postgres checkpoints | Done |
+| 7 | MCP server and bounded agents | Done |
+| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider) |
+| 9 | Full dashboard and analytics | Done (no independent review, since it only reads) |
+| 10 | Integrations, quotas, entitlements | Done (real provider not connected) |
+| 11 | Hardening and release | Done locally (no deployment or real provider) |
 
 ## Phase 0 — audit findings
 - Repository was empty (no git, no code). Greenfield build following the spec layout.
@@ -182,10 +182,10 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
 | `pip-audit`, `pnpm audit --prod` | No known vulnerabilities |
-| GitHub Actions CI | Not run — no remote repository configured |
+| GitHub Actions CI | Passes on `23e6f8e` in the private repository `fahadtahir111/leadsiq`, on Linux: API 503 passed and 11 skipped (the tests that need a model), web 49, browser 60 and 3 skipped, both images built, audits clean. Images are built there and not run |
 
 ## Known blockers
 - Sending real email needs provider credentials and explicit approval. Everything up to that point is built, and tested locally.
 
 ## Next concrete steps
-The build plan is finished. What comes next needs the owner, and is listed in RELEASE_CHECKLIST.md: a remote repository so CI can run, a real email provider, a hosting choice, and a legal review of outreach.
+The build plan is finished. What comes next needs the owner, and is listed in RELEASE_CHECKLIST.md: a real email provider, a hosting choice, and a legal review of outreach.
