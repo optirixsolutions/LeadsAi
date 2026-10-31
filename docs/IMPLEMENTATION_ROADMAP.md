@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 7 complete → next is Phase 8 (outreach and approvals).
+**Current phase:** Phase 8 complete → next is Phase 9 (dashboard and analytics).
 **Last updated:** 2026-10-31
 
 ## Phase status
@@ -14,8 +14,8 @@
 | 5 | Sales intelligence: evidence, ICP, explainable scoring | Done (fetcher not run against the public internet; CI not run) |
 | 6 | LangGraph workflows with Postgres checkpoints | Done (container worker not run; CI not run) |
 | 7 | MCP server and bounded agents | Done (containers not run; CI not run) |
-| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Next |
-| 9 | Full dashboard and analytics | Pending |
+| 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider; CI not run) |
+| 9 | Full dashboard and analytics | Next |
 | 10 | Integrations, quotas, entitlements | Pending |
 | 11 | Hardening and release | Pending |
 
@@ -124,15 +124,31 @@ Acceptance met: authorized tools work, unauthorized calls fail and are logged, a
   that could skip the audit log, free text in the log, agent budgets that could be exceeded, cancellation ignored mid-run, tokens surviving a
   password change or removal, MCP bypassing REST rate limits, one rep filling the queue, a migration that failed open, and the API holding the owner URL.
 
+## Phase 8 — completed
+Acceptance met: no message leaves without a valid approval and a final server-side check, shown by tests against a real SMTP server.
+- **Drafts:** written by a person or by the outreach agent, which reads a lead's evidence and can only produce a draft. Model text with no real source, or that reads as
+  instructions, is dropped. A link or address its sources do not show has to be edited before approval.
+- **Approvals:** their own records, bound to exact text and address, for 7 days. Reps can ask but not decide (ADR-031, ADR-032, ADR-036).
+- **Final check:** 15 reasons a send can be refused, all checked again just before it goes, and shown on the page before anyone clicks.
+- **Dispatch:** real SMTP, off by default and limited to this machine unless deliberately opened, at most once (ADR-033, ADR-034, ADR-035).
+- **Suppression:** addresses and domains, checked at drafting, at the approval request, and at sending. A signed link in every email opts someone out for good (ADR-037).
+- **Web:** Outreach with drafts, approvals, suppression list, and settings; an outreach card on the lead page; a public unsubscribe page.
+- **MCP:** three new tools can draft and ask. No tool can approve or send.
+- **Independent review** found no way to send without valid approval, no role or tenant bypass, and no injection. Fixed with tests: an opt-out lost when another entry already
+  existed, opt-out links that could point at localhost, bad requests using up real opt-outs, token-written drafts labelled as a person's, planted links passing the contact check,
+  one word clearing the edit requirement, odd line breaks in a subject counting against limits, relay refusals suppressing good addresses, a late result overwriting a person's
+  answer, and a downgrade that left rows older code cannot read. One was documented and not fixed: sender details are not part of an approval (see KNOWN_LIMITATIONS).
+- Also removed 12 empty files committed by accident in earlier phases.
+
 ## Tests run (2026-10-31, local Windows machine)
 Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 401 passed, 0 skipped, including real Ollama models, real MCP over HTTP, and a killed worker process |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (87 files) |
-| Web `vitest` | 37 passed |
+| API `pytest` | 454 passed, 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (94 files) |
+| Web `vitest` | 42 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API, worker, Postgres) | 45 passed, 3 skipped (sidebar tests are desktop-only) |
+| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 51 passed, 3 skipped (sidebar tests are desktop-only) |
 | `docker compose config` | Valid; the images and the containerized worker were not built or run |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
@@ -140,11 +156,10 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- Sending real email needs a provider choice and explicit approval. Phase 8 can be built and tested fully up to that point without one.
+- Sending real email needs a provider choice and explicit approval. Everything up to that point is built and tested.
 
-## Next concrete steps (Phase 8)
-1. Outreach drafts: a bounded agent writes, using only cited facts, and every draft is a record a person can edit.
-2. Suppression lists and opt-outs, checked by fixed rules at draft time and again at dispatch.
-3. Approval requests through the workflow interrupt from Phase 6, recorded under the person who approves.
-4. A dispatch adapter that refuses to send without an approval record and a final policy check. No real provider without explicit approval.
-5. Outreach and follow-up tools for MCP, with sending never available as a tool.
+## Next concrete steps (Phase 9)
+1. Overview and leads list show scores, signals, pending approvals, and outreach drafts.
+2. Analytics from stored records only: pipeline, outreach volume, approval wait times, workflow health.
+3. Connect the remaining pages to APIs, with responsive behavior checked at phone width.
+4. Reduce the lead page's API calls, which were already about 10 per render before the outreach card.

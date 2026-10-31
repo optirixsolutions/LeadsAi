@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.agents.evaluation.metrics import lexical_support, unsupported_numbers
-from app.agents.evaluation.tasks import SynthesisOut
+from app.agents.evaluation.tasks import OutreachOut, SynthesisOut
 
 # Every pattern here is bounded, and it runs over 20,000 characters of untrusted text.
 _RULES: dict[str, re.Pattern[str]] = {
@@ -50,9 +50,19 @@ _CONTACT = re.compile(
     r"|\b[\w-]{1,63}\.(?:com|net|org|io|ai|co|app|dev|biz|info|example)\b",
     re.IGNORECASE,
 )
+# Wider than _CONTACT on purpose: in an email to a real person, a false alarm costs one edit.
+_ANY_CONTACT = re.compile(
+    r"[\w.+-]{1,64}@[\w.-]{1,253}|[a-z][a-z0-9+.-]{1,20}://\S{1,500}|www\.\S{1,500}"
+    r"|\b[a-z0-9][a-z0-9-]{0,62}(?:\.[a-z0-9-]{1,63}){0,8}\.[a-z]{2,24}\b",
+    re.IGNORECASE,
+)
 _WORD = re.compile(r"[^\W\d_]{2,}")
 
 MIN_LEXICAL_SUPPORT = 0.5
+# An email has greetings and asks that no source could support, so this bar is lower.
+MIN_EMAIL_SUPPORT = 0.3
+MAX_SUBJECT_CHARS = 200
+MAX_BODY_CHARS = 5000
 MAX_MISSING_ITEM_CHARS = 200
 
 
@@ -168,3 +178,64 @@ def check_output(output: SynthesisOut, evidence: Mapping[str, str]) -> GateResul
         rejected_claims=rejected,
         missing_information=missing,
     )
+
+
+@dataclass
+class EmailReview:
+    subject: str
+    body: str
+    # Any of these means no draft is kept at all.
+    fatal: list[str] = field(default_factory=list)
+    # Shown to whoever reviews the draft.
+    flags: list[str] = field(default_factory=list)
+    needs_edit: bool = False
+    flagged_contacts: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+
+
+def check_email(email: OutreachOut, evidence: Mapping[str, str]) -> EmailReview:
+    """Text with no real source, or that reads as instructions, is dropped. Other problems become
+    flags, because a person reads every draft before it can go anywhere. Any link or address has
+    to be taken out, even one a source shows, since a source is how it would have been planted."""
+    subject = " ".join(email.subject.split())
+    body = email.body.strip()
+    review = EmailReview(subject=subject, body=body)
+    known = list(dict.fromkeys(i for i in email.evidence_ids if i in evidence))
+    review.evidence_ids = known
+    text = f"{subject}\n{body}"
+    if not known:
+        review.fatal.append("no_citation")
+    if screen_evidence(text):
+        review.fatal.append("instruction_like")
+    if not subject or not body or len(subject) > MAX_SUBJECT_CHARS or len(body) > MAX_BODY_CHARS:
+        review.fatal.append("bad_length")
+    sources = list(evidence.values())
+    if any(i not in evidence for i in email.evidence_ids):
+        review.flags.append("unknown_citation")
+    if sources and unsupported_numbers(text, sources):
+        review.flags.append("unsupported_number")
+    if sources and lexical_support(text, sources) < MIN_EMAIL_SUPPORT:
+        review.flags.append("low_support")
+    review.flagged_contacts = find_contacts(text)
+    if review.flagged_contacts:
+        review.flags.append("contains_contact")
+        review.needs_edit = True
+    return review
+
+
+def find_contacts(text: str) -> list[str]:
+    """Lowercased, because that is how they are compared when a person edits the text."""
+    return list(dict.fromkeys(m.lower().rstrip(".,;:!?)") for m in _ANY_CONTACT.findall(text)))
+
+
+def review_unsourced(subject: str, body: str) -> EmailReview:
+    """For text that arrives through a token, with no sources to check it against."""
+    text = f"{subject}\n{body}"
+    review = EmailReview(subject=subject, body=body)
+    if screen_evidence(text):
+        review.flags.append("instruction_like")
+    review.flagged_contacts = find_contacts(text)
+    if review.flagged_contacts:
+        review.flags.append("contains_contact")
+        review.needs_edit = True
+    return review

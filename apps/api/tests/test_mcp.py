@@ -947,7 +947,12 @@ def test_agent_api_rules(setup: Any, add_member: Any, make_org: Any, use_model: 
     assert owner.api.post(url, {"lead_id": lead["id"], "tools": ["run_sql"]}).status_code == 422
 
     catalog = owner.api.get(f"/organizations/{org}/agents").json()
-    assert {a["role"] for a in catalog["agents"]} == {"research", "qualification", "pipeline"}
+    assert {a["role"] for a in catalog["agents"]} == {
+        "research",
+        "qualification",
+        "pipeline",
+        "outreach",
+    }
     write_tools = {t["name"] for t in catalog["tools"] if t["side_effect"] == "write"}
     assert not [a for a in catalog["agents"] if write_tools & set(a["tools"])], "agents only read"
 

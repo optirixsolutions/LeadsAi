@@ -67,6 +67,7 @@ class AgentRunOut(BaseModel):
     input_tokens: int | None
     output_tokens: int | None
     failure_category: str | None
+    outreach_draft_id: uuid.UUID | None
     created_at: datetime
     completed_at: datetime | None
 

@@ -66,11 +66,23 @@ Workers cross tenants only through `workflow_claim()` and `import_claim()`, whic
 | `mcp_tokens` | `user_id`, `name`, `token_hash` (unique), `scope`, `expires_at`, `revoked_at`, `last_used_at` | No RLS, because tokens are looked up by digest before a tenant is known. Every other query filters by user and organization |
 | `workflow_runs` (changed) | `lead_id` is now optional | At most one active run per lead, and one per agent for work about the whole organization |
 
+## Phase 8
+All under forced RLS. The API role has no DELETE on any of them.
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `outreach_drafts` | `lead_id`, `status`, `origin`, `recipient`, `subject`, `body`, `version`, `content_hash`, `flags`, `needs_edit`, `evidence_ids`, `workflow_run_id` (unique) | An agent's run makes at most one draft |
+| `approval_requests` | `draft_id`, `status`, `draft_version`, `content_hash`, `recipient`, requester, decider, `expires_at` | One live request per draft, by a partial unique index |
+| `deliveries` | `draft_id`, `approval_id`, `status`, `adapter`, `recipient`, `content_hash`, `message_id`, `error_category`, sender, resolver | One live delivery per approval, by a partial unique index |
+| `suppression_entries` | `kind`, `value`, `reason`, `note`, `removed_at` | One active entry per value. Removal keeps the row |
+| `outreach_settings` | `organization_id` (primary key), `sends_enabled`, sender identity, `timezone`, quiet hours, `daily_limit`, `recontact_days` | Its row lock serializes an organization's sends |
+| `agent_runs` (changed) | `outreach_draft_id` | What an outreach agent wrote |
+
 ## Planned
 | Phase | Tables |
 |---|---|
 | 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
-| 8 | `outreach_drafts`, `campaigns`, `suppression_entries`, `approval_requests`, `deliveries` |
+| 9 or later | `campaigns` |
 | 4/10 | `model_configurations`, `model_evaluations`, `usage_records`, `integration_connections`, `webhook_events`, `plans`, `entitlements`, `subscriptions` |
 
 Deletion policy: tenant data cascades from `organizations`; audit logs are retained with nulled references. Hard deletion of

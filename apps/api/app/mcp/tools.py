@@ -1,8 +1,9 @@
 """The tool catalog. Each tool wraps a real service, which does its own tenant scoping.
 
-Not here yet, because what they would act on does not exist: outreach drafts (Phase 8), follow-up
-tasks, and integration health (Phase 10). There is deliberately no SQL, shell, file, or
-general HTTP tool. Quarantined and rejected evidence is never returned.
+Not here yet, because what they would act on does not exist: follow-up tasks and integration
+health (Phase 10). There is deliberately no SQL, shell, file, or general HTTP tool, and nothing
+that approves or sends outreach. Those stay with a signed-in person. Quarantined and rejected
+evidence is never returned.
 """
 
 import uuid
@@ -19,6 +20,7 @@ from app.core.permissions import Permission
 from app.mcp.registry import ToolSpec
 from app.models import (
     Company,
+    DraftOrigin,
     EvidenceStatus,
     Lead,
     Opportunity,
@@ -29,7 +31,13 @@ from app.models import (
 )
 from app.schemas.crm import LeadCreate, LeadUpdate
 from app.schemas.intelligence import EvidenceCreate
-from app.services import intelligence_service, lead_service, pipeline_service, workflow_service
+from app.services import (
+    intelligence_service,
+    lead_service,
+    outreach_service,
+    pipeline_service,
+    workflow_service,
+)
 from app.services.lead_service import LeadFilters
 
 MAX_ITEMS = 25
@@ -467,6 +475,61 @@ def request_action_approval(db: Session, ctx: OrgContext, args: LeadRef) -> Work
     )
 
 
+class CreateDraftIn(_In):
+    lead_id: uuid.UUID
+    subject: str = Field(min_length=1, max_length=200, pattern=r"^[^\r\n]*$")
+    body: str = Field(min_length=1, max_length=5000)
+
+
+class DraftRef(_In):
+    draft_id: uuid.UUID
+
+
+class OutreachDraftOut(BaseModel):
+    id: uuid.UUID
+    lead_id: uuid.UUID
+    status: str
+    origin: str
+    recipient: str
+    subject: str
+    body: str
+    version: int
+    flags: list[str]
+
+
+def _draft_out(draft: Any) -> OutreachDraftOut:
+    return OutreachDraftOut(
+        id=draft.id,
+        lead_id=draft.lead_id,
+        status=draft.status.value,
+        origin=draft.origin.value,
+        recipient=draft.recipient,
+        subject=draft.subject,
+        body=draft.body,
+        version=draft.version,
+        flags=draft.flags,
+    )
+
+
+def create_outreach_draft(db: Session, ctx: OrgContext, args: CreateDraftIn) -> OutreachDraftOut:
+    """Write a draft email to a lead. It cannot go anywhere until a person approves it."""
+    return _draft_out(
+        outreach_service.create_draft(
+            db, ctx, args.lead_id, args.subject, args.body, origin=DraftOrigin.mcp
+        )
+    )
+
+
+def get_outreach_draft(db: Session, ctx: OrgContext, args: DraftRef) -> OutreachDraftOut:
+    return _draft_out(outreach_service.get_draft(db, ctx, args.draft_id))
+
+
+def request_outreach_approval(db: Session, ctx: OrgContext, args: DraftRef) -> OutreachDraftOut:
+    """Ask for a person to review a draft. A caller can ask for this, but cannot answer it."""
+    outreach_service.request_approval(db, ctx, args.draft_id)
+    return _draft_out(outreach_service.get_draft(db, ctx, args.draft_id))
+
+
 def _spec(
     name: str, handler: Any, input_model: type[BaseModel], output_model: type[BaseModel], **kw: Any
 ) -> ToolSpec:
@@ -650,6 +713,38 @@ CATALOG: dict[str, ToolSpec] = {
             limit_key="workflow",
             limit_per_minute=10,
             **_LEAD,
+        ),
+        _spec(
+            "create_outreach_draft",
+            create_outreach_draft,
+            CreateDraftIn,
+            OutreachDraftOut,
+            permission=Permission.outreach_write,
+            side_effect="write",
+            limit_key="outreach-draft",
+            limit_per_minute=30,
+            **_LEAD,
+        ),
+        _spec(
+            "get_outreach_draft",
+            get_outreach_draft,
+            DraftRef,
+            OutreachDraftOut,
+            description="Read one outreach draft and its status.",
+            permission=Permission.outreach_read,
+            side_effect="read",
+            audit_fields=("draft_id",),
+        ),
+        _spec(
+            "request_outreach_approval",
+            request_outreach_approval,
+            DraftRef,
+            OutreachDraftOut,
+            permission=Permission.outreach_write,
+            side_effect="write",
+            audit_fields=("draft_id",),
+            limit_key="outreach-draft",
+            limit_per_minute=30,
         ),
     )
 }

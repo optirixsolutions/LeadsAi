@@ -11,6 +11,7 @@ export const AGENT_LABELS: Record<string, string> = {
   research: "Research agent",
   qualification: "Qualification agent",
   pipeline: "Pipeline analyst",
+  outreach: "Outreach agent",
 };
 
 export const AGENT_STATUS_LABELS: Record<string, string> = {

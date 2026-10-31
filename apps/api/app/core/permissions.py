@@ -33,6 +33,12 @@ class Permission(enum.StrEnum):
     icp_configure = "icp:configure"
     workflows_read = "workflows:read"
     workflows_run = "workflows:run"  # start, cancel, and resume
+    outreach_read = "outreach:read"
+    outreach_write = "outreach:write"  # draft, edit, ask for approval, add to suppression
+    outreach_send = "outreach:send"  # send what someone with outreach:approve has approved
+    # Withheld from reps, who could otherwise write an email and wave it through themselves.
+    outreach_approve = "outreach:approve"  # decide approvals, remove suppressions
+    outreach_configure = "outreach:configure"  # sender identity, limits, turning sending on
 
 
 _ALL = frozenset(Permission)
@@ -44,6 +50,7 @@ _READ = frozenset(
         Permission.pipeline_read,
         Permission.intelligence_read,
         Permission.workflows_read,
+        Permission.outreach_read,
     }
 )
 _SELL = _READ | {
@@ -52,6 +59,8 @@ _SELL = _READ | {
     Permission.research_write,
     Permission.assessments_run,
     Permission.workflows_run,
+    Permission.outreach_write,
+    Permission.outreach_send,
 }
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
@@ -64,6 +73,7 @@ ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
         Permission.leads_import,
         Permission.leads_export,
         Permission.intelligence_review,
+        Permission.outreach_approve,
     },
     Role.sales_rep: _SELL,
     # Read-only. Export is withheld: it is the easiest path to bulk data exfiltration.

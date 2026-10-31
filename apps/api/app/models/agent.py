@@ -26,6 +26,7 @@ class AgentRole(enum.StrEnum):
     research = "research"
     qualification = "qualification"
     pipeline = "pipeline"
+    outreach = "outreach"
 
 
 class AgentStatus(enum.StrEnum):
@@ -85,6 +86,10 @@ class AgentRun(IdMixin, Base):
     input_tokens: Mapped[int | None] = mapped_column(Integer)
     output_tokens: Mapped[int | None] = mapped_column(Integer)
     failure_category: Mapped[str | None] = mapped_column(String(40))
+    # What an outreach agent wrote. A person still has to review and approve it.
+    outreach_draft_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("outreach_drafts.id", ondelete="SET NULL")
+    )
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )

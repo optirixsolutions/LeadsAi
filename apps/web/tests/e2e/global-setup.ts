@@ -1,5 +1,11 @@
 import { spawn } from "node:child_process";
-import { resolve } from "node:path";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+
+/** What the local mail server received, one JSON object per line. */
+export const SINK_FILE = join(tmpdir(), "salesiq-e2e-mail.jsonl");
+export const SINK_PORT = 2525;
 
 /**
  * Runs a real background worker for the suite. It has no port for Playwright's `webServer` to
@@ -22,7 +28,13 @@ export default function globalSetup(): () => void {
       SALESIQ_WORKER_POLL_SECONDS: "0.5",
     },
   });
+  writeFileSync(SINK_FILE, "");
+  const sink = spawn(resolve(api, python), ["-m", "tests.support.smtp_sink", String(SINK_PORT), SINK_FILE], {
+    cwd: api,
+    stdio: "ignore",
+  });
   return () => {
     worker.kill();
+    sink.kill();
   };
 }

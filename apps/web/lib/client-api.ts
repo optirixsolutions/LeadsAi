@@ -14,7 +14,7 @@ function readCookie(name: string): string | null {
 
 export async function apiRequest<T>(
   path: string,
-  init: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown } = {},
+  init: { method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE"; body?: unknown } = {},
 ): Promise<ApiResult<T>> {
   const method = init.method ?? "GET";
   const headers: Record<string, string> = {};

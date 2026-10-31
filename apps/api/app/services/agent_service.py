@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.agents.gates import check_output
+from app.agents.gates import EmailReview, check_email, check_output
 from app.agents.llm import Usage
 from app.agents.llm.registry import estimate_cost
 from app.agents.roles import AGENT_PROMPT_VERSION, AGENTS
@@ -28,7 +28,7 @@ from app.models import (
     WorkflowRun,
     WorkflowStatus,
 )
-from app.services import workflow_service
+from app.services import outreach_service, workflow_service
 from app.services.brief_service import get_registry
 from app.services.lead_service import get_lead
 
@@ -45,6 +45,8 @@ def start(db: Session, ctx: OrgContext, role: AgentRole, lead_id: uuid.UUID | No
         raise AppError("This agent needs a lead", code="lead_required", details=None)
     if not definition.needs_lead:
         lead_id = None
+    if definition.writes_email and lead_id is not None:
+        outreach_service.require_contactable(db, ctx, lead_id)
     run = workflow_service.enqueue(db, ctx, lead_id, WorkflowKind.agent, role=role.value)
     agent = AgentRun(
         organization_id=ctx.org_id,
@@ -52,7 +54,7 @@ def start(db: Session, ctx: OrgContext, role: AgentRole, lead_id: uuid.UUID | No
         lead_id=lead_id,
         role=role,
         status=AgentStatus.running,
-        model_key=get_registry().routes["agents"],
+        model_key=get_registry().routes[definition.route],
         prompt_version=AGENT_PROMPT_VERSION,
         created_by_user_id=ctx.user_id,
     )
@@ -229,6 +231,8 @@ def run_step(
             db.commit()
             raise result.error
         return _failed_step(agent_id, result.error.category)
+    if result.email is not None:
+        return _record_email(db, ctx, record, result, run_id, agent_id, lead_id, used, registry)
     if result.output is None:
         # It reached a budget before it could answer.
         record(AgentStatus.failed, failure_category=result.stop_reason, **used)
@@ -265,6 +269,76 @@ def run_step(
             "estimated_cost_usd": cost,
         },
     }
+
+
+def _email_notes(review: EmailReview, result: AgentResult) -> list[str]:
+    notes = []
+    if result.stop_reason != "finished":
+        notes.append(f"The agent stopped at a limit ({result.stop_reason})")
+    if result.refused_calls:
+        notes.append(f"{len(result.refused_calls)} tool call(s) were refused or invalid")
+    if not result.sources:
+        notes.append("The agent read no sources, so nothing it said can be checked")
+    return notes
+
+
+def _record_email(
+    db: Session,
+    ctx: OrgContext,
+    record: Any,
+    result: AgentResult,
+    run_id: uuid.UUID,
+    agent_id: uuid.UUID,
+    lead_id: uuid.UUID | None,
+    used: dict[str, Any],
+    registry: Any,
+) -> dict[str, Any]:
+    """Stores a draft, never more than that. A rejected email keeps its wording for reviewers."""
+    assert result.email is not None and lead_id is not None
+    review = check_email(result.email, result.sources)
+    notes = _email_notes(review, result)
+    usage = {
+        "model": result.served_by,
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
+        "estimated_cost_usd": estimate_cost(
+            registry.model(result.served_by or ""),
+            Usage(result.input_tokens, result.output_tokens),
+        ),
+    }
+    if review.fatal:
+        record(
+            AgentStatus.rejected,
+            rejected_claims=[{"text": review.body[:2000], "problems": review.fatal}],
+            review_notes=notes,
+            failure_category=None,
+            **used,
+        )
+        return {"agent_id": str(agent_id), "agent_status": "rejected", "usage": usage}
+    record(AgentStatus.completed, summary=review.subject, review_notes=notes, **used)
+    lead = get_lead(db, ctx, lead_id)
+    if not lead.email:
+        # The address was removed while the agent worked.
+        db.execute(
+            update(AgentRun)
+            .where(AgentRun.id == agent_id)
+            .values(status=AgentStatus.failed, failure_category="lead_has_no_email")
+        )
+        return _failed_step(agent_id, "lead_has_no_email")
+    draft = outreach_service.create_agent_draft(
+        db,
+        ctx,
+        lead,
+        run_id,
+        review.subject,
+        review.body,
+        flags=review.flags,
+        needs_edit=review.needs_edit,
+        flagged_contacts=review.flagged_contacts,
+        evidence_ids=[result.source_ids[i] for i in review.evidence_ids],
+    )
+    db.execute(update(AgentRun).where(AgentRun.id == agent_id).values(outreach_draft_id=draft.id))
+    return {"agent_id": str(agent_id), "agent_status": "completed", "usage": usage}
 
 
 def _failed_step(agent_id: uuid.UUID, category: str) -> dict[str, Any]:

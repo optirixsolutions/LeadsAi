@@ -148,3 +148,36 @@ separation when it has not happened would be worse than stopping. Migrations run
 ### ADR-030 · 2026-10-31 · MCP tokens are personal, revocable, and never exceed their owner
 A token acts as its owner with their role at the time of each call, and a read token cannot use write tools. Changing a password or leaving an
 organization revokes tokens, and a write token needs the current password to create, so a stolen session cannot mint lasting write access.
+
+### ADR-031 · 2026-10-31 · An approval is its own record, not a paused workflow
+The roadmap planned to use the Phase 6 workflow interrupt. A person may take days to decide, and a paused run holds its lead and one of the
+organization's 20 run slots for all of that time. So `approval_requests` stands alone, and drafts need no running worker to be reviewed.
+Workflow interrupts remain for status changes proposed by a run.
+
+### ADR-032 · 2026-10-31 · An approval covers exact text for an exact address
+It stores a SHA-256 of the recipient, subject, and body. The approver's request has to carry the hash of what their screen showed, so an edit
+made while they read cannot be approved by accident. Any edit ends the approval, and sending recomputes the hash from what is stored.
+
+### ADR-033 · 2026-10-31 · At most once, even if that means asking a person
+The delivery row is committed before the connection opens, and a partial unique index allows one live delivery per approval. If the connection
+drops after the message starts going out, or the process dies, the outcome is `unknown`, and only a person can settle it. It never retries by
+itself, because the same email twice is worse than a person having to check a log. A refusal or a failed connection sent nothing, so it can be retried.
+
+### ADR-034 · 2026-10-31 · Sending happens in the API request, one organization at a time
+Every send takes a lock on the organization's settings row while it checks and records, and releases it before connecting. This keeps limits and
+the recontact rule exact under concurrency, and no database connection is held during SMTP, which has a 15-second timeout. A send is a person
+clicking a button, so nothing here needs the queue until campaigns exist.
+
+### ADR-035 · 2026-10-31 · The dispatch adapter is real SMTP, and cannot leave this machine by accident
+The owner ruled out mocks (ADR-015), so tests use a real SMTP server on localhost, including real refusals and a server that hangs up. The default
+is `disabled`. A host that is not a loopback address is refused unless `SALESIQ_DISPATCH_ALLOW_EXTERNAL` is set, and outside development that also
+requires STARTTLS. Sending to real people needs an organization to turn sending on and a deliberate server setting, in addition to every approval.
+
+### ADR-036 · 2026-10-31 · Approvers may approve their own requests
+Reps cannot approve, which is the separation that matters: the person closest to the quota does not decide alone. A manager or admin may approve
+their own request, because small teams would otherwise be stuck. The audit entry records it as `own_request`.
+
+### ADR-037 · 2026-10-31 · Opt-out links are signed, name a delivery, and need a POST
+A link names a delivery and not an address, so logs reveal nothing about the person. It never expires, because an old email still has to work. It
+sets the tenant from a verified signature, which is the one route where tenancy comes from anything other than a session. A GET does nothing, because
+mail scanners follow links. An opt-out cannot be removed by a person.

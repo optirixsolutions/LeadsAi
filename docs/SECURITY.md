@@ -10,7 +10,7 @@
 | Account enumeration / credential stuffing | Uniform login errors, dummy-hash timing equalization, indistinguishable reset requests, rate limits | Done (Phase 2); lockout DoS noted in KNOWN_LIMITATIONS |
 | Prompt injection via imported content | Scores never read model output; input and output gates; quarantine with human release; tool permissions in code, not prompts | Gates and scoring done (Phase 5), measured in `research/evaluations/GATES.md`, and the input gate is easy to evade by rewording; tools Phase 7 |
 | Unsafe tool calls / confused deputy | Identity set by the server, never by arguments; one executor checks membership, scope, role, and binding on every call; no SQL/shell/arbitrary HTTP tools | Done (Phase 7) |
-| Unauthorized external communication | Approval record + final policy check at dispatch; suppression lists; tests for bypass | Phase 8 |
+| Unauthorized external communication | Approval bound to exact text and address; final policy check at dispatch; suppression lists; no tool can approve or send; SMTP limited to loopback by default; tests for bypass | Done (Phase 8) |
 | SSRF | Research fetcher with per-hop allowlist, connection pinned to a checked public IP, size limit and a deadline on every socket call | Done (Phase 5) |
 | SQL injection | ORM / bound parameters only; no string-built SQL | Ongoing |
 | XSS | React escaping; no `dangerouslySetInnerHTML` on untrusted content; CSP | CSP in Phase 11 |

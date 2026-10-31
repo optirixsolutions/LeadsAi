@@ -16,7 +16,7 @@ from typing import Any
 from mcp import Client
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.agents.evaluation.tasks import SynthesisOut, _untrusted
+from app.agents.evaluation.tasks import OutreachOut, SynthesisOut, _untrusted
 from app.agents.llm import ChatResult, LLMError, ModelRegistry, ToolRequest
 from app.agents.roles import AgentDefinition
 from app.mcp.registry import Identity, ToolResult
@@ -33,11 +33,17 @@ FINAL_INSTRUCTIONS = (
     "must cite the source labels it relies on, such as S1. Use only what the sources say. List "
     "what is still unknown."
 )
+EMAIL_INSTRUCTIONS = (
+    "Stop calling tools and write the email now, from the tool results above. Keep the body under "
+    "120 words, with no signature and no opt-out line, which are added later. In evidence_ids, "
+    "list the source labels you used, such as S1. It is a draft and will not be sent automatically."
+)
 
 
 @dataclass
 class AgentResult:
     output: SynthesisOut | None
+    # An email-writing agent answers here instead.
     # label -> text, exactly as shown to the model. The review checks claims against these.
     sources: dict[str, str]
     source_ids: dict[str, str]
@@ -49,6 +55,7 @@ class AgentResult:
     output_tokens: int = 0
     served_by: str | None = None
     error: LLMError | None = None
+    email: OutreachOut | None = None
 
 
 def tool_schemas(tools: frozenset[str]) -> list[dict[str, Any]]:
@@ -96,6 +103,10 @@ class _Sources:
         """A model that copied a real ID still gets credit for citing the right thing."""
         for claim in output.claims:
             claim.evidence_ids = [self._labels.get(i, i).strip("[]") for i in claim.evidence_ids]
+        return output
+
+    def normalize_email(self, output: OutreachOut) -> OutreachOut:
+        output.evidence_ids = [self._labels.get(i, i).strip("[]") for i in output.evidence_ids]
         return output
 
 
@@ -214,6 +225,18 @@ async def run_agent(
         return outcome  # Asking for one more answer would only spend more past the limit.
     if check:
         await asyncio.to_thread(check)
+    if definition.writes_email:
+        messages.append({"role": "user", "content": EMAIL_INSTRUCTIONS})
+        try:
+            email, reply = await asyncio.to_thread(
+                registry.structured, model_key, messages, OutreachOut
+            )
+        except LLMError as exc:
+            outcome.error = exc
+            return outcome
+        account(reply)
+        outcome.email = sources.normalize_email(email)
+        return outcome
     messages.append({"role": "user", "content": FINAL_INSTRUCTIONS})
     try:
         parsed, reply = await asyncio.to_thread(

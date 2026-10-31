@@ -30,6 +30,20 @@ in front of it. Set `SALESIQ_MCP_HOST` to listen beyond localhost. It connects a
 Upgrading `langgraph-checkpoint-postgres` may add checkpoint migrations, which the app role cannot run. Add an Alembic revision that
 runs its setup as the schema owner in the same release.
 
+## Sending outreach
+Off by default. To let approved email leave, set these on the API, then have an admin turn sending on in Outreach → Settings.
+
+| Variable | Notes |
+|---|---|
+| `SALESIQ_DISPATCH_ADAPTER` | `disabled` (default) or `smtp` |
+| `SALESIQ_DISPATCH_SMTP_HOST`, `_PORT` | Default `127.0.0.1:1025`. Anything but loopback also needs the next setting |
+| `SALESIQ_DISPATCH_ALLOW_EXTERNAL` | **Real people can receive what goes through this.** Outside development it requires STARTTLS |
+| `SALESIQ_DISPATCH_SMTP_STARTTLS`, `_USERNAME`, `_PASSWORD`, `_TIMEOUT_S` | Server login and timeout |
+| `SALESIQ_WEB_BASE_URL` | Opt-out links are built from this. Outside development, startup refuses SMTP sending unless it is a public HTTPS address |
+
+To try sending without reaching anyone, run a local mail catcher on port 1025, such as `uv run python -m tests.support.smtp_sink 1025 mail.jsonl` from `apps/api`,
+which keeps what it receives in that file and passes nothing on.
+
 ## Database roles (provision before the first migration)
 | Role | Attributes | Purpose |
 |---|---|---|

@@ -1,12 +1,32 @@
 # Known Limitations
 
-Current as of Phase 7 (2026-10-31).
+Current as of Phase 8 (2026-10-31).
+
+## Outreach
+- **No email has reached a real mailbox, or passed through a real provider.** Sending was tested only against a real SMTP server on this machine. STARTTLS,
+  login, and external hosts are written but unexercised. Delivery status stops at "a mail server accepted it", with no bounce or open tracking, so a later
+  bounce does not add an address to the suppression list.
+- **The sender identity is not verified.** An admin can enter any sender address, and nothing here sets up SPF, DKIM, or DMARC.
+- Planted text can reach a draft, and the person reviewing it is the last line of defence. See `research/evaluations/AGENTS.md`. The link check covers only what its pattern
+  recognizes, so "evil dot com" would not be flagged, and it also flags harmless text such as `Node.js`. Rewording a flagged link clears the flag.
+- **Sender details are not part of an approval.** An admin who changes the sender name, address, or footer afterward changes approved email without a new approval. Only
+  owners and admins can do this, and they can approve anyway, and the change is audited.
+- The lead row is read but not locked during the final check, so a change at the same instant can miss it.
+- A relay that reports a bad address only after accepting the message is not noticed.
+- Quiet hours use the organization's time zone, not the recipient's, whose time zone is unknown.
+- Suppression matches exact addresses and exact domains. A subdomain or a provider's address variants (such as `+tags`) are not covered.
+- Removing a lead's email and adding it back to another lead reuses the same address, and suppression still applies, but the recontact rule looks at addresses, so it cannot
+  tell two people apart who share one.
+- Campaigns, sequences, and follow-ups do not exist. Each email is written, approved, and sent one at a time. Plain text only.
+- A person can approve their own request if they hold `outreach:approve` (ADR-036).
+- There is no retention limit on drafts or deliveries, and approved outreach is not exportable.
+- The opt-out page's rate limit shares one bucket per IP, and behind a proxy that needs the forwarded-address setup in DEPLOYMENT.md.
 
 ## Agents and MCP
 - **Agent text can still carry a planted message.** Agents cannot act on it, but a reader might. See `research/evaluations/AGENTS.md`. Items an
   agent lists as unknown need no support from sources, so "call the CFO today" could pass as one, and CRM fields such as a title reach the model
   unscreened and can be cited.
-- Outreach, follow-up, and integration tools, and the outreach and follow-up agents, do not exist yet because what they act on does not (Phases 8 to 10).
+- Follow-up and integration tools, and the follow-up agent, do not exist yet because what they act on does not (Phase 10).
 - `tool_calls` and agent `sources` have no retention limit. Rate-limited calls leave no row, so a flood is visible only in logs.
 - Rate limits fail open if Redis is down, and the MCP server has no limit per IP for traffic without a valid token. Token lookups are by digest.
 - Each model call's timeout shrinks as a run nears its time limit, but the client's retries still apply, so a run can overrun by a few calls.
@@ -63,7 +83,6 @@ Current as of Phase 7 (2026-10-31).
 - Local cost covers tokens only, not hardware or power.
 
 ## Functional
-- No outreach in the product yet (Phase 8).
 - CSV imports are capped at 5 MB / 10,000 rows in one transaction, with no progress within a run. Duplicate detection is by email
   only; leads without an email are never treated as duplicates.
 - No tasks/follow-ups table yet (planned with the Follow-up agent), no custom-field definitions (values are free-form

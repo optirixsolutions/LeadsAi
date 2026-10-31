@@ -10,6 +10,7 @@ import { BriefCard } from "@/features/intelligence/brief-card";
 import { CompanyFacts } from "@/features/intelligence/company-facts";
 import { EvidenceCard } from "@/features/intelligence/evidence-card";
 import { LeadDetails, NoteForm, OpportunityForm, DeleteLeadButton } from "@/features/leads/lead-profile";
+import { OutreachCard } from "@/features/outreach/outreach-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import type { WorkflowRun } from "@/lib/workflows";
 import type { Assessment, AssessmentDetail, Brief, CompanyDetail, Evidence, Icp } from "@/lib/intelligence";
@@ -23,6 +24,7 @@ import {
   type LeadDetail,
 } from "@/lib/crm";
 import { getMembers, getStages, orgGet } from "@/lib/org-api";
+import type { Draft } from "@/lib/outreach";
 import { hasPermission } from "@/lib/roles";
 import { requireOrg } from "@/lib/session";
 
@@ -33,7 +35,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const { org } = await requireOrg();
   const orgId = org.organization_id;
   const leadPath = `/leads/${encodeURIComponent(id)}`;
-  const [lead, members, stages, icp, evidence, assessments, brief, runs] = await Promise.all([
+  const [lead, members, stages, icp, evidence, assessments, brief, runs, drafts] = await Promise.all([
     orgGet<LeadDetail>(orgId, leadPath),
     getMembers(orgId),
     getStages(orgId),
@@ -42,6 +44,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     orgGet<Assessment[]>(orgId, `${leadPath}/assessments`),
     orgGet<Brief>(orgId, `${leadPath}/briefs/latest`),
     orgGet<WorkflowRun[]>(orgId, `/workflows?lead_id=${encodeURIComponent(id)}`),
+    orgGet<Draft[]>(orgId, `/outreach/drafts?lead_id=${encodeURIComponent(id)}`),
   ]);
   if (!lead.ok) {
     if (lead.status === 404 || lead.status === 422) notFound();
@@ -101,6 +104,16 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             companyDomain={company?.ok ? company.data.domain : null}
             canRun={can("workflows:run")}
           />
+          {drafts.ok && (
+            <OutreachCard
+              orgId={orgId}
+              leadId={l.id}
+              email={l.email}
+              drafts={drafts.data}
+              canWrite={can("outreach:write")}
+              canRunAgent={can("workflows:run")}
+            />
+          )}
           <AssessmentCard
             orgId={orgId}
             leadId={l.id}

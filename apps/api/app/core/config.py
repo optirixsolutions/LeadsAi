@@ -5,6 +5,7 @@ All secrets come from the environment; nothing sensitive is hardcoded.
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -57,6 +58,18 @@ class Settings(BaseSettings):
     # "log" prints emails to the log in development only; "disabled" drops them.
     mailer: Literal["log", "memory", "disabled"] = "log"
 
+    # How approved outreach leaves. "disabled" refuses every send. A real SMTP server is used
+    # even in tests, and anything beyond this machine also needs dispatch_allow_external.
+    dispatch_adapter: Literal["disabled", "smtp"] = "disabled"
+    dispatch_smtp_host: str = "127.0.0.1"
+    dispatch_smtp_port: int = Field(default=1025, ge=1, le=65535)
+    dispatch_smtp_username: str | None = None
+    dispatch_smtp_password: SecretStr | None = None
+    dispatch_smtp_starttls: bool = False
+    dispatch_smtp_timeout_s: float = Field(default=15.0, gt=0, le=120)
+    # Real people can receive what goes through this. Turning it on is a deliberate act.
+    dispatch_allow_external: bool = False
+
     # A worker renews its lease at a third of this. If it dies, the run is recovered after it.
     mcp_host: str = "127.0.0.1"
     mcp_port: int = Field(default=8100, ge=1, le=65535)
@@ -93,6 +106,18 @@ class Settings(BaseSettings):
             if self.mailer != "disabled":
                 raise RuntimeError(
                     "Only SALESIQ_MAILER=disabled is allowed until a real mailer exists"
+                )
+            url = urlsplit(self.web_base_url)
+            if self.dispatch_adapter == "smtp" and (
+                url.scheme != "https" or url.hostname in ("localhost", "127.0.0.1", "::1", None)
+            ):
+                raise RuntimeError(
+                    "Opt-out links are built from SALESIQ_WEB_BASE_URL, so sending needs it to be "
+                    "a public HTTPS address"
+                )
+            if self.dispatch_allow_external and not self.dispatch_smtp_starttls:
+                raise RuntimeError(
+                    "Sending beyond this machine needs SALESIQ_DISPATCH_SMTP_STARTTLS"
                 )
 
 

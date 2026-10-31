@@ -8,6 +8,19 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "aiosmtpd"
+version = "1.4.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "atpublic" },
+    { name = "attrs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/ca/b2b7cc880403ef24be77383edaadfcf0098f5d7b9ddbf3e2c17ef0a6af0d/aiosmtpd-1.4.6.tar.gz", hash = "sha256:5a811826e1a5a06c25ebc3e6c4a704613eb9a1bcf6b78428fbe865f4f6c9a4b8", size = 152775, upload-time = "2024-05-18T11:37:50.029Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/39/d401756df60a8344848477d54fdf4ce0f50531f6149f3b8eaae9c06ae3dc/aiosmtpd-1.4.6-py3-none-any.whl", hash = "sha256:72c99179ba5aa9ae0abbda6994668239b64a5ce054471955fe75f581d2592475", size = 154263, upload-time = "2024-05-18T11:37:47.877Z" },
+]
+
+[[package]]
 name = "alembic"
 version = "1.20.1"
 source = { registry = "https://pypi.org/simple" }
@@ -187,6 +200,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/25/1e/faf0f247f6f881b98fc4d6d07e14085cb89d13665084e6d6ac1dc2c03d0b/asttokens-3.0.2.tar.gz", hash = "sha256:3ecdbd8f2cc195f53ccada3a613538bb5f9ef6f6869129f13e03c30a677b8fe2", size = 63136, upload-time = "2026-07-12T03:31:49.084Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d4/2b/04b8a15f3a1c77bc79ddf5c73875327f34b4fa75982df2b76e45e402d364/asttokens-3.0.2-py3-none-any.whl", hash = "sha256:9da13157f5b28becde0bd374fc677dcd3c290614264eff096f167c469cd9f933", size = 28702, upload-time = "2026-07-12T03:31:47.542Z" },
+]
+
+[[package]]
+name = "atpublic"
+version = "9.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/3f/23b2643edfae61210baee60eec95873a4ad4fc6a7c096a725f240a0bf4db/atpublic-9.0.0.tar.gz", hash = "sha256:61ea62d8445d2aaa83b6dffaa3d90f99fcec10e16683ee9b13792cdcdafa0966", size = 27443, upload-time = "2026-10-13T01:49:05.987Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/d1/875c831006b60a9b93d8d5aba734fde33402d9136785d824fa0ba8765731/atpublic-9.0.0-py3-none-any.whl", hash = "sha256:449c3c4f0c74df79749d6fe225ba55e2a2fce34b303f0329211e4d6989ed6f6e", size = 11111, upload-time = "2026-10-13T01:49:05.07Z" },
 ]
 
 [[package]]
@@ -2545,11 +2567,13 @@ dependencies = [
     { name = "pyyaml" },
     { name = "redis" },
     { name = "sqlalchemy" },
+    { name = "tzdata" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiosmtpd" },
     { name = "httpx" },
     { name = "ipykernel" },
     { name = "jupyter-client" },
@@ -2579,11 +2603,13 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "sqlalchemy", specifier = ">=2" },
+    { name = "tzdata", specifier = ">=2026.6" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aiosmtpd", specifier = ">=1.4.6" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "ipykernel", specifier = ">=7.4.0" },
     { name = "jupyter-client", specifier = ">=8.10.0" },

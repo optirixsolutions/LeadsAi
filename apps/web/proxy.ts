@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/verify-email",
   "/invite",
+  "/unsubscribe",
 ];
 
 export function proxy(request: NextRequest) {

@@ -9,6 +9,9 @@ const apiEnv = {
   SALESIQ_MAILER: "disabled",
   SALESIQ_LOG_LEVEL: "WARNING",
   SALESIQ_WEB_BASE_URL: "http://127.0.0.1:3100",
+  // A real SMTP server on this machine, started in global setup. It passes nothing onward.
+  SALESIQ_DISPATCH_ADAPTER: "smtp",
+  SALESIQ_DISPATCH_SMTP_PORT: "2525",
   // Every e2e browser shares one IP; rate limiting itself is covered by API tests.
   SALESIQ_LOGIN_RATE_LIMIT_PER_MINUTE: "1000",
   ...(process.env.SALESIQ_DATABASE_URL ? { SALESIQ_DATABASE_URL: process.env.SALESIQ_DATABASE_URL } : {}),

@@ -44,6 +44,11 @@ export function AgentRunView({ orgId, initial }: { orgId: string; initial: Agent
             View lead
           </Link>
         )}
+        {run.outreach_draft_id && (
+          <Link href={`/outreach/${run.outreach_draft_id}`} className="text-sm text-accent hover:underline">
+            Open draft
+          </Link>
+        )}
         <Link href={`/workflows/${run.workflow_run_id}`} className="text-sm text-accent hover:underline">
           View workflow
         </Link>

@@ -79,4 +79,29 @@ References to other records (company, lead, stage, owner) that are not in the ca
 Scores rank a lead against the organization's ICP. They are deterministic, are not conversion probabilities, and are never
 changed by model output. Research older than the ICP's `signal_ttl_days` does not count toward them.
 
-Planned groups: `tasks`, `outreach`, `approvals`, `integrations`, `usage`.
+## Outreach and approvals (Phase 8)
+All under `/organizations/{id}`. No route sends anything without an approval and the checks below.
+
+| Route | Permission | Purpose |
+|---|---|---|
+| `GET/POST /outreach/drafts` | read / `outreach:write` | List (`status`, `lead_id`), or write a draft. 409 `suppressed`, 400 `lead_has_no_email`, 400 `hidden_characters` |
+| `GET/PATCH /outreach/drafts/{id}` | read / `outreach:write` | Detail includes the latest approval, deliveries, and current `blockers`. PATCH needs `expected_version`, and ends any approval |
+| `POST /outreach/drafts/{id}/discard` | `outreach:write` | Ends the draft |
+| `POST /outreach/drafts/{id}/request-approval` | `outreach:write` | 409 `needs_edit`, `address_changed`, `suppressed` |
+| `POST /outreach/drafts/{id}/send` | `outreach:send` | 409 `send_blocked`, with every reason in `details` |
+| `POST /outreach/deliveries/{id}/resolve` | `outreach:approve` | A person settles an `unknown` outcome: `{"sent": bool}` |
+| `GET /approvals` | read | Filter by `status` |
+| `POST /approvals/{id}/approve` | `outreach:approve` | Body has the `content_hash` the approver saw. 409 `content_changed`, `not_pending` |
+| `POST /approvals/{id}/reject` | `outreach:approve` | Body has a `note` |
+| `GET/POST /outreach/suppressions` | read / `outreach:write` | `kind` is `email` or `domain` |
+| `DELETE /outreach/suppressions/{id}` | `outreach:approve` | Keeps the record. 409 `opted_out` |
+| `GET/PUT /outreach/settings` | read / `outreach:configure` | Sender identity, quiet hours, limits, and the switch that allows sending |
+| `POST /api/v1/unsubscribe/{token}` | None (signed token) | Public, and needs no JSON or session. Answers `{"unsubscribed": bool}` |
+
+Send blockers: `dispatch_disabled`, `external_not_allowed`, `sends_off`, `sender_missing`, `not_approved`, `approval_missing`, `approval_mismatch`,
+`approver_lost_authority`, `lead_gone`, `address_changed`, `lead_disqualified`, `suppressed`, `recontact_too_soon`, `daily_limit`, `quiet_hours`.
+
+A delivery's `accepted` means a mail server took the message, not that anyone received it. `POST /agents/outreach/runs` starts the outreach agent, and
+its run's `outreach_draft_id` names the draft. MCP adds `create_outreach_draft`, `get_outreach_draft`, and `request_outreach_approval`. No tool approves or sends.
+
+Planned groups: `tasks`, `integrations`, `usage`.

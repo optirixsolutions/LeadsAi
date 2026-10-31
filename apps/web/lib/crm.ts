@@ -54,6 +54,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   deleted: "Lead deleted",
   research_added: "Research evidence added",
   assessed: "Lead assessed",
+  outreach_sent: "Email handed to mail server",
+  opted_out: "Opted out of email",
 };
 
 export function describeActivity(a: Activity, members: Member[]): { title: string; detail: string } {

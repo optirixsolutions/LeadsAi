@@ -66,6 +66,8 @@ class ActivityType(enum.StrEnum):
     deleted = "deleted"
     research_added = "research_added"
     assessed = "assessed"
+    outreach_sent = "outreach_sent"
+    opted_out = "opted_out"
 
 
 class ImportStatus(enum.StrEnum):
