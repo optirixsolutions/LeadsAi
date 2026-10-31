@@ -1,9 +1,8 @@
 """The tool catalog. Each tool wraps a real service, which does its own tenant scoping.
 
-Not here yet, because what they would act on does not exist: follow-up tasks and integration
-health (Phase 10). There is deliberately no SQL, shell, file, or general HTTP tool, and nothing
-that approves or sends outreach. Those stay with a signed-in person. Quarantined and rejected
-evidence is never returned.
+Not here yet, because what it would act on does not exist: follow-up tasks. There is
+deliberately no SQL, shell, file, or general HTTP tool, and nothing that approves or sends
+outreach. Those stay with a signed-in person. Quarantined and rejected evidence is never returned.
 """
 
 import uuid
@@ -32,6 +31,7 @@ from app.models import (
 from app.schemas.crm import LeadCreate, LeadUpdate
 from app.schemas.intelligence import EvidenceCreate
 from app.services import (
+    integration_service,
     intelligence_service,
     lead_service,
     outreach_service,
@@ -530,6 +530,31 @@ def request_outreach_approval(db: Session, ctx: OrgContext, args: DraftRef) -> O
     return _draft_out(outreach_service.get_draft(db, ctx, args.draft_id))
 
 
+class ConnectionHealthItem(BaseModel):
+    name: str
+    kind: str
+    health: str
+    last_error_category: str | None
+
+
+class IntegrationHealthOut(BaseModel):
+    connections: list[ConnectionHealthItem]
+
+
+def get_integration_health(db: Session, ctx: OrgContext, _: NoInput) -> IntegrationHealthOut:
+    return IntegrationHealthOut(
+        connections=[
+            ConnectionHealthItem(
+                name=c.name,
+                kind=c.kind.value,
+                health=c.health.value,
+                last_error_category=c.last_error_category,
+            )
+            for c in integration_service.list_connections(db, ctx)
+        ]
+    )
+
+
 def _spec(
     name: str, handler: Any, input_model: type[BaseModel], output_model: type[BaseModel], **kw: Any
 ) -> ToolSpec:
@@ -713,6 +738,15 @@ CATALOG: dict[str, ToolSpec] = {
             limit_key="workflow",
             limit_per_minute=10,
             **_LEAD,
+        ),
+        _spec(
+            "get_integration_health",
+            get_integration_health,
+            NoInput,
+            IntegrationHealthOut,
+            description="Read how each connected provider is doing. Never returns credentials.",
+            permission=Permission.integrations_read,
+            side_effect="read",
         ),
         _spec(
             "create_outreach_draft",

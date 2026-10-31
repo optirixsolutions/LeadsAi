@@ -28,7 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Workflows", href: "/workflows", icon: Workflow },
   { label: "Agents", href: "/agents", icon: Bot },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Integrations", href: "/integrations", icon: Plug, phase: 10 },
+  { label: "Integrations", href: "/integrations", icon: Plug },
   { label: "System status", href: "/status", icon: Activity },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

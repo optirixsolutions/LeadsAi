@@ -200,6 +200,8 @@ class Delivery(IdMixin, Base):
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     message_id: Mapped[str | None] = mapped_column(String(255))
     error_category: Mapped[str | None] = mapped_column(String(40))
+    # What a provider later said happened, from a signed webhook. Empty until one does.
+    provider_status: Mapped[str | None] = mapped_column(String(20))
     sent_by_user_id: Mapped[uuid.UUID | None] = _user_fk()
     resolved_by_user_id: Mapped[uuid.UUID | None] = _user_fk()
     created_at: Mapped[datetime] = mapped_column(

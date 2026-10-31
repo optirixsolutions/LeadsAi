@@ -51,11 +51,20 @@ export const DELIVERY_STATUS_LABELS: Record<string, string> = {
   unknown: "Outcome unknown",
 };
 
+/** What a provider reported later, through a signed webhook. */
+export const PROVIDER_STATUS_LABELS: Record<string, string> = {
+  deferred: "The provider is still trying",
+  delivered: "The provider reports it delivered",
+  bounced: "The provider reports it bounced",
+  complained: "The recipient marked it as spam",
+};
+
 export const DELIVERY_ERRORS: Record<string, string> = {
   server_refused: "The mail server refused to take this, for a reason that is not about the address.",
   connection_failed: "Could not connect to the mail server.",
   session_failed: "The mail server would not start a session.",
   recipient_refused: "The mail server refused this address.",
+  connection_host_refused: "The connected mail server's address is not allowed.",
   message_refused: "The mail server refused this message.",
   connection_lost: "The connection dropped while the message was going out.",
   interrupted: "The server stopped partway through sending.",

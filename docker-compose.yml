@@ -40,7 +40,7 @@ services:
       SALESIQ_DATABASE_URL: postgresql+psycopg://salesiq_app:salesiq_app@postgres:5432/salesiq
       SALESIQ_REDIS_URL: redis://redis:6379/0
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${SALESIQ_API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -78,7 +78,7 @@ services:
       SALESIQ_MCP_HOST: 0.0.0.0
       SALESIQ_MCP_PUBLIC_URL: http://localhost:8100
     ports:
-      - "127.0.0.1:8100:8100"
+      - "127.0.0.1:${SALESIQ_MCP_PORT:-8100}:8100"
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,7 +120,7 @@ services:
     environment:
       SALESIQ_API_URL: http://api:8000
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${SALESIQ_WEB_PORT:-3000}:3000"
     depends_on:
       - api
     profiles: ["app"]

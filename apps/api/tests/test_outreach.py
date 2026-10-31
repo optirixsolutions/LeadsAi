@@ -902,6 +902,7 @@ def test_sending_outside_development_needs_a_public_opt_out_address() -> None:
         "secret_key": "x" * 40,
         "mailer": "disabled",
         "dispatch_adapter": "smtp",
+        "credentials_key": "a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s=",
         "_env_file": None,
     }
     with pytest.raises(RuntimeError, match="public HTTPS"):

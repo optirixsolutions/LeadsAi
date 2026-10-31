@@ -78,12 +78,23 @@ All under forced RLS. The API role has no DELETE on any of them.
 | `outreach_settings` | `organization_id` (primary key), `sends_enabled`, sender identity, `timezone`, quiet hours, `daily_limit`, `recontact_days` | Its row lock serializes an organization's sends |
 | `agent_runs` (changed) | `outreach_draft_id` | What an outreach agent wrote |
 
+## Phase 10
+All under forced RLS. The API role has no DELETE on any of them.
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `integration_connections` | `kind`, `name`, `config`, `encrypted_password`, `encrypted_webhook_secret`, `health`, `last_error_category`, `last_checked_at`, `removed_at` | One active per organization and kind. Removal clears the secrets |
+| `webhook_events` | `connection_id`, `event_id`, `event_type`, `message_id`, `delivery_id` | Unique on connection and event ID, so a replay does nothing. Append-only, with no payload kept |
+| `usage_records` | `kind`, `quantity`, `model_key`, `estimated_cost_usd`, `workflow_run_id` | Append-only. Costs are estimates |
+| `subscriptions` | `organization_id` (primary key), `plan_key`, `source` | With no row, the default plan applies |
+| `deliveries` (changed) | `provider_status` | What a provider later reported |
+
 ## Planned
 | Phase | Tables |
 |---|---|
 | 3 (deferred) | `tasks`, `custom_field_definitions`, saved views |
 | 9 or later | `campaigns` |
-| 4/10 | `model_configurations`, `model_evaluations`, `usage_records`, `integration_connections`, `webhook_events`, `plans`, `entitlements`, `subscriptions` |
+| Later | `model_configurations`, `model_evaluations` |
 
 Deletion policy: tenant data cascades from `organizations`; audit logs are retained with nulled references. Hard deletion of
 leads/contacts will be a soft-delete + scheduled purge job to support retention limits (Phase 10).

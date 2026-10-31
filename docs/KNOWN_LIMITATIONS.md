@@ -1,6 +1,20 @@
 # Known Limitations
 
-Current as of Phase 9 (2026-10-31).
+Current as of Phase 10 (2026-10-31).
+
+## Integrations, quotas, and billing
+- **No real provider has been connected.** SMTP and webhooks were tested against a real server on this machine and real signed requests. STARTTLS, provider login, name resolution with
+  pinning, and external hosts are written but have never reached a real server. A provider's own webhook format is not mapped, so a real one needs a small adapter.
+- **Only email exists.** Calendars, CRMs, enrichment, OAuth, outbound webhooks, and payment are not built, because each needs a chosen provider and its credentials.
+- There is no payment provider. Plans change only through the development adapter, so in production every organization stays on the default plan, unless someone edits the table.
+- The encryption key cannot be rotated yet. Losing it means entering every stored password again.
+- Health is checked on demand and after each send, not on a schedule, so a connection can break unnoticed between sends.
+- One email connection per organization. Removing it sends the organization back to the server's own mail settings, if sending is on.
+- Model tokens are counted after a run, so one run can overshoot the month's budget by its own limit. Tokens from a run that was cancelled or lost its lease are not counted. A resumed run is not counted as a new one.
+- Only STARTTLS is spoken, so a provider that offers only implicit TLS on port 465 cannot connect.
+- A large import is refused if its total rows would pass the lead limit, even if some are duplicates. A plan downgrade does not remove anything; it only blocks what would add more.
+- Quotas are per calendar month in UTC, with no proration. Costs are estimates from configured rates, and local models have none.
+- Rejected webhook requests share one limit per IP, which behind a proxy needs the forwarded-address setup in DEPLOYMENT.md.
 
 ## Analytics
 - Figures are computed on each request, with no caching or pre-aggregation, and have not been measured on a large organization. Indexes were not added for them.
@@ -35,14 +49,13 @@ Current as of Phase 9 (2026-10-31).
 - **Agent text can still carry a planted message.** Agents cannot act on it, but a reader might. See `research/evaluations/AGENTS.md`. Items an
   agent lists as unknown need no support from sources, so "call the CFO today" could pass as one, and CRM fields such as a title reach the model
   unscreened and can be cited.
-- Follow-up and integration tools, and the follow-up agent, do not exist yet because what they act on does not (Phase 10).
+- Follow-up tools and the follow-up agent do not exist yet, because follow-up tasks do not.
 - `tool_calls` and agent `sources` have no retention limit. Rate-limited calls leave no row, so a flood is visible only in logs.
 - Rate limits fail open if Redis is down, and the MCP server has no limit per IP for traffic without a valid token. Token lookups are by digest.
 - Each model call's timeout shrinks as a run nears its time limit, but the client's retries still apply, so a run can overrun by a few calls.
 - MCP metadata names an authorization server that does not exist, because tokens come from Settings, not an OAuth flow. Clients that insist on
   OAuth discovery will not connect.
 - Whether Ollama truncates a long conversation at its context limit was not tested. Tool results are capped to keep this unlikely.
-- There is no per-organization token budget across runs. Local models cost nothing per token, but this is needed before any paid route.
 - The MCP and migrate containers have not been built or run; the server was tested as a local process over real HTTP.
 
 ## Workflows

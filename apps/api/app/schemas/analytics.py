@@ -76,3 +76,4 @@ class Attention(BaseModel):
     outcomes_unknown: int
     workflows_waiting: int
     workflows_failed_7d: int
+    integrations_failing: int

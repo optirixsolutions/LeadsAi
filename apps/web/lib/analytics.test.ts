@@ -8,6 +8,7 @@ const NOTHING = {
   outcomes_unknown: 0,
   workflows_waiting: 0,
   workflows_failed_7d: 0,
+  integrations_failing: 0,
 };
 
 describe("attentionItems", () => {

@@ -3,12 +3,17 @@
 All secrets come from the environment; nothing sensitive is hardcoded.
 """
 
+import base64
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
+import yaml
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PLANS_FILE = Path(__file__).resolve().parent / "plans.yaml"
 
 
 class Settings(BaseSettings):
@@ -70,6 +75,11 @@ class Settings(BaseSettings):
     # Real people can receive what goes through this. Turning it on is a deliberate act.
     dispatch_allow_external: bool = False
 
+    # Base64 of 32 random bytes. Encrypts stored provider credentials. Required outside development.
+    credentials_key: SecretStr | None = None
+    # The plan an organization is on until it has a subscription. See core/plans.yaml.
+    default_plan: str = "team"
+
     # A worker renews its lease at a third of this. If it dies, the run is recovered after it.
     mcp_host: str = "127.0.0.1"
     mcp_port: int = Field(default=8100, ge=1, le=65535)
@@ -96,8 +106,22 @@ class Settings(BaseSettings):
     def effective_migration_url(self) -> str:
         return self.migration_database_url or self.database_url
 
+    def _validate_plans_and_keys(self) -> None:
+        """Better to refuse to start than to answer every later request with an error."""
+        plans = yaml.safe_load(_PLANS_FILE.read_text(encoding="utf-8"))["plans"]
+        if self.default_plan not in plans:
+            raise RuntimeError(f"SALESIQ_DEFAULT_PLAN must be one of {sorted(plans)}")
+        if self.credentials_key is not None:
+            try:
+                key = base64.b64decode(self.credentials_key.get_secret_value(), validate=True)
+            except ValueError as exc:
+                raise RuntimeError("SALESIQ_CREDENTIALS_KEY must be base64") from exc
+            if len(key) != 32:
+                raise RuntimeError("SALESIQ_CREDENTIALS_KEY must be 32 bytes")
+
     def validate_for_runtime(self) -> None:
         """Refuse to boot non-development environments with insecure defaults."""
+        self._validate_plans_and_keys()
         if self.environment in ("staging", "production"):
             if self.secret_key.get_secret_value() == "dev-insecure-change-me":
                 raise RuntimeError("SALESIQ_SECRET_KEY must be set outside development")
@@ -107,6 +131,8 @@ class Settings(BaseSettings):
                 raise RuntimeError(
                     "Only SALESIQ_MAILER=disabled is allowed until a real mailer exists"
                 )
+            if self.credentials_key is None:
+                raise RuntimeError("SALESIQ_CREDENTIALS_KEY must be set outside development")
             url = urlsplit(self.web_base_url)
             if self.dispatch_adapter == "smtp" and (
                 url.scheme != "https" or url.hostname in ("localhost", "127.0.0.1", "::1", None)

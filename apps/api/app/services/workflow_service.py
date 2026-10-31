@@ -14,13 +14,14 @@ from app.models import (
     BriefStatus,
     Lead,
     ResearchBrief,
+    UsageKind,
     WorkflowKind,
     WorkflowRun,
     WorkflowStatus,
     WorkflowStep,
 )
 from app.schemas.workflow import WorkflowStart
-from app.services import audit
+from app.services import audit, quota_service
 from app.services.lead_service import get_lead
 
 MAX_ACTIVE_PER_ORG = 20
@@ -44,6 +45,8 @@ def enqueue(
 ) -> WorkflowRun:
     if lead_id is not None:
         get_lead(db, ctx, lead_id)
+    quota_service.check(db, ctx.org_id, "monthly_workflow_runs")
+    quota_service.check_budget(db, ctx.org_id)
     active = db.scalar(
         select(func.count())
         .select_from(WorkflowRun)
@@ -66,6 +69,7 @@ def enqueue(
     except IntegrityError as exc:
         what = "this lead" if lead_id else "this agent"
         raise ConflictError(f"A workflow is already active for {what}") from exc
+    quota_service.record(db, ctx.org_id, UsageKind.workflow_run, 1, workflow_run_id=run.id)
     audit.record(
         db,
         "workflow.started",
@@ -185,6 +189,7 @@ def resume(db: Session, ctx: OrgContext, run_id: uuid.UUID) -> WorkflowRun:
         raise ConflictError("Only a failed workflow can be resumed")
     if run.error_category == "access_lost":
         raise ConflictError("The person who started this run no longer has access")
+    quota_service.check_budget(db, ctx.org_id)
     run.status = WorkflowStatus.queued
     run.attempts = 0
     run.error_category = None

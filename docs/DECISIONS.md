@@ -181,3 +181,23 @@ their own request, because small teams would otherwise be stuck. The audit entry
 A link names a delivery and not an address, so logs reveal nothing about the person. It never expires, because an old email still has to work. It
 sets the tenant from a verified signature, which is the one route where tenancy comes from anything other than a session. A GET does nothing, because
 mail scanners follow links. An opt-out cannot be removed by a person.
+
+### ADR-038 · 2026-10-31 · Credentials are encrypted with a key kept outside the database
+AES-256-GCM, with each value bound to its organization, record, and purpose, so ciphertext copied to another row does not decrypt. The key is separate from `secret_key`, and
+startup refuses to run outside development without it. A password can be replaced but never read back through the API. Rotating the key itself is not built, so a lost or changed key
+means entering passwords again.
+
+### ADR-039 · 2026-10-31 · Email connects through SMTP, which needs no choice of vendor
+Most email providers offer SMTP, so one adapter covers them, and building it did not need the owner to pick one. Connecting a provider still sends nothing to anyone outside this machine
+without `SALESIQ_DISPATCH_ALLOW_EXTERNAL`. A tenant chooses this address, so it is treated as hostile: this machine's services are off limits outside development, other addresses must be
+public and on a mail port, and a name is resolved once and that address used, so it cannot later point somewhere internal.
+
+### ADR-040 · 2026-10-31 · Provider events use one signed format, and the tenant is trusted only after the signature
+The webhook URL names an organization and connection, which proves nothing. Only a valid signature from that connection's own secret does, covering the time and the body. Providers each
+have their own format, and mapping one needs choosing one, so today's format is our own. A provider's report is stored beside a delivery's outcome rather than replacing it, because
+"accepted" and "delivered" are claims from different parties.
+
+### ADR-041 · 2026-10-31 · Plans are configuration, and there is no fake payment
+Limits live in `core/plans.yaml` and are checked on the server, under a lock per organization and metric. No payment provider exists, so plans change only through an owner-only adapter that
+refuses to run outside development. Model tokens are charged after the fact, since a run's use is unknown beforehand: a new run is refused once the month's budget is gone, and one run can
+overshoot by its own hard limit.

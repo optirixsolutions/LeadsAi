@@ -44,6 +44,17 @@ Off by default. To let approved email leave, set these on the API, then have an 
 To try sending without reaching anyone, run a local mail catcher on port 1025, such as `uv run python -m tests.support.smtp_sink 1025 mail.jsonl` from `apps/api`,
 which keeps what it receives in that file and passes nothing on.
 
+## Provider credentials and plans
+`SALESIQ_CREDENTIALS_KEY` is required outside development: `python -c "import base64,os;print(base64.b64encode(os.urandom(32)).decode())"`. Keep it in a secret manager and back it up
+separately from the database. Without it, stored provider passwords cannot be read, and rotating it is not built yet, so changing it means entering them again.
+
+`SALESIQ_DEFAULT_PLAN` (default `team`) names a plan in `apps/api/app/core/plans.yaml`. Editing that file changes limits on the next restart. No payment provider exists: to connect one,
+add an adapter that writes `subscriptions` from its signed webhooks, and keep `POST /billing/development-plan` refusing outside development.
+
+To connect an email provider: an owner or admin adds its SMTP details under Integrations, and gives the provider the webhook address and secret shown once. Providers have their own event
+formats, so one that cannot send ours needs a small adapter in front of `webhook_service`. Mail reaches real people only with `SALESIQ_DISPATCH_ADAPTER=smtp` and
+`SALESIQ_DISPATCH_ALLOW_EXTERNAL=true`.
+
 ## Database roles (provision before the first migration)
 | Role | Attributes | Purpose |
 |---|---|---|
@@ -72,6 +83,7 @@ roles if they exist and log a notice otherwise.
 | `SALESIQ_REDIS_URL` | yes | Use `rediss://` in production |
 | `SALESIQ_CORS_ORIGINS` | yes | JSON list of web origins |
 | `SALESIQ_WEB_BASE_URL` | yes | Public web URL used in email links |
+| `SALESIQ_CREDENTIALS_KEY` | yes (base64, 32 bytes) | From a secret manager. Encrypts provider credentials |
 | `SALESIQ_MAILER` | yes | Must be `disabled` outside development until a real provider adapter exists |
 | `SALESIQ_REGISTRATION_ENABLED` | no | Default `true` |
 | `SALESIQ_API_URL` (web, **build time**) | yes | Internal API URL for the same-origin `/api/v1` rewrite; rebuild the web image to change it |

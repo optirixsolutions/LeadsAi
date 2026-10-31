@@ -104,7 +104,10 @@ def test_production_refuses_default_secret() -> None:
             environment="production", secret_key=SecretStr("x" * 40), mailer="log"
         ).validate_for_runtime()
     Settings(
-        environment="production", secret_key=SecretStr("x" * 40), mailer="disabled"
+        environment="production",
+        secret_key=SecretStr("x" * 40),
+        mailer="disabled",
+        credentials_key=SecretStr("a2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2s="),
     ).validate_for_runtime()
 
 

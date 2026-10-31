@@ -33,6 +33,7 @@ os.environ.setdefault(
 os.environ.setdefault("SALESIQ_REDIS_URL", "redis://127.0.0.1:56379/1")
 os.environ.setdefault("SALESIQ_ENVIRONMENT", "test")
 os.environ.setdefault("SALESIQ_MAILER", "memory")
+os.environ.setdefault("SALESIQ_DEFAULT_PLAN", "unlimited")
 
 APP_DB_URL = os.environ["SALESIQ_DATABASE_URL"]
 ADMIN_DB_URL = os.environ["SALESIQ_MIGRATION_DATABASE_URL"]

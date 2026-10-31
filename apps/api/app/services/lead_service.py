@@ -35,7 +35,7 @@ from app.schemas.crm import (
     LeadOut,
     LeadUpdate,
 )
-from app.services import audit
+from app.services import audit, quota_service
 from app.services.normalize import normalize_domain
 
 ACTIVITY_LIMIT = 50
@@ -446,6 +446,7 @@ def _resolve_company(
 def create_lead(db: Session, ctx: OrgContext, body: LeadCreate) -> Lead:
     if existing := find_duplicate(db, ctx, body.email):
         raise _duplicate_error(existing)
+    quota_service.check(db, ctx.org_id, "leads")
     ensure_member(db, ctx, body.owner_user_id)
     lead = Lead(
         organization_id=ctx.org_id,

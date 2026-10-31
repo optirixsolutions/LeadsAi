@@ -69,6 +69,12 @@ export function attentionItems(a: Attention): AttentionItem[] {
       href: "/outreach?status=approved",
     },
     {
+      key: "integrations",
+      count: a.integrations_failing,
+      label: one(a.integrations_failing, "connected provider failing", "connected providers failing"),
+      href: "/integrations",
+    },
+    {
       key: "waiting",
       count: a.workflows_waiting,
       label: one(a.workflows_waiting, "workflow waiting for a decision", "workflows waiting for a decision"),

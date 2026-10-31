@@ -14,9 +14,10 @@
 | SSRF | Research fetcher with per-hop allowlist, connection pinned to a checked public IP, size limit and a deadline on every socket call | Done (Phase 5) |
 | SQL injection | ORM / bound parameters only; no string-built SQL | Ongoing |
 | XSS | React escaping; no `dangerouslySetInnerHTML` on untrusted content; CSP | CSP in Phase 11 |
-| Webhook forgery / replay | HMAC signatures, timestamp window, event-ID dedupe | Phase 10 |
+| Webhook forgery / replay | HMAC signatures over time and body, a 5-minute window, event-ID dedupe, tenant trusted only after the signature | Done (Phase 10) |
 | Resource exhaustion / abuse | Rate limits (Redis), request size caps, agent step/time/budget limits | Phases 2, 6 |
-| Credential leakage | Env-only secrets; log redaction; encrypted integration tokens | Redaction done; encryption Phase 10 |
+| Credential leakage | Env-only secrets; log redaction; provider credentials encrypted with AES-256-GCM, never returned, destroyed on removal | Done (Phase 10) |
+| SSRF through a tenant's mail server | Internal addresses and this machine refused outside development; mail ports only; name resolved once and pinned; TLS required | Done (Phase 10); external paths untested against a real server |
 | Duplicate background jobs | Leases, one active run per lead, unique per-run results | Done (Phase 6) |
 
 ## Controls implemented (Phase 1)

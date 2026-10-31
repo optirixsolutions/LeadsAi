@@ -30,12 +30,12 @@ test("navigation reaches status page", async ({ page, isMobile }) => {
   await expect(page).toHaveURL(/\/status$/);
 });
 
-test("unbuilt modules are not links", async ({ page, isMobile }) => {
+test("every module in the sidebar is a real page", async ({ page, isMobile }) => {
   test.skip(isMobile, "sidebar hidden on mobile");
   await page.goto("/");
   const sidebar = page.getByRole("complementary", { name: "Sidebar" });
-  await expect(sidebar.getByRole("link", { name: /Integrations/ })).toHaveCount(0);
-  await expect(sidebar.getByText("Integrations")).toBeVisible();
+  await sidebar.getByRole("link", { name: /Integrations/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Integrations" })).toBeVisible();
 });
 
 test("sidebar collapses", async ({ page, isMobile }) => {

@@ -15,10 +15,12 @@ from app.models import (
     AgentRun,
     ApprovalRequest,
     ApprovalStatus,
+    ConnectionHealth,
     Delivery,
     DeliveryStatus,
     DraftStatus,
     EvaluationStatus,
+    IntegrationConnection,
     Lead,
     LeadAssessment,
     Opportunity,
@@ -294,6 +296,16 @@ def attention(db: Session, ctx: OrgContext) -> Attention:
             select(func.count())
             .select_from(WorkflowRun)
             .where(runs, WorkflowRun.status == WorkflowStatus.waiting_approval)
+        )
+        or 0,
+        integrations_failing=db.scalar(
+            select(func.count())
+            .select_from(IntegrationConnection)
+            .where(
+                IntegrationConnection.organization_id == ctx.org_id,
+                IntegrationConnection.removed_at.is_(None),
+                IntegrationConnection.health == ConnectionHealth.failing,
+            )
         )
         or 0,
         workflows_failed_7d=db.scalar(

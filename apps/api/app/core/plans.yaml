@@ -1,0 +1,30 @@
+# What each plan allows. These are product limits, with no prices: nothing here charges anyone.
+# A limit of null means no limit. `SALESIQ_DEFAULT_PLAN` names the plan an organization starts on.
+plans:
+  free:
+    label: Free
+    integrations: false
+    limits:
+      seats: 3
+      leads: 1000
+      monthly_workflow_runs: 200
+      monthly_model_tokens: 500000
+      monthly_emails: 200
+  team:
+    label: Team
+    integrations: true
+    limits:
+      seats: 25
+      leads: 50000
+      monthly_workflow_runs: 5000
+      monthly_model_tokens: 10000000
+      monthly_emails: 5000
+  unlimited:
+    label: Unlimited
+    integrations: true
+    limits:
+      seats: null
+      leads: null
+      monthly_workflow_runs: null
+      monthly_model_tokens: null
+      monthly_emails: null

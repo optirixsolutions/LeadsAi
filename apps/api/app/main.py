@@ -9,6 +9,7 @@ from app.api.v1 import (
     analytics,
     auth,
     health,
+    integrations,
     intelligence,
     leads,
     organizations,
@@ -57,6 +58,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     v1.include_router(agents.router)
     v1.include_router(outreach.router)
     v1.include_router(analytics.router)
+    v1.include_router(integrations.router)
+    v1.include_router(integrations.public_router)
     v1.include_router(outreach.public_router)
     app.include_router(v1)
     return app

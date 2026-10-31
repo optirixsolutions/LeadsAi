@@ -30,7 +30,7 @@ from app.models import (
     LeadStatus,
 )
 from app.schemas.crm import ImportIn, LeadField
-from app.services import audit
+from app.services import audit, quota_service
 from app.services.lead_service import find_or_create_company, record_activity
 from app.services.normalize import (
     company_domain_from_email,
@@ -233,6 +233,9 @@ def run_import(db: Session, ctx: OrgContext, body: ImportIn) -> tuple[LeadImport
     if unknown:
         raise CsvError(f"Mapped columns not found in the file: {', '.join(unknown[:5])}")
 
+    # Rows that turn out to be duplicates would not add a lead, so this can refuse a file that
+    # would just fit. Knowing that takes the whole import, and a person can trim the file.
+    quota_service.check(db, ctx.org_id, "leads", len(rows))
     if len(rows) > SYNC_ROW_LIMIT:
         waiting = db.scalar(
             select(func.count())
@@ -283,6 +286,8 @@ def process_queued(db: Session, ctx: OrgContext, record: LeadImport) -> None:
     """Worker step, in one transaction. The stored file is removed in that same transaction."""
     body = ImportIn.model_validate(record.payload)
     headers, rows = parse_csv(body.content)
+    # Checked again, because other files may have gone first. The lock lasts until this commits.
+    quota_service.check(db, ctx.org_id, "leads", len(rows))
     _apply(db, ctx, record, body, headers, rows)
 
 

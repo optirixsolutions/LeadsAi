@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Current phase:** Phase 9 complete → next is Phase 10 (integrations, quotas, entitlements).
+**Current phase:** Phase 10 complete → next is Phase 11 (hardening and release).
 **Last updated:** 2026-10-31
 
 ## Phase status
@@ -16,8 +16,8 @@
 | 7 | MCP server and bounded agents | Done (containers not run; CI not run) |
 | 8 | Outreach drafts, suppression, approvals, dispatch adapter | Done (SMTP tested on this machine only; no real provider; CI not run) |
 | 9 | Full dashboard and analytics | Done (no independent review, since it only reads; CI not run) |
-| 10 | Integrations, quotas, entitlements | Next |
-| 11 | Hardening and release | Pending |
+| 10 | Integrations, quotas, entitlements | Done (real provider not connected; CI not run) |
+| 11 | Hardening and release | Next |
 
 ## Phase 0 — audit findings
 - Repository was empty (no git, no code). Greenfield build following the spec layout.
@@ -149,15 +149,27 @@ Acceptance met: the primary journeys work end to end, from a lead through scorin
 - **Outreach:** a status filter, so links from Overview land on what they name.
 - Reviewed by its author only, not independently, because it only reads. Tests cover tenant isolation, roles, deleted leads, and that currencies are never added together.
 
+## Phase 10 — completed
+Acceptance met in the form the owner chose: integrations work with configured credentials, with no mocks. Tested against a real SMTP server on this machine and real signed requests, not a real provider.
+- **Connections:** an organization connects any SMTP provider. Passwords and webhook secrets are encrypted, never returned, and destroyed on removal (ADR-038, ADR-039).
+- **Webhooks:** signed events report delivered, bounced, complained, or deferred. A bounce suppresses the address, and a complaint counts as an opt-out for good (ADR-040).
+- **Quotas:** seats, leads, workflow runs, model tokens, and emails, enforced on the server through every way in, including imports and MCP (ADR-041).
+- **Usage:** recorded for each run, token, and email, with costs labelled as estimates. Settings → Plan and usage shows it.
+- **Health:** a check connects without sending anything, and each send updates it. Failing connections show on Overview, and `get_integration_health` reports them over MCP.
+- **Billing:** no fake payment. An owner-only adapter changes plans, and refuses to run outside development.
+- **Independent review** found no secret in any response or log, no way past the SSRF checks, and no way around the external-send switch. Fixed with tests: a stored password that could be sent to
+  a new host by editing the connection, a downgraded organization still using its connection, queued imports and queued or resumed runs passing a limit, emails of unknown outcome not counting, a
+  provider event lost if it arrived during sending, startup accepting a bad plan or key, and a 500 on an odd signature. One was documented and not fixed: tokens from a cancelled run are not counted.
+
 ## Tests run (2026-10-31, local Windows machine)
 Playwright ran with `SALESIQ_API_URL` on a free port because another local project holds :8000.
 | Check | Result |
 |---|---|
-| API `pytest` | 463 passed, 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
-| API `ruff check`, `ruff format`, `mypy --strict` | Clean (97 files) |
-| Web `vitest` | 46 passed |
+| API `pytest` | 513 passed (511 in the full run, and the 2 stale tests it found, fixed and rerun alone), 0 skipped, including real Ollama models, real MCP over HTTP, a killed worker process, and a real SMTP server on localhost |
+| API `ruff check`, `ruff format`, `mypy --strict` | Clean (104 files) |
+| Web `vitest` | 49 passed |
 | Web `eslint`, `tsc --noEmit`, `next build` | Clean / succeeded |
-| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 55 passed, 3 skipped (sidebar tests are desktop-only). Two later runs on an idle machine. An earlier run, while real models were loading the machine, had 12 failures, mostly timeouts, and one `Internal Server Error` that did not recur and was not explained |
+| Playwright (desktop + mobile, real API, worker, Postgres, local SMTP) | 59 passed, 3 skipped (sidebar tests are desktop-only) in the last run. The run before it had 1 failure, `sign out, then sign back in` on mobile, not explained. Timing failures also appear when real models or image builds load the machine |
 | `docker compose config` | Valid; the images and the containerized worker were not built or run |
 | Notebooks 01–06 (local Ollama, Phase 4) | All executed; not rerun on the new prompt version; Colab paths not run |
 | Contracts drift check | Up to date |
@@ -165,10 +177,11 @@ Playwright ran with `SALESIQ_API_URL` on a free port because another local proje
 | GitHub Actions CI | Not run — no remote repository configured |
 
 ## Known blockers
-- Sending real email needs a provider choice and explicit approval. Everything up to that point is built and tested.
+- Sending real email needs provider credentials and explicit approval. Everything up to that point is built, and tested locally.
 
-## Next concrete steps (Phase 10)
-1. Connection management for provider adapters, with encrypted credentials.
-2. A real email provider adapter, only with an explicit choice and approval from the owner.
-3. Quotas and entitlements, including a per-organization token budget before any paid model route.
-4. Integration health monitoring, and documented external configuration.
+## Next concrete steps (Phase 11)
+1. Build and run every container, and run the migration job as it would run in a release.
+2. Create a remote repository, if the owner wants one, so CI can run for the first time.
+3. Verify a clean installation from the README on an empty machine or container.
+4. Full security pass, a CSP, `__Host-` cookies, and a load test of the slow paths recorded in KNOWN_LIMITATIONS.
+5. Document backups and recovery, and run a restore drill.

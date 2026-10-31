@@ -24,11 +24,12 @@ from app.models import (
     Lead,
     TokenScope,
     ToolCall,
+    UsageKind,
     WorkflowKind,
     WorkflowRun,
     WorkflowStatus,
 )
-from app.services import outreach_service, workflow_service
+from app.services import outreach_service, quota_service, workflow_service
 from app.services.brief_service import get_registry
 from app.services.lead_service import get_lead
 
@@ -154,6 +155,8 @@ def run_step(
         raise AppError("This run has no agent", code="request_invalid")
     if agent.status in (AgentStatus.completed, AgentStatus.rejected):
         return {"agent_id": str(agent.id), "agent_status": agent.status.value}
+    # The budget may have gone while this run waited in the queue.
+    quota_service.check_budget(db, ctx.org_id)
     definition = AGENTS[agent.role]
     agent_id, lead_id, model_key = agent.id, agent.lead_id, agent.model_key
     agent.status = AgentStatus.running
@@ -204,6 +207,18 @@ def run_step(
             update(AgentRun)
             .where(AgentRun.id == agent_id)
             .values(status=status, completed_at=_now(), **values)
+        )
+        quota_service.record(
+            db,
+            ctx.org_id,
+            UsageKind.model_tokens,
+            result.input_tokens + result.output_tokens,
+            model_key=result.served_by or model_key,
+            estimated_cost_usd=estimate_cost(
+                registry.model(result.served_by or model_key),
+                Usage(result.input_tokens, result.output_tokens),
+            ),
+            workflow_run_id=run_id,
         )
 
     result = asyncio.run(

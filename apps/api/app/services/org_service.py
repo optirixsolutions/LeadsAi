@@ -21,7 +21,7 @@ from app.core.permissions import ROLE_PERMISSIONS, can_manage_role
 from app.core.security import new_token, token_digest
 from app.integrations.mailer import Email, Mailer
 from app.models import AuditLog, Invitation, Membership, Organization, Role, User
-from app.services import audit
+from app.services import audit, quota_service
 from app.services.auth_service import InvalidTokenError, revoke_mcp_tokens
 from app.services.pipeline_service import seed_default_stages
 
@@ -220,6 +220,8 @@ def create_invitation(
         raise ConflictError("A pending invitation you cannot replace already exists")
     for p in pending:
         p.revoked_at = now
+    db.flush()
+    quota_service.check(db, ctx.org_id, "seats")
 
     token = new_token()
     inv = Invitation(

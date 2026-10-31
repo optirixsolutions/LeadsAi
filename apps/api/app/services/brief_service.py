@@ -28,11 +28,12 @@ from app.models import (
     Lead,
     ResearchBrief,
     ResearchEvidence,
+    UsageKind,
     WorkflowKind,
     WorkflowRun,
     WorkflowStatus,
 )
-from app.services import workflow_service
+from app.services import quota_service, workflow_service
 from app.services.lead_service import lead_with_company
 
 MAX_ITEMS = 12
@@ -148,6 +149,8 @@ def write_brief(
         db.flush()
     elif brief.status in (BriefStatus.completed, BriefStatus.rejected):
         return BriefOutcome(brief.id, brief.status, None, {})
+    # The budget may have gone while this run waited in the queue.
+    quota_service.check_budget(db, ctx.org_id)
     brief_id = brief.id
     brief.status = BriefStatus.running
     brief.failure_category = None
@@ -222,6 +225,15 @@ def write_brief(
         input_tokens=result.usage.input_tokens,
         output_tokens=result.usage.output_tokens,
         failure_category=None,
+    )
+    quota_service.record(
+        db,
+        ctx.org_id,
+        UsageKind.model_tokens,
+        (result.usage.input_tokens or 0) + (result.usage.output_tokens or 0),
+        model_key=result.model_key,
+        estimated_cost_usd=estimate_cost(registry.model(result.model_key), result.usage),
+        workflow_run_id=run_id,
     )
     usage = {
         "model": result.model_key,

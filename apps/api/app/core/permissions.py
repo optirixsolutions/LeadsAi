@@ -34,6 +34,10 @@ class Permission(enum.StrEnum):
     workflows_read = "workflows:read"
     workflows_run = "workflows:run"  # start, cancel, and resume
     analytics_read = "analytics:read"
+    usage_read = "usage:read"
+    integrations_read = "integrations:read"
+    integrations_manage = "integrations:manage"  # connect providers, which hold credentials
+    billing_manage = "billing:manage"  # owners only: this is what the organization pays for
     outreach_read = "outreach:read"
     outreach_write = "outreach:write"  # draft, edit, ask for approval, add to suppression
     outreach_send = "outreach:send"  # send what someone with outreach:approve has approved
@@ -53,6 +57,8 @@ _READ = frozenset(
         Permission.workflows_read,
         Permission.outreach_read,
         Permission.analytics_read,
+        Permission.usage_read,
+        Permission.integrations_read,
     }
 )
 _SELL = _READ | {
@@ -67,7 +73,7 @@ _SELL = _READ | {
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.owner: _ALL,
-    Role.admin: _ALL,
+    Role.admin: _ALL - {Permission.billing_manage},
     # Managers run the team's data: bulk changes, imports, and exports.
     Role.manager: _SELL
     | {

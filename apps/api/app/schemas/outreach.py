@@ -117,6 +117,7 @@ class DeliveryOut(BaseModel):
     recipient: str
     message_id: str | None
     error_category: str | None
+    provider_status: str | None
     resolved_by_user_id: uuid.UUID | None
     created_at: datetime
     finished_at: datetime | None

@@ -17,6 +17,7 @@ import {
   DELIVERY_STATUS_LABELS,
   FLAG_LABELS,
   nextStep,
+  PROVIDER_STATUS_LABELS,
   ORIGIN_LABELS,
   type DraftDetail,
 } from "@/lib/outreach";
@@ -244,7 +245,7 @@ export function DraftView({
         <Card>
           <CardHeader
             title="Delivery attempts"
-            description="A mail server accepting a message does not prove it reached an inbox."
+            description="A mail server accepting a message does not prove it reached an inbox. A provider's report is shown when one arrives."
           />
           <ul className="divide-y divide-border">
             {draft.deliveries.map((d) => (
@@ -257,6 +258,9 @@ export function DraftView({
                 </div>
                 {d.error_category && (
                   <p className="text-fg-muted">{DELIVERY_ERRORS[d.error_category] ?? d.error_category}</p>
+                )}
+                {d.provider_status && (
+                  <p className="text-fg-muted">{PROVIDER_STATUS_LABELS[d.provider_status] ?? d.provider_status}</p>
                 )}
                 {d.status === "unknown" && canApprove && (
                   <div className="flex flex-wrap gap-2">

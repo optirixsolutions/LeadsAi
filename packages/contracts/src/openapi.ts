@@ -496,6 +496,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/billing/development-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Plan
+         * @description Stands in for a payment provider, and refuses to exist anywhere but development.
+         */
+        post: operations["change_plan_api_v1_organizations__org_id__billing_development_plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/companies": {
         parameters: {
             query?: never;
@@ -561,6 +581,92 @@ export interface paths {
         get: operations["list_icp_versions_api_v1_organizations__org_id__icp_versions_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Integrations */
+        get: operations["list_integrations_api_v1_organizations__org_id__integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/integrations/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Email */
+        post: operations["connect_email_api_v1_organizations__org_id__integrations_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/integrations/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Connection */
+        delete: operations["remove_connection_api_v1_organizations__org_id__integrations__connection_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Connection */
+        patch: operations["update_connection_api_v1_organizations__org_id__integrations__connection_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/integrations/{connection_id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Connection */
+        post: operations["check_connection_api_v1_organizations__org_id__integrations__connection_id__check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/integrations/{connection_id}/rotate-webhook-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate Secret */
+        post: operations["rotate_secret_api_v1_organizations__org_id__integrations__connection_id__rotate_webhook_secret_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1177,6 +1283,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Usage */
+        get: operations["usage_api_v1_organizations__org_id__usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{org_id}/workflows": {
         parameters: {
             query?: never;
@@ -1276,6 +1399,26 @@ export interface paths {
          * @description Public on purpose: a mail provider's one-click request carries no session or JSON.
          */
         post: operations["unsubscribe_api_v1_unsubscribe__token__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/webhooks/email/{org_id}/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email Webhook
+         * @description Public on purpose: a provider has no session. Only the signature lets anything through.
+         */
+        post: operations["email_webhook_api_v1_webhooks_email__org_id___connection_id__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1721,6 +1864,8 @@ export interface components {
             approvals_waiting: number;
             /** Drafts Ready To Send */
             drafts_ready_to_send: number;
+            /** Integrations Failing */
+            integrations_failing: number;
             /** Outcomes Unknown */
             outcomes_unknown: number;
             /** Workflows Failed 7D */
@@ -1957,6 +2102,87 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /**
+         * ConnectionCreated
+         * @description The only response that contains the webhook secret.
+         */
+        ConnectionCreated: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Has Password */
+            has_password: boolean;
+            health: components["schemas"]["ConnectionHealth"];
+            /** Host */
+            host: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["ConnectionKind"];
+            /** Last Checked At */
+            last_checked_at: string | null;
+            /** Last Error Category */
+            last_error_category: string | null;
+            /** Name */
+            name: string;
+            /** Port */
+            port: number | null;
+            /** Starttls */
+            starttls: boolean | null;
+            /** Username */
+            username: string | null;
+            /** Webhook Path */
+            webhook_path: string;
+            /** Webhook Secret */
+            webhook_secret: string;
+        };
+        /**
+         * ConnectionHealth
+         * @enum {string}
+         */
+        ConnectionHealth: "unknown" | "ok" | "failing";
+        /**
+         * ConnectionKind
+         * @enum {string}
+         */
+        ConnectionKind: "email_smtp";
+        /** ConnectionOut */
+        ConnectionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Has Password */
+            has_password: boolean;
+            health: components["schemas"]["ConnectionHealth"];
+            /** Host */
+            host: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["ConnectionKind"];
+            /** Last Checked At */
+            last_checked_at: string | null;
+            /** Last Error Category */
+            last_error_category: string | null;
+            /** Name */
+            name: string;
+            /** Port */
+            port: number | null;
+            /** Starttls */
+            starttls: boolean | null;
+            /** Username */
+            username: string | null;
+            /** Webhook Path */
+            webhook_path: string;
+        };
         /** DayCount */
         DayCount: {
             /** Count */
@@ -1992,6 +2218,8 @@ export interface components {
             id: string;
             /** Message Id */
             message_id: string | null;
+            /** Provider Status */
+            provider_status: string | null;
             /** Recipient */
             recipient: string;
             /** Resolved By User Id */
@@ -2019,6 +2247,11 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "error";
+        };
+        /** DevPlanChange */
+        DevPlanChange: {
+            /** Plan */
+            plan: string;
         };
         /** DraftCreate */
         DraftCreate: {
@@ -2431,6 +2664,17 @@ export interface components {
          * @enum {string}
          */
         ImportStatus: "queued" | "running" | "completed" | "failed";
+        /** IntegrationsOut */
+        IntegrationsOut: {
+            /** Connections */
+            connections: components["schemas"]["ConnectionOut"][];
+            /** Integrations Included */
+            integrations_included: boolean;
+            /** Models */
+            models: components["schemas"]["ModelServerHealth"][];
+            /** Server Blocker */
+            server_blocker: string | null;
+        };
         /** InvitationCreateIn */
         InvitationCreateIn: {
             /**
@@ -2736,6 +2980,13 @@ export interface components {
             permissions: string[];
             role: components["schemas"]["Role"];
         };
+        /** ModelServerHealth */
+        ModelServerHealth: {
+            /** Available */
+            available: boolean;
+            /** Model Key */
+            model_key: string;
+        };
         /** NoteIn */
         NoteIn: {
             /** Body */
@@ -3006,6 +3257,15 @@ export interface components {
             /** Stages */
             stages: components["schemas"]["StageSummary"][];
         };
+        /** PlanOut */
+        PlanOut: {
+            /** Integrations */
+            integrations: boolean;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
         /** ReadyResponse */
         ReadyResponse: {
             /** Dependencies */
@@ -3161,6 +3421,39 @@ export interface components {
             source_url: string | null;
             /** Type */
             type: string;
+        };
+        /** SmtpConnectionCreate */
+        SmtpConnectionCreate: {
+            /** Host */
+            host: string;
+            /** Name */
+            name: string;
+            /** Password */
+            password?: string | null;
+            /** Port */
+            port: number;
+            /**
+             * Starttls
+             * @default true
+             */
+            starttls: boolean;
+            /** Username */
+            username?: string | null;
+        };
+        /** SmtpConnectionUpdate */
+        SmtpConnectionUpdate: {
+            /** Host */
+            host?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Password */
+            password?: string | null;
+            /** Port */
+            port?: number | null;
+            /** Starttls */
+            starttls?: boolean | null;
+            /** Username */
+            username?: string | null;
         };
         /** StageCreate */
         StageCreate: {
@@ -3378,6 +3671,31 @@ export interface components {
             /** Unsubscribed */
             unsubscribed: boolean;
         };
+        /** UsageMetric */
+        UsageMetric: {
+            /** Label */
+            label: string;
+            /** Limit */
+            limit: number | null;
+            /** Metric */
+            metric: string;
+            /** Used */
+            used: number;
+        };
+        /** UsageOut */
+        UsageOut: {
+            /** Development Billing */
+            development_billing: boolean;
+            /** Estimated Cost Usd */
+            estimated_cost_usd: number | null;
+            /** Metrics */
+            metrics: components["schemas"]["UsageMetric"][];
+            plan: components["schemas"]["PlanOut"];
+            /** Plans */
+            plans: components["schemas"]["PlanOut"][];
+            /** Source */
+            source: string;
+        };
         /** UserOut */
         UserOut: {
             /** Display Name */
@@ -3404,6 +3722,16 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WebhookResult */
+        WebhookResult: {
+            /** Result */
+            result: string;
+        };
+        /** WebhookSecretOut */
+        WebhookSecretOut: {
+            /** Webhook Secret */
+            webhook_secret: string;
         };
         /** WorkerHealthOut */
         WorkerHealthOut: {
@@ -4559,6 +4887,41 @@ export interface operations {
             };
         };
     };
+    change_plan_api_v1_organizations__org_id__billing_development_plan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevPlanChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_companies_api_v1_organizations__org_id__companies_get: {
         parameters: {
             query?: {
@@ -4781,6 +5144,202 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IcpOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_integrations_api_v1_organizations__org_id__integrations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_email_api_v1_organizations__org_id__integrations_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpConnectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_connection_api_v1_organizations__org_id__integrations__connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_connection_api_v1_organizations__org_id__integrations__connection_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpConnectionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_connection_api_v1_organizations__org_id__integrations__connection_id__check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rotate_secret_api_v1_organizations__org_id__integrations__connection_id__rotate_webhook_secret_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connection_id: string;
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSecretOut"];
                 };
             };
             /** @description Validation Error */
@@ -6477,6 +7036,37 @@ export interface operations {
             };
         };
     };
+    usage_api_v1_organizations__org_id__usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_workflows_api_v1_organizations__org_id__workflows_get: {
         parameters: {
             query?: {
@@ -6660,6 +7250,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UnsubscribeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    email_webhook_api_v1_webhooks_email__org_id___connection_id__post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-salesiq-timestamp"?: string | null;
+                "x-salesiq-signature"?: string | null;
+            };
+            path: {
+                org_id: string;
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookResult"];
                 };
             };
             /** @description Validation Error */

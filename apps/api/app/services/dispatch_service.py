@@ -8,6 +8,7 @@ itself, because the one thing worse than a lost email is the same email twice.
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from email.utils import make_msgid
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import OrgContext, restore_context
 from app.core.config import get_settings
+from app.core.crypto import CredentialError
 from app.core.db import set_tenant_context
 from app.core.errors import ConflictError, NotFoundError
 from app.core.permissions import Permission, has_permission
@@ -22,6 +24,7 @@ from app.core.security import read_unsubscribe_token, unsubscribe_token
 from app.integrations.dispatch import (
     Outcome,
     OutgoingEmail,
+    SmtpTarget,
     build_message,
     send_smtp,
     unavailable_reason,
@@ -44,7 +47,13 @@ from app.models import (
     SuppressionReason,
     User,
 )
-from app.services import audit, outreach_service, suppression_service
+from app.services import (
+    audit,
+    integration_service,
+    outreach_service,
+    quota_service,
+    suppression_service,
+)
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +63,11 @@ _COUNTED = (DeliveryStatus.sending, DeliveryStatus.accepted, DeliveryStatus.unkn
 BLOCKER_MESSAGES = {
     "dispatch_disabled": "Sending is turned off on this server.",
     "external_not_allowed": "This server may not send beyond this machine.",
+    "connection_host_refused": "The connected mail server's address or port is not allowed.",
+    "connection_needs_tls": "The connected mail server has to use STARTTLS.",
+    "credential_unreadable": "The connected mail server's password cannot be read. Enter it again.",
+    "monthly_email_limit": "This month's email limit on your plan has been reached.",
+    "integrations_not_included": "Your plan does not include the connected mail server.",
     "sends_off": "Sending is turned off for this organization. An admin can turn it on.",
     "sender_missing": "Set a sender name, sender email, and postal address in outreach settings.",
     "not_approved": "This draft has not been approved.",
@@ -111,8 +125,22 @@ def blockers(
     """Everything standing in the way of sending this draft right now."""
     now = now or _now()
     found: list[str] = []
-    if reason := unavailable_reason():
+    connection = integration_service.active_smtp(db, draft.organization_id)
+    if connection is None:
+        reason = unavailable_reason()
+    else:
+        # Settings only. The password and DNS are left to the moment of sending.
+        c = connection.config
+        reason = unavailable_reason(
+            SmtpTarget(c["host"], int(c["port"]), bool(c["starttls"]), from_connection=True)
+        )
+    if reason:
         found.append(reason)
+    plan = quota_service.plan_for(db, draft.organization_id)
+    if connection is not None and not plan.integrations:
+        found.append("integrations_not_included")
+    if quota_service.remaining(db, draft.organization_id, "monthly_emails") == 0:
+        found.append("monthly_email_limit")
     if not settings.sends_enabled:
         found.append("sends_off")
     if not (settings.sender_name and settings.sender_email and settings.postal_address):
@@ -223,13 +251,22 @@ def send(db: Session, ctx: OrgContext, draft_id: uuid.UUID) -> Delivery:
         )
     )
     assert approval is not None
+    connection = integration_service.active_smtp(db, ctx.org_id)
+    connection_id = connection.id if connection else None
+    try:
+        target = integration_service.target_of(connection) if connection else None
+    except CredentialError as exc:
+        db.rollback()
+        raise ConflictError(
+            BLOCKER_MESSAGES["credential_unreadable"], code="credential_unreadable"
+        ) from exc
     delivery = Delivery(
         id=uuid.uuid4(),
         organization_id=ctx.org_id,
         draft_id=draft.id,
         approval_id=approval.id,
         status=DeliveryStatus.sending,
-        adapter=get_settings().dispatch_adapter,
+        adapter="smtp_connection" if connection else get_settings().dispatch_adapter,
         recipient=draft.recipient,
         content_hash=draft.content_hash,
         sent_by_user_id=ctx.user_id,
@@ -245,6 +282,8 @@ def send(db: Session, ctx: OrgContext, draft_id: uuid.UUID) -> Delivery:
         target_id=delivery.id,
         data={"draft_id": str(draft.id), "approval_id": str(approval.id)},
     )
+    # Recorded before it leaves, so a provider's event cannot arrive ahead of its delivery.
+    delivery.message_id = make_msgid(domain=(settings.sender_email or "").rpartition("@")[2])
     url, one_click_url = _unsubscribe_urls(ctx.org_id, delivery.id)
     assert settings.sender_name and settings.sender_email
     email = OutgoingEmail(
@@ -254,6 +293,7 @@ def send(db: Session, ctx: OrgContext, draft_id: uuid.UUID) -> Delivery:
         subject=draft.subject,
         body=draft.body + _footer(settings, url),
         one_click_url=one_click_url,
+        message_id=delivery.message_id,
     )
     try:
         build_message(email)
@@ -264,13 +304,17 @@ def send(db: Session, ctx: OrgContext, draft_id: uuid.UUID) -> Delivery:
     db.commit()
 
     try:
-        outcome = send_smtp(email)
+        outcome = send_smtp(email, target)
     except Exception as exc:
         log.warning("dispatch_failed", extra={"error_type": type(exc).__name__})
         outcome = Outcome(DeliveryStatus.unknown, category="adapter_error")
 
     restore_context(db, ctx)
     _finish(db, ctx, draft.id, delivery.id, outcome)
+    if connection_id is not None and outcome.status != DeliveryStatus.unknown:
+        # The address's own refusal says the server is working.
+        problem = outcome.category if outcome.status == DeliveryStatus.failed else None
+        integration_service.record_health(db, ctx.org_id, connection_id, problem)
     db.commit()
     restore_context(db, ctx)
     finished = db.get(Delivery, delivery.id, populate_existing=True)
@@ -289,7 +333,6 @@ def _finish(
         log.warning("dispatch_finished_after_resolution", extra={"delivery": str(delivery_id)})
         return
     delivery.status = outcome.status
-    delivery.message_id = outcome.message_id
     delivery.error_category = outcome.category
     delivery.finished_at = _now()
     if outcome.status == DeliveryStatus.accepted:

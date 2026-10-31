@@ -109,4 +109,18 @@ its run's `outreach_draft_id` names the draft. MCP adds `create_outreach_draft`,
 time, and days are UTC. A rate or median is `null` when there is nothing to base it on, never zero. Money is reported per currency and never added across currencies.
 `GET /leads` now returns `score` and `fit` from each lead's latest assessment, and takes `fit=high|medium|low|none`.
 
-Planned groups: `tasks`, `integrations`, `usage`.
+## Integrations, usage, and plans (Phase 10)
+| Route | Permission | Purpose |
+|---|---|---|
+| `GET /integrations` | `integrations:read` | Connections and model availability. Never a password or secret |
+| `POST /integrations/email` | `integrations:manage` | Connect an SMTP server. The one response with the webhook secret. 402 `quota_exceeded`, 409 `already_connected` |
+| `PATCH`, `DELETE /integrations/{id}` | `integrations:manage` | Leaving out `password` keeps it. Removing destroys the secrets |
+| `POST /integrations/{id}/check` | `integrations:manage` | Connects and logs in, and sends nothing |
+| `POST /integrations/{id}/rotate-webhook-secret` | `integrations:manage` | Returns a new secret once, and ends the old one |
+| `GET /usage` | `usage:read` | Plan, limits, counts, and an estimated cost |
+| `POST /billing/development-plan` | `billing:manage` (owners) | 403 `billing_unavailable` outside development |
+| `POST /api/v1/webhooks/email/{org_id}/{connection_id}` | Signature | Public. Headers `x-salesiq-timestamp` (Unix seconds, within 5 minutes) and `x-salesiq-signature` (`v1=` + hex HMAC-SHA256 of `timestamp.body`). Body `{"id", "type": "delivered"\|"bounced"\|"complained"\|"deferred", "message_id"}`. Answers `applied`, `ignored`, or `duplicate`, or 401 |
+
+A limit reached is 402 `quota_exceeded`, with `metric`, `limit`, and `used` in `details`. `GET /leads`-side limits also apply through imports and MCP. MCP adds `get_integration_health`.
+
+Planned group: `tasks`.

@@ -26,6 +26,7 @@ export default function globalSetup(): () => void {
       SALESIQ_LOG_LEVEL: "WARNING",
       SALESIQ_OLLAMA_BASE_URL: `${apiUrl}/v1`,
       SALESIQ_WORKER_POLL_SECONDS: "0.5",
+      SALESIQ_DEFAULT_PLAN: "unlimited",
     },
   });
   writeFileSync(SINK_FILE, "");
